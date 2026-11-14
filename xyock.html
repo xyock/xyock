@@ -1606,6 +1606,16 @@ header::after{
         app_metadata: session.app_metadata || {},
         identities: session.identities || []
       } : null;
+      const githubStatus=document.getElementById("githubPluginStatus");
+      const githubConnectButton=document.getElementById("githubPluginConnect");
+      if(githubStatus){
+        githubStatus.textContent=!loggedIn
+          ? "xyock 로그인 필요"
+          : isGitHubAccountConnected()
+            ? "GitHub 계정 연결됨 · 저장소 권한 확인 가능"
+            : "xyock 로그인됨 · GitHub 계정 연결 필요";
+      }
+      if(githubConnectButton)githubConnectButton.textContent=loggedIn&&isGitHubAccountConnected()?"GitHub 다시 연결":"GitHub 계정 연결";
       window.dispatchEvent(new Event("xyock-profile-updated"));
     }
 
@@ -1902,7 +1912,9 @@ int main() {
         /^(?:create|write|make|generate)\s+(?:code|script)?\s*(?:in|for)?\s*(python|javascript|java|c\+\+|cpp|c|html)\s+(.+)/i
       );
 
-      if (!attachments.length && codeMatch) {
+      const routeToGitHubChat = !window.__xyockSecretMode && isLoggedIn() && isGitHubEditIntent(query);
+
+      if (!attachments.length && codeMatch && !routeToGitHubChat) {
         const language = codeMatch[1];
         const request = codeMatch[2];
         const code = generateCode(language, request);
@@ -1928,14 +1940,14 @@ int main() {
         } catch {}
       }
 
-      if (!attachments.length && key) {
+      if (!attachments.length && key && !routeToGitHubChat) {
         showTerm(key);
         return;
       }
 
       const codeLang = detectLanguage(query);
 
-      if (!attachments.length && codeLang) {
+      if (!attachments.length && codeLang && !routeToGitHubChat) {
         addAIMessage(analyzeCode(codeLang, query), "success");
         return;
       }
@@ -2818,6 +2830,10 @@ int main() {
 
       // Plugin dialog is opened from Menu > Plugins; no chat-bar plugin button remains.
       document.getElementById("ghActionType").addEventListener("change", updateGitHubActionFields);
+      document.getElementById("ghRepoSelect").addEventListener("change", event => {
+        const repo=event.target.value;
+        if(repo)localStorage.setItem(githubRepoStorageKey(),repo);
+      });
       document.getElementById("ghRefreshBtn").addEventListener("click", () => refreshGitHubActions());
       document.getElementById("ghRequestBtn").addEventListener("click", createGitHubActionRequest);
       try { updateGitHubActionFields(); } catch (error) { console.error("GitHub 플러그인 폼 초기화 오류:", error); }
