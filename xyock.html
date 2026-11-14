@@ -1600,6 +1600,7 @@ int main() {
     welcome.append(heading, description);
     root.append(welcome);
     $("searchInput").value = "";
+    window.__xyockClearAttachments?.();
     $("sendBtn").disabled = true;
     $("attachmentList").replaceChildren();
   }
@@ -1882,6 +1883,8 @@ int main() {
       if (!window.__xyockSecretMode) queueSaveConversation();
       scrollToBottom();
     }
+
+    window.__xyockClearAttachments = function () { selectedAttachments = []; renderAttachments(); updateSendButton(); };
 
     function updateSendButton() {
       document.getElementById("sendBtn").disabled =
