@@ -2623,7 +2623,6 @@ int main() {
    window.__xyockSecretMode=true;
    document.body.classList.add("xy-secret-active");
    closeScreens();
-   $("xyockClearAttachments")?.click();
    window.__xyockClearAttachments?.();
    const chat=$("chat"),notice=$("secretChatNotice");
    if(chat&&notice){chat.replaceChildren(notice);notice.hidden=false}
