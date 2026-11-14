@@ -4,6 +4,12 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const ALLOWED_ORIGIN = "https://xyock.github.io";
 const PROVIDER_URL = "https://ai-gateway.kilo.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "kilo-auto/free";
+const FREE_MODELS = new Set([
+  "kilo-auto/free",
+  "nvidia/nemotron-3.5-super-vl:free",
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "dots-studio/dots-3-note-preview:free",
+]);
 const MAX_QUESTION_CHARS = 4000;
 const MAX_REQUEST_BYTES = 20_000_000;
 const GUEST_DAILY_LIMIT = 100;
@@ -172,8 +178,13 @@ Deno.serve(async (req: Request) => {
     : {};
   const q = requestBody.q;
   const rawAttachments = requestBody.attachments;
-  // Xyock uses Kilo Auto Free as its single AI backend.
-  const model = DEFAULT_MODEL;
+  const requestedModel = requestBody.model;
+  const model = typeof requestedModel === "string" && FREE_MODELS.has(requestedModel)
+    ? requestedModel
+    : DEFAULT_MODEL;
+  if (requestedModel !== undefined && (typeof requestedModel !== "string" || !FREE_MODELS.has(requestedModel))) {
+    return jsonResponse({ error: "선택한 무료 모델을 사용할 수 없습니다." }, 400, allowedOrigin);
+  }
 
   if (typeof q !== "string" || !q.trim()) {
     return jsonResponse({ error: "질문을 입력해 주세요." }, 400, allowedOrigin);
@@ -317,7 +328,12 @@ Deno.serve(async (req: Request) => {
           { role: "user", content: messageContent },
         ],
         stream: false,
-        max_tokens: 32768,
+        max_tokens: ({
+          "kilo-auto/free": 32768,
+          "nvidia/nemotron-3.5-super-vl:free": 131072,
+          "nvidia/nemotron-3-ultra-550b-a55b:free": 65536,
+          "dots-studio/dots-3-note-preview:free": 131072,
+        } as Record<string, number>)[model] ?? 32768,
         temperature: 0.5,
       }),
     });
