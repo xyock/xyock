@@ -3,13 +3,13 @@
   "short_name": "xyock",
   "icons": [
     {
-      "src": "/lock/favicon-3/web-app-manifest-192x192.png",
+      "src": "/xyock/favicon/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/lock/favicon-3/web-app-manifest-512x512.png",
+      "src": "/xyock/favicon/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
