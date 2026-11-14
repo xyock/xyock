@@ -1088,6 +1088,7 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
     const TABLE_URL = `${SUPABASE_URL}/rest/v1/terms`;
     const CONVERSATIONS_URL = `${SUPABASE_URL}/rest/v1/chat_conversations`;
     let currentConversationId = null;
+    let currentConversationUserId = null;
     let restoringConversation = false;
     let saveQueue = Promise.resolve();
     const AUTH_URL = `${SUPABASE_URL}/auth/v1`;
@@ -1417,6 +1418,9 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
 
     async function logout() {
       await revokeRemoteSession();
+      currentConversationId = null;
+      currentConversationUserId = null;
+      startNewConversation();
       clearSession();
       updateUI();
       addAIMessage("로그아웃했습니다.", "success");
@@ -1491,6 +1495,13 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
       loginPending = false;
       closeLoginModal();
       updateUI();
+      try {
+        await window.xyockSyncWorkspace?.();
+        await window.xyockLoadLatestConversation?.();
+      } catch (syncError) {
+        console.error("Workspace sync after login failed", syncError);
+        showToast("클라우드 동기화에 실패했습니다: " + syncError.message);
+      }
       addAIMessage(`${session.email}님, 로그인되었습니다.`, "success");
     }
 
@@ -1535,7 +1546,8 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
 
     function getSelectedModel() {
       try {
-        const saved = localStorage.getItem(MODEL_STORAGE_KEY);
+        const modelKey = window.xyockAccountStorageKey ? window.xyockAccountStorageKey(MODEL_STORAGE_KEY) : MODEL_STORAGE_KEY;
+        const saved = localStorage.getItem(modelKey) || localStorage.getItem(MODEL_STORAGE_KEY);
         return FREE_MODELS.includes(saved) ? saved : DEFAULT_MODEL;
       } catch { return DEFAULT_MODEL; }
     }
@@ -1582,6 +1594,12 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
       await ensureSession();
       return apiRaw(url, options);
     }
+
+    // Authenticated, RLS-protected workspace access for the settings/project UI.
+    window.xyockCloudRequest = async (path, options = {}) => {
+      if (!session || !await ensureSession()) throw new Error("로그인이 필요합니다.");
+      return apiRaw(`${SUPABASE_URL}/rest/v1/${path}`, options);
+    };
 
     async function loadSharedTerms() {
       const rows = await api(
@@ -2158,6 +2176,8 @@ int main() {
 
     async function persistConversation(messages) {
       if (!session?.user_id || !await ensureSession()) return;
+      if (currentConversationUserId && currentConversationUserId !== session.user_id) currentConversationId = null;
+      currentConversationUserId = session.user_id;
       const payload = {
         user_id: session.user_id,
         title: (messages.find(m => m.role === "user")?.content || "새 대화").replace(/\s+/g, " ").slice(0, 80),
@@ -2165,7 +2185,7 @@ int main() {
         updated_at: new Date().toISOString()
       };
       const url = currentConversationId
-        ? CONVERSATIONS_URL + "?id=eq." + encodeURIComponent(currentConversationId)
+        ? CONVERSATIONS_URL + "?id=eq." + encodeURIComponent(currentConversationId) + "&user_id=eq." + encodeURIComponent(session.user_id)
         : CONVERSATIONS_URL;
       const res = await fetch(url, {
         method: currentConversationId ? "PATCH" : "POST",
@@ -2181,6 +2201,7 @@ int main() {
       if (!currentConversationId) {
         const rows = await res.json();
         currentConversationId = rows?.[0]?.id || null;
+        currentConversationUserId = session.user_id;
       }
     }
 
@@ -2230,6 +2251,7 @@ int main() {
 
     async function restoreConversation(id) {
       try {
+        if (!session?.user_id || !await ensureSession()) throw new Error("로그인이 필요합니다.");
         await saveQueue;
         const res = await fetch(CONVERSATIONS_URL + "?select=id,title,messages&id=eq." + encodeURIComponent(id) + "&limit=1", {
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token }
@@ -2241,6 +2263,7 @@ int main() {
         const chat = document.getElementById("chat");
         chat.replaceChildren();
         currentConversationId = rows[0].id;
+        currentConversationUserId = session.user_id;
         (Array.isArray(rows[0].messages) ? rows[0].messages : []).forEach(m =>
           appendMessage(m.role === "user" ? "user" : "ai", m.content || "")
         );
@@ -2253,9 +2276,19 @@ int main() {
       }
     }
 
+    window.xyockLoadLatestConversation = async () => {
+      if (!session?.user_id || !await ensureSession() || window.__xyockSecretMode) return false;
+      if (currentMessages().length) return false;
+      const rows = await apiRaw(CONVERSATIONS_URL + "?select=id&order=updated_at.desc&limit=1");
+      if (!rows?.length) return false;
+      await restoreConversation(rows[0].id);
+      return true;
+    };
+
     function getLongTermMemories() {
       try {
-        const value = JSON.parse(localStorage.getItem(XYOCK_MEMORY_KEY) || "[]");
+        const memoryKey = window.xyockAccountStorageKey ? window.xyockAccountStorageKey(XYOCK_MEMORY_KEY) : XYOCK_MEMORY_KEY;
+        const value = JSON.parse(localStorage.getItem(memoryKey) || "[]");
         return Array.isArray(value) ? value.filter(item => typeof item === "string").slice(0, 30) : [];
       } catch { return []; }
     }
@@ -2274,8 +2307,11 @@ int main() {
       if (!preference || /기억(?:하는|하기|기능|시스템).{0,12}(?:만들|구현|추가)/i.test(preference)) return false;
       preference = preference.slice(0, 300);
       // 새 기억 요청은 이전 선호를 전부 대체합니다.
-      try { localStorage.setItem(XYOCK_MEMORY_KEY, JSON.stringify([preference])); }
-      catch { showToast("기억을 저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요."); return false; }
+      try {
+        const memoryKey = window.xyockAccountStorageKey ? window.xyockAccountStorageKey(XYOCK_MEMORY_KEY) : XYOCK_MEMORY_KEY;
+        localStorage.setItem(memoryKey, JSON.stringify([preference]));
+        window.xyockScheduleSettingsSync?.();
+      } catch { showToast("기억을 저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요."); return false; }
       showRememberIndicator();
       return true;
     }
@@ -2295,6 +2331,7 @@ int main() {
       currentConversationId = null;
       const chat = document.getElementById("chat");
       chat.replaceChildren();
+      currentConversationUserId = session?.user_id || null;
       const welcome = document.createElement("div");
       welcome.className = "welcome"; welcome.id = "welcome";
       const h = document.createElement("h1"); h.textContent = "How can I help?";
@@ -2673,7 +2710,9 @@ int main() {
       document.getElementById("modelOptions").addEventListener("click", e => {
         const option = e.target.closest("[data-model]");
         if (!option || !FREE_MODELS.includes(option.dataset.model)) return;
-        localStorage.setItem(MODEL_STORAGE_KEY, option.dataset.model);
+        const modelKey = window.xyockAccountStorageKey ? window.xyockAccountStorageKey(MODEL_STORAGE_KEY) : MODEL_STORAGE_KEY;
+        localStorage.setItem(modelKey, option.dataset.model);
+        window.xyockScheduleSettingsSync?.();
         updateModelOptions();
         closeModelModal();
         showToast("모델 변경: " + option.querySelector(".model-name").textContent);
