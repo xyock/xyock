@@ -819,6 +819,7 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
     <div class="header-icons">
       <span class="mode-indicator" id="modeIndicator">xyock</span>
       <div class="auth-col">
+        <button class="icon-btn" id="historyBtn" type="button" aria-label="대화 기록" title="대화 기록" onclick="openHistoryModal()">◷</button>
         <button class="icon-btn xy-menu-trigger" id="xyMenuOpen" type="button" aria-label="메뉴 열기" title="메뉴">☰</button>
         <button class="login-btn" id="loginBtn" type="button">locked</button>
       </div>
@@ -1577,6 +1578,74 @@ int main() {
 </head>
 <body>
   <h1>Hello, World!</h1>
+
+<script id="xyock-secret-chat-controller-v2">
+(() => {
+  const $ = id => document.getElementById(id);
+  let active = false;
+  const chat = () => $("chat");
+  function clearSession() {
+    const root = chat();
+    if (!root) return;
+    root.replaceChildren();
+    const welcome = document.createElement("div");
+    welcome.className = "welcome";
+    welcome.id = "welcome";
+    const heading = document.createElement("h1");
+    heading.textContent = active ? "Secret Chat" : "How can I help?";
+    const description = document.createElement("p");
+    description.textContent = active
+      ? "임시 대화입니다. 이 앱의 대화 기록과 기억에 저장하지 않습니다."
+      : "Ask xyock about anything, explain code, or get help writing code";
+    welcome.append(heading, description);
+    root.append(welcome);
+    $("searchInput").value = "";
+    $("sendBtn").disabled = true;
+    $("attachmentList").replaceChildren();
+  }
+  function setActive(next) {
+    if (active === Boolean(next)) return;
+    active = Boolean(next);
+    window.__xyockSecretMode = active;
+    document.body.classList.toggle("xy-secret-active", active);
+    const indicator = $("modeIndicator");
+    if (indicator) indicator.textContent = active ? "Secret Chat" : "xyock";
+    const banner = $("secretChatNotice");
+    if (banner) banner.hidden = !active;
+    $("searchInput").placeholder = active
+      ? "Secret Chat에 메시지 보내기..."
+      : "xyock에게 질문하거나 코드 요청하기...";
+    document.querySelectorAll('#xyMenu [data-xy-go="secret"]').forEach(button => {
+      button.classList.toggle("xy-secret-selected", active);
+      const tag = button.querySelector(".xy-secret-tag");
+      if (tag) tag.textContent = active ? "ACTIVE" : "PRIVATE SESSION";
+    });
+    $("xyMenu")?.classList.remove("open");
+    clearSession();
+    if (active) $("searchInput").focus();
+    if (!active) window.__xyockSecretMode = false;
+  }
+  document.addEventListener("click", event => {
+    const button = event.target.closest('#xyMenu [data-xy-go="secret"]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setActive(!active);
+    if (active) {
+      alert("Secret Chat을 시작했어요. xyock의 대화 기록·장기 기억·코드 기록에는 저장하지 않습니다. 다만 답변을 위해 메시지는 Supabase와 AI 제공자에 전송되며, 종단간 암호화는 아닙니다.");
+    } else {
+      alert("Secret Chat을 종료했어요. 임시 대화는 화면에서 지웠습니다.");
+    }
+  }, true);
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && active) setActive(false);
+  });
+  const banner = $("secretChatNotice");
+  if (banner) banner.hidden = true;
+  window.__xyockSecretMode = false;
+})();
+</script>
+
 </body>
 </html>`,
           button: `<button onclick="alert('Hello!')">Click me</button>`,
@@ -2620,7 +2689,7 @@ int main() {
  async function gate(){let v;try{v=JSON.parse(get(K.pass))}catch{return}if(!v?.salt||!v?.hash)return;$("xyGate")?.classList.add("open");const verify=async()=>{try{if(await hash($("xyGateInput").value,v.salt)===v.hash){$("xyGate").classList.remove("open");$("xyGateInput").value="";$("xyGateError").textContent=""}else $("xyGateError").textContent="암호가 올바르지 않습니다."}catch{$("xyGateError").textContent="암호를 확인하지 못했습니다."}};$("xyGateSubmit")?.addEventListener("click",verify);$("xyGateInput")?.addEventListener("keydown",e=>{if(e.key==="Enter")verify()})}
  function list(){try{const v=JSON.parse(get(K.codes,"[]"));return Array.isArray(v)?v:[]}catch{return[]}}
  function renderCodes(){const root=$("xyCodeList");if(!root)return;root.replaceChildren();const a=list();if(!a.length){root.textContent="아직 저장된 코드가 없습니다.";return}a.slice().reverse().forEach(v=>{const card=document.createElement("article"),b=document.createElement("b"),pre=document.createElement("pre"),copy=document.createElement("button");card.className="xy-code-entry";b.textContent=(v.lang||"code")+" · "+new Date(v.time).toLocaleString();pre.textContent=v.code||"";copy.type="button";copy.textContent="복사";copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(v.code||"");copy.textContent="복사됨"}catch{copy.textContent="복사 실패"}});card.append(b,pre,copy);root.append(card)})}
- function collect(){document.querySelectorAll("#chat .code-card").forEach(card=>{const code=card.querySelector("pre code");if(!code?.textContent.trim()||card.dataset.xySaved)return;const a=list();a.push({lang:card.querySelector(".code-card-language")?.textContent||"code",code:code.textContent,time:Date.now()});set(K.codes,JSON.stringify(a.slice(-100)));card.dataset.xySaved="1"})}
+ function collect(){if(window.__xyockSecretMode)return;document.querySelectorAll("#chat .code-card").forEach(card=>{const code=card.querySelector("pre code");if(!code?.textContent.trim()||card.dataset.xySaved)return;const a=list();a.push({lang:card.querySelector(".code-card-language")?.textContent||"code",code:code.textContent,time:Date.now()});set(K.codes,JSON.stringify(a.slice(-100)));card.dataset.xySaved="1"})}
  if($("chat")&&window.MutationObserver)new MutationObserver(collect).observe($("chat"),{childList:true,subtree:true,characterData:true});setTheme(get(K.theme,"dark"));applyLanguage();gate();
 })();
 </script>
