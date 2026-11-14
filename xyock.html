@@ -2278,7 +2278,7 @@ int main() {
 
     window.xyockLoadLatestConversation = async () => {
       if (!session?.user_id || !await ensureSession() || window.__xyockSecretMode) return false;
-      if (currentMessages().length) return false;
+      if (currentMessages().some(message => message.role === "user")) return false;
       const rows = await apiRaw(CONVERSATIONS_URL + "?select=id&order=updated_at.desc&limit=1");
       if (!rows?.length) return false;
       await restoreConversation(rows[0].id);
