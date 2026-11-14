@@ -988,7 +988,7 @@ header::after{
 .xy-chat-more{width:30px;height:30px;flex:0 0 30px;border:0;border-radius:7px;background:transparent;color:#aebbb3;font-size:19px;line-height:1;cursor:pointer;opacity:0;pointer-events:none}
 .xy-chat-row:hover .xy-chat-more,.xy-chat-more:focus-visible{opacity:1;pointer-events:auto}
 .xy-chat-more:hover{background:#29372f;color:#fff}
-.xy-chat-menu{position:absolute;right:3px;top:34px;z-index:10050;min-width:145px;padding:5px;border:1px solid #35463b;border-radius:10px;background:#101713;box-shadow:0 12px 32px #000b}
+.xy-chat-menu{position:fixed;z-index:100500;min-width:155px;padding:5px;border:1px solid #35463b;border-radius:10px;background:#101713;box-shadow:0 12px 32px #000b}
 .xy-chat-menu[hidden]{display:none!important}
 .xy-chat-menu button{display:block;width:100%;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:#e0e9e3;text-align:left;font:inherit;font-size:12px;cursor:pointer}
 .xy-chat-menu button:hover{background:#1e2c23}
@@ -3223,12 +3223,12 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
     open.addEventListener("click",async()=>{try{await window.xyockRestoreConversation?.(row.id);document.getElementById("xyMenu")?.classList.remove("open")}catch(e){window.xyockToast?.(e.message||"대화를 열지 못했습니다.")}});
     more.type="button";more.className="xy-chat-more";more.textContent="···";more.title="Chat options";more.setAttribute("aria-label","Chat options");
     menu.className="xy-chat-menu";menu.hidden=true;
-    const pinAction=document.createElement("button");pinAction.type="button";pinAction.textContent=pinned.includes(row.id)?"Unpin chat":"Pin chat";
+    const pinAction=document.createElement("button");pinAction.type="button";pinAction.textContent=pinned.includes(row.id)?"고정 해제":"대화 고정";
     pinAction.addEventListener("click",async()=>{menu.hidden=true;try{await window.xyockSetConversationPinned(row.id,!pinned.includes(row.id));await render()}catch(e){window.xyockToast?.(e.message||"핀 설정 실패")}});
-    const deleteAction=document.createElement("button");deleteAction.type="button";deleteAction.className="danger";deleteAction.textContent="Delete chat";
+    const deleteAction=document.createElement("button");deleteAction.type="button";deleteAction.className="danger";deleteAction.textContent="대화 삭제";
     deleteAction.addEventListener("click",async()=>{menu.hidden=true;if(!confirm("이 대화를 삭제할까요?"))return;try{await window.xyockDeleteConversation(row.id);await render()}catch(e){window.xyockToast?.(e.message||"삭제 실패")}});
-    menu.append(pinAction,deleteAction);more.addEventListener("click",e=>{e.stopPropagation();root.querySelectorAll(".xy-chat-menu").forEach(other=>{if(other!==menu)other.hidden=true});menu.hidden=!menu.hidden});
-    item.append(open,more,menu);root.append(item);
+    menu.append(pinAction,deleteAction);more.addEventListener("click",e=>{e.stopPropagation();root.querySelectorAll(".xy-chat-menu").forEach(other=>{if(other!==menu)other.hidden=true});const willOpen=menu.hidden;if(willOpen){const rect=more.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(window.innerWidth-170,rect.right-155))+"px";menu.style.top=Math.min(window.innerHeight-100,rect.bottom+5)+"px"}menu.hidden=!willOpen});
+    item.append(open,more);item.append(menu);root.append(item);
    });
   }catch(error){root.textContent="대화 목록을 불러오지 못했습니다: "+(error.message||"오류")}
   finally{loading=false;if(queued){queued=false;render()}}
