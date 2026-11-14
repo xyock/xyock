@@ -1786,34 +1786,10 @@ console.log(arr.sort((a, b) => a - b));`,
 }`,
           html: `public class HTMLTest {
   public static void main(String[] args) {
-    String html = "<html><body><h1>Hello from Java</h1>
-<script id="xy-chats-list-controller">
-(()=>{
- const root=document.getElementById("xyChatsList");if(!root)return;
- const escapeText=value=>String(value||"").replace(/\\s+/g," ").trim();
- let loading=false;
- async function render(){if(loading)return;loading=true;try{
-   if(!window.__xyockSessionProfile?.user_id){root.innerHTML='<div class="xy-chats-empty">로그인하면 대화가 여기에 표시됩니다.</div>';return}
-   if(typeof window.xyockFetchSavedConversations!=="function"){root.textContent="대화를 불러올 수 없습니다.";return}
-   const rows=await window.xyockFetchSavedConversations();const pinned=window.xyockReadPinnedConversations?.()||[];
-   rows.sort((a,b)=>{const ai=pinned.indexOf(a.id),bi=pinned.indexOf(b.id);if(ai>=0&&bi>=0)return ai-bi;if(ai>=0)return -1;if(bi>=0)return 1;return new Date(b.updated_at)-new Date(a.updated_at)});
-   root.replaceChildren();if(!rows.length){const empty=document.createElement("div");empty.className="xy-chats-empty";empty.textContent="아직 대화가 없습니다.";root.append(empty);return}
-   rows.forEach(row=>{const item=document.createElement("div"),open=document.createElement("button"),more=document.createElement("button"),menu=document.createElement("div");item.className="xy-chat-row";open.type="button";open.className="xy-chat-open";open.title=row.title||"New chat";open.textContent=(pinned.includes(row.id)?"📌 ":"")+escapeText(row.title||"New chat");open.addEventListener("click",()=>window.xyockRestoreConversation?.(row.id));more.type="button";more.className="xy-chat-more";more.textContent="···";more.title="Chat options";more.setAttribute("aria-label","Chat options");menu.className="xy-chat-menu";menu.hidden=true;
-     const pinAction=document.createElement("button");pinAction.type="button";pinAction.textContent=pinned.includes(row.id)?"Unpin chat":"Pin chat";pinAction.addEventListener("click",async()=>{menu.hidden=true;try{await window.xyockSetConversationPinned(row.id,!pinned.includes(row.id));await render()}catch(e){window.xyockToast?.(e.message||"핀 설정 실패")}});
-     const deleteAction=document.createElement("button");deleteAction.type="button";deleteAction.className="danger";deleteAction.textContent="Delete chat";deleteAction.addEventListener("click",async()=>{menu.hidden=true;if(!confirm("이 대화를 삭제할까요?"))return;try{await window.xyockDeleteConversation(row.id);await render()}catch(e){window.xyockToast?.(e.message||"삭제 실패")}});
-     menu.append(pinAction,deleteAction);more.addEventListener("click",e=>{e.stopPropagation();root.querySelectorAll(".xy-chat-menu").forEach(other=>{if(other!==menu)other.hidden=true});menu.hidden=!menu.hidden});item.append(open,more,menu);root.append(item);
-   });
- }catch(error){root.textContent="대화 목록을 불러오지 못했습니다: "+(error.message||"오류")}finally{loading=false}}
- window.xyockRenderChatsList=render;window.addEventListener("xyock-chats-refresh",render);window.addEventListener("xyock-workspace-synced",render);
- document.addEventListener("click",e=>{if(!e.target.closest(".xy-chat-row"))root.querySelectorAll(".xy-chat-menu").forEach(menu=>menu.hidden=true)});
- const menu=document.getElementById("xyMenu");if(menu)new MutationObserver(()=>{if(menu.classList.contains("open"))render()}).observe(menu,{attributes:true,attributeFilter:["class"]});
- render();
-})();
-<\/script>
-</body></html>";
+    String html = "<html><body><h1>Hello from Java</h1></body></html>";
     System.out.println(html);
   }
-}`
+}`,
         },
 
         cpp: {
@@ -3221,6 +3197,50 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  },true);
  const chat=document.getElementById("chat");if(chat)new MutationObserver(paint).observe(chat,{childList:true,subtree:true});
  window.addEventListener("xyock-profile-updated",paint);window.addEventListener("xyock-workspace-synced",paint);paint();
+})();
+</script>
+
+<script id="xy-chats-list-controller">
+(()=>{
+ const root=document.getElementById("xyChatsList");if(!root)return;
+ const escapeText=value=>String(value||"").replace(/\s+/g," ").trim();
+ let loading=false,queued=false;
+ async function render(){
+  if(loading){queued=true;return}
+  loading=true;
+  try{
+   const uid=window.__xyockSessionProfile?.user_id;
+   if(!uid){root.innerHTML='<div class="xy-chats-empty">로그인하면 대화가 여기에 표시됩니다.</div>';return}
+   if(typeof window.xyockFetchSavedConversations!=="function"){root.textContent="대화 기록 기능을 불러오는 중입니다.";return}
+   const rows=await window.xyockFetchSavedConversations();
+   const pinned=window.xyockReadPinnedConversations?.()||[];
+   rows.sort((a,b)=>{const ai=pinned.indexOf(a.id),bi=pinned.indexOf(b.id);if(ai>=0&&bi>=0)return ai-bi;if(ai>=0)return -1;if(bi>=0)return 1;return new Date(b.updated_at)-new Date(a.updated_at)});
+   root.replaceChildren();
+   if(!rows.length){const empty=document.createElement("div");empty.className="xy-chats-empty";empty.textContent="아직 대화가 없습니다.";root.append(empty);return}
+   rows.forEach(row=>{
+    const item=document.createElement("div"),open=document.createElement("button"),more=document.createElement("button"),menu=document.createElement("div");
+    item.className="xy-chat-row";open.type="button";open.className="xy-chat-open";open.title=row.title||"New chat";open.textContent=(pinned.includes(row.id)?"📌 ":"")+escapeText(row.title||"New chat");
+    open.addEventListener("click",async()=>{try{await window.xyockRestoreConversation?.(row.id);document.getElementById("xyMenu")?.classList.remove("open")}catch(e){window.xyockToast?.(e.message||"대화를 열지 못했습니다.")}});
+    more.type="button";more.className="xy-chat-more";more.textContent="···";more.title="Chat options";more.setAttribute("aria-label","Chat options");
+    menu.className="xy-chat-menu";menu.hidden=true;
+    const pinAction=document.createElement("button");pinAction.type="button";pinAction.textContent=pinned.includes(row.id)?"Unpin chat":"Pin chat";
+    pinAction.addEventListener("click",async()=>{menu.hidden=true;try{await window.xyockSetConversationPinned(row.id,!pinned.includes(row.id));await render()}catch(e){window.xyockToast?.(e.message||"핀 설정 실패")}});
+    const deleteAction=document.createElement("button");deleteAction.type="button";deleteAction.className="danger";deleteAction.textContent="Delete chat";
+    deleteAction.addEventListener("click",async()=>{menu.hidden=true;if(!confirm("이 대화를 삭제할까요?"))return;try{await window.xyockDeleteConversation(row.id);await render()}catch(e){window.xyockToast?.(e.message||"삭제 실패")}});
+    menu.append(pinAction,deleteAction);more.addEventListener("click",e=>{e.stopPropagation();root.querySelectorAll(".xy-chat-menu").forEach(other=>{if(other!==menu)other.hidden=true});menu.hidden=!menu.hidden});
+    item.append(open,more,menu);root.append(item);
+   });
+  }catch(error){root.textContent="대화 목록을 불러오지 못했습니다: "+(error.message||"오류")}
+  finally{loading=false;if(queued){queued=false;render()}}
+ }
+ window.xyockRenderChatsList=render;
+ window.addEventListener("xyock-chats-refresh",render);
+ window.addEventListener("xyock-workspace-synced",render);
+ window.addEventListener("xyock-profile-updated",()=>{if(window.__xyockSessionProfile?.user_id)setTimeout(render,0);else render()});
+ document.addEventListener("click",e=>{if(!e.target.closest(".xy-chat-row"))root.querySelectorAll(".xy-chat-menu").forEach(menu=>menu.hidden=true)});
+ const menu=document.getElementById("xyMenu");
+ if(menu)new MutationObserver(()=>{if(menu.classList.contains("open"))render()}).observe(menu,{attributes:true,attributeFilter:["class"]});
+ render();
 })();
 </script>
 </body>
