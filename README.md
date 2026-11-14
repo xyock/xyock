@@ -85,7 +85,7 @@ The default model and available alternatives are configured in the frontend. The
 
    ```bash
    git clone https://github.com/xyock/xyock.git
-   cd lock
+   cd xyock
    ```
 
 2. Open `xyock.html` in a browser for local UI work, or serve the repository with a local static web server.
