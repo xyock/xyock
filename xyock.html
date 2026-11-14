@@ -503,6 +503,27 @@
     .social-login-stack { display:grid;gap:9px; }
     .login-divider { display:flex; align-items:center; gap:12px; color:#777; font-size:.85em; margin:16px 0; }
     .login-divider::before, .login-divider::after { content:""; flex:1; height:1px; background:#333; }
+    .xy-review-content{max-width:860px!important;width:min(860px,96vw)!important;max-height:90vh!important;padding:26px!important}
+    .xy-review-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+    .xy-review-kicker{font-size:10px;letter-spacing:2px;color:#7ae5b3;font-weight:700;margin-bottom:7px}
+    .xy-review-top .modal-title{text-align:left;margin:0 0 8px;font-size:25px;font-weight:650;letter-spacing:0}
+    .xy-review-close{border:1px solid #34443b;background:#121b16;color:var(--text);border-radius:10px;width:38px;height:38px;cursor:pointer}
+    .xy-review-intro,.xy-review-note{color:var(--muted);font-size:13px;line-height:1.6}
+    .xy-review-status{padding:16px;border:1px solid #303b35;border-radius:12px;margin:18px 0;color:var(--muted)}
+    .xy-review-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+    .xy-review-summary>div,.xy-review-section{background:rgba(127,160,140,.055);border:1px solid #29372f;border-radius:13px;padding:15px}
+    .xy-review-summary strong{display:block;font-size:25px;color:var(--text);font-variant-numeric:tabular-nums}
+    .xy-review-summary span{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+    .xy-review-section{margin:12px 0}.xy-review-section h3{font-size:14px;margin:0 0 14px;color:var(--text);letter-spacing:.3px}
+    .xy-review-bars{display:grid;gap:13px}.xy-review-bar-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:6px}.xy-review-bar-head span:first-child{color:var(--text)}.xy-review-bar-head b{font-variant-numeric:tabular-nums}
+    .xy-review-track{height:8px;background:#202923;border-radius:99px;overflow:hidden}.xy-review-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#4b9b73,#91d9ad)}
+    .xy-review-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .xy-review-detail{padding:12px;border:1px solid #2a3830;border-radius:10px}.xy-review-detail b{display:block;font-size:12px;margin-bottom:5px}.xy-review-detail p{font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+    .xy-review-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.xy-review-stat{padding:12px;border:1px solid #2a3830;border-radius:10px}.xy-review-stat strong{display:block;font-size:18px}.xy-review-stat span{font-size:11px;color:var(--muted)}
+    .xy-review-note{margin:14px 2px 20px;font-size:11px}
+    body.xy-light .xy-review-section,body.xy-light .xy-review-summary>div,body.xy-light .xy-review-detail,body.xy-light .xy-review-stat{background:#fff;border-color:#d7e1db}
+    body.xy-light .xy-review-track{background:#e4ebe6}
+    @media(max-width:600px){.xy-review-content{padding:18px!important}.xy-review-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.xy-review-summary>div{padding:10px}.xy-review-summary strong{font-size:20px}.xy-review-details,.xy-review-activity{grid-template-columns:1fr}}
     .history-modal-list { display:grid;gap:8px;max-height:50vh;overflow:auto;margin:14px 0; }
     .history-item { display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #333;border-radius:8px;background:#101010;color:var(--text); }
     .history-open { flex:1;min-width:0;text-align:left;border:0;background:transparent;color:inherit;cursor:pointer;font:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
@@ -966,7 +987,23 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
     </div>
   </div>
 
-  <div class="modal" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+  <div class="modal" id="reviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+  <div class="modal-content xy-review-content">
+    <div class="xy-review-top"><div><div class="xy-review-kicker">XYOCK PERFORMANCE REPORT</div><div class="modal-title" id="reviewTitle">Conversation Review</div></div><button class="xy-review-close" id="reviewClose" type="button" aria-label="Close">✕</button></div>
+    <p class="xy-review-intro">A transparent, text-based review of visible assistant replies across your saved conversations.</p>
+    <div id="reviewStatus" class="xy-review-status">Loading conversation history…</div>
+    <div id="reviewDashboard" hidden>
+      <div class="xy-review-summary"><div><strong id="reviewTotal">0</strong><span>Assistant replies reviewed</span></div><div><strong id="reviewChats">0</strong><span>Conversations analyzed</span></div><div><strong id="reviewWords">0</strong><span>Words analyzed</span></div></div>
+      <div class="xy-review-section"><h3>Performance Overview</h3><div id="reviewBars" class="xy-review-bars"></div></div>
+      <div class="xy-review-section"><h3>Detailed Evaluation</h3><div id="reviewDetails" class="xy-review-details"></div></div>
+      <div class="xy-review-section"><h3>Activity & Output</h3><div id="reviewActivity" class="xy-review-activity"></div></div>
+      <p class="xy-review-note"><strong>Methodology:</strong> Scores are heuristic indicators calculated from saved message text, structure, and wording—not human judgments or measured model emotions. Hidden chain-of-thought is not available; “Reasoning & Explanation” evaluates only reasoning that appears in the visible answer. Secret Chat sessions are not saved and are excluded.</p>
+    </div>
+    <div class="modal-buttons"><button class="modal-btn" id="reviewRefresh" type="button">Refresh report</button><button class="modal-btn" id="reviewCloseBottom" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="modal" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
     <div class="modal-content"><div class="modal-title" id="historyModalTitle">대화 기록</div><p style="color:var(--muted);text-align:center;font-size:.9em">로그인한 계정에 저장되어 다른 기기에서도 확인할 수 있어요.</p><div class="history-modal-list" id="historyList"><div class="empty-message">기록을 불러오는 중…</div></div><div class="modal-buttons"><button class="modal-btn" id="newChatBtn" type="button">새 대화</button><button class="modal-btn" id="historyCloseBtn" type="button">닫기</button></div></div>
   </div>
 
@@ -2642,9 +2679,66 @@ int main() {
    window.__xyockClearAttachments?.();
  }
  $("secretChatExit")?.addEventListener("click",exitSecretChat);
+ function reviewScore(messages){
+   const replies=messages.filter(m=>m.role==="assistant"&&typeof m.content==="string"&&m.content.trim());
+   const text=replies.map(m=>m.content),all=text.join("\n");
+   const words=s=>((s.match(/[\\p{L}\\p{N}]+/gu)||[]).length);
+   const avg=text.length?text.reduce((n,s)=>n+words(s),0)/text.length:0;
+   const count=(re,repl=all)=>((repl.match(re)||[]).length);
+   const pct=n=>Math.max(0,Math.min(100,Math.round(n)));
+   const structure=count(/(^|\\n)\\s*(?:#{1,3}\\s|[-*•]\\s|\\d+[.)]\\s)/gm);
+   const reasoning=count(/\\b(because|therefore|since|thus|step|first|second|finally|reason|explain|evidence|trade-?off|approach)\\b/gi)+count(/(이유|따라서|먼저|다음으로|단계|근거|설명|비교|결론)/g);
+   const warm=count(/\\b(please|thank you|thanks|happy to|glad to|you can|let me know|great question|appreciate)\\b/gi)+count(/(고마워|감사|도와|괜찮|좋은 질문|알려줘|함께)/g);
+   const initiative=count(/\\b(next step|you can also|if you want|I can help|try this|for example|would you like)\\b/gi)+count(/(다음 단계|원한다면|필요하면|예를 들어|추가로|해볼 수)/g);
+   const code=count(/\`\`\`/g)/2;
+   const depth=pct(avg/1.8);
+   const clarity=pct(35+Math.min(35,structure*4)+Math.min(30,(text.length?text.filter(s=>s.includes("\\n")).length/text.length:0)*30));
+   const reasoningScore=pct(25+Math.min(45,reasoning*3)+Math.min(30,avg/8));
+   const warmth=pct(25+Math.min(75,warm*9));
+   const initiativeScore=pct(20+Math.min(80,initiative*10));
+   const coding=pct(20+Math.min(55,code*9)+Math.min(25,count(/\\b(code|function|class|debug|error|compile|API|HTML|CSS|JavaScript|Python)\\b/gi)*1.2));
+   const engagement=pct(depth*.35+clarity*.2+initiativeScore*.2+reasoningScore*.25);
+   const details=[
+    ["Engagement & Effort",engagement,"Estimated from reply depth, structure, visible explanation, and useful next steps."],
+    ["Warmth & Kindness",warmth,"Looks for considerate language, thanks, reassurance, and supportive phrasing."],
+    ["Reasoning & Explanation",reasoningScore,"Measures visible explanations, step-by-step language, and stated reasons—not hidden reasoning."],
+    ["Clarity & Structure",clarity,"Measures headings, lists, paragraph structure, and readable organization."],
+    ["Depth & Detail",depth,"Uses average visible answer length as a rough detail indicator; longer is not always better."],
+    ["Initiative & Follow-through",initiativeScore,"Looks for examples, practical next steps, and relevant offers to continue the task."],
+    ["Technical & Coding Support",coding,"Looks for code blocks and technical vocabulary in saved assistant replies."]
+   ];
+   return {replies,words:text.reduce((n,s)=>n+words(s),0),details,codeBlocks:Math.round(code),userMessages:messages.filter(m=>m.role==="user").length};
+ }
+ async function openReview(){
+   closeScreens();showModal("reviewModal");await loadReview();
+ }
+ async function loadReview(){
+   const status=$("reviewStatus"),dash=$("reviewDashboard");
+   if(!status||!dash)return;
+   status.hidden=false;status.textContent="Loading saved conversations…";dash.hidden=true;
+   if(!session?.user_id||!await ensureSession()){status.textContent="Please sign in to review saved conversations. Secret Chat sessions are intentionally excluded.";return}
+   try{
+     const res=await fetch(CONVERSATIONS_URL+"?select=id,title,updated_at,messages&order=updated_at.desc&limit=1000",{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+session.access_token}});
+     if(!res.ok)throw new Error("History request failed (HTTP "+res.status+")");
+     const rows=await res.json(),messages=rows.flatMap(row=>Array.isArray(row.messages)?row.messages:[]);
+     const report=reviewScore(messages),replies=report.replies;
+     if(!replies.length){status.textContent="No saved assistant replies were found yet. Start a regular chat and save a conversation first.";return}
+     $("reviewTotal").textContent=replies.length.toLocaleString("en-US");$("reviewChats").textContent=rows.length.toLocaleString("en-US");$("reviewWords").textContent=report.words.toLocaleString("en-US");
+     $("reviewBars").replaceChildren();
+     report.details.forEach(([label,score,desc])=>{const wrap=document.createElement("div"),head=document.createElement("div"),name=document.createElement("span"),val=document.createElement("b"),track=document.createElement("div"),fill=document.createElement("div");head.className="xy-review-bar-head";name.textContent=label;val.textContent=score+"/100";track.className="xy-review-track";fill.className="xy-review-fill";fill.style.width=score+"%";track.append(fill);head.append(name,val);wrap.append(head,track);$("reviewBars").append(wrap)});
+     $("reviewDetails").replaceChildren();report.details.forEach(([label,score,desc])=>{const card=document.createElement("div"),b=document.createElement("b"),p=document.createElement("p");card.className="xy-review-detail";b.textContent=label+" · "+score+"/100";p.textContent=desc;card.append(b,p);$("reviewDetails").append(card)});
+     $("reviewActivity").replaceChildren();
+     [["User messages",report.userMessages],["Visible code blocks",report.codeBlocks],["Average reply length",Math.round(report.words/replies.length)+" words"],["Saved conversations",rows.length]].forEach(([label,value])=>{const card=document.createElement("div"),strong=document.createElement("strong"),span=document.createElement("span");card.className="xy-review-stat";strong.textContent=typeof value==="number"?value.toLocaleString("en-US"):value;span.textContent=label;card.append(strong,span);$("reviewActivity").append(card)});
+     status.textContent="Analysis complete · Based on "+rows.length+" saved conversations. Scores are heuristic, not objective quality ratings.";dash.hidden=false;
+   }catch(err){status.textContent="Could not load the review: "+err.message}
+ }
+ $("reviewClose")?.addEventListener("click",()=>$("reviewModal")?.classList.remove("show"));
+ $("reviewCloseBottom")?.addEventListener("click",()=>$("reviewModal")?.classList.remove("show"));
+ $("reviewRefresh")?.addEventListener("click",loadReview);
+ $("reviewModal")?.addEventListener("click",e=>{if(e.target.id==="reviewModal")$("reviewModal").classList.remove("show")});
  function applyLanguage(){const d=words[lang()];document.querySelectorAll("[data-i18n]").forEach(el=>{if(d[el.dataset.i18n])el.textContent=d[el.dataset.i18n]});const w=$("welcome"),name=get(K.nick).trim();if(w){const h=w.querySelector("h1"),p=w.querySelector("p");if(h)h.textContent=name?(lang()==="ko"?"환영합니다, "+name+"!":"Welcome, "+name+"!"):d.welcome;if(p)p.textContent=d.sub}if($("searchInput"))$("searchInput").placeholder=lang()==="ko"?"질문하거나 코드를 요청하세요...":"Ask a question or request code...";document.querySelectorAll("[data-xy-lang]").forEach(b=>b.classList.toggle("active",b.dataset.xyLang===lang()))}
  function setTheme(v){set(K.theme,v);document.body.classList.toggle("xy-light",v==="light");document.querySelectorAll("[data-xy-theme]").forEach(b=>b.classList.toggle("active",b.dataset.xyTheme===v))}
- document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"secret":enterSecretChat();break;case"plugins":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"project":openScreen("xyAccount");break;case"review":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
+ document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"secret":enterSecretChat();break;case"plugins":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"project":openScreen("xyAccount");break;case"review":openReview();break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
  $("xyMenuOpen")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openScreen("xyMenu")});$("xyOpenPlugins")?.addEventListener("click",()=>{$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"})});
  document.querySelectorAll("[data-xy-theme]").forEach(b=>b.addEventListener("click",()=>setTheme(b.dataset.xyTheme)));document.querySelectorAll("[data-xy-lang]").forEach(b=>b.addEventListener("click",()=>{set(K.lang,b.dataset.xyLang);applyLanguage()}));
  $("xySaveNickname")?.addEventListener("click",()=>{set(K.nick,($("xyNickname")?.value||"").trim());applyLanguage();alert(lang()==="ko"?"닉네임을 저장했습니다.":"Nickname saved.")});
