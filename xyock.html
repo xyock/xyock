@@ -1224,6 +1224,7 @@ body{padding-left:var(--xy-rail)!important}header{padding-left:20px!important}he
       toast.classList.add("show");
       setTimeout(() => toast.classList.remove("show"), 3500);
     }
+    window.xyockToast = showToast;
 
     function scrollToBottom() {
       const chat = document.getElementById("chat");
@@ -3059,7 +3060,7 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
 (()=>{
  const pins=()=>window.xyockReadPinnedConversations?.()||[],id=()=>window.xyockGetCurrentConversationId?.()||null,pin=document.getElementById("xyPinCurrent");
  const paint=()=>{const on=!!id()&&pins().includes(id());pin?.classList.toggle("active",on);pin?.setAttribute("aria-pressed",String(on));pin?.setAttribute("title",on?"대화 고정 해제":"현재 대화 고정")};
- pin?.addEventListener("click",async()=>{const current=id();if(!window.__xyockSessionProfile?.user_id){showToast("고정 기능은 로그인 후 사용할 수 있습니다.");return}if(!current){showToast("먼저 대화를 시작해 주세요.");return}const next=pins(),at=next.indexOf(current);if(at>=0)next.splice(at,1);else next.push(current);pin.disabled=true;try{await window.xyockSavePinnedConversations(next);paint();showToast(at>=0?"모든 기기에서 고정이 해제되었습니다.":"모든 기기에 대화가 고정되었습니다.")}catch(e){showToast("고정 동기화 실패: "+e.message)}finally{pin.disabled=false}});
+ pin?.addEventListener("click",async()=>{const current=id();if(!window.__xyockSessionProfile?.user_id){window.xyockToast?.("고정 기능은 로그인 후 사용할 수 있습니다.");return}if(!current){window.xyockToast?.("먼저 대화를 시작해 주세요.");return}const next=pins(),at=next.indexOf(current);if(at>=0)next.splice(at,1);else next.push(current);pin.disabled=true;try{await window.xyockSavePinnedConversations(next);paint();window.xyockToast?.(at>=0?"모든 기기에서 고정이 해제되었습니다.":"모든 기기에 대화가 고정되었습니다.")}catch(e){window.xyockToast?.("고정 동기화 실패: "+e.message)}finally{pin.disabled=false}});
  document.getElementById("xySidebarPlugins")?.addEventListener("click",()=>document.getElementById("pluginModal")?.classList.add("show"));
  const pop=document.getElementById("xyConversationSearch"),input=document.getElementById("xyConversationSearchInput"),out=document.getElementById("xyConversationSearchResults");
  document.getElementById("xySidebarSearch")?.addEventListener("click",()=>{pop.hidden=false;input.focus()});
