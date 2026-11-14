@@ -860,7 +860,7 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
 <div class="xy-gate" id="xyGate"><div class="xy-gate-card"><h1>xyock</h1><p>계속하려면 암호를 입력하세요.</p><input id="xyGateInput" type="password" placeholder="암호"><button id="xyGateSubmit" class="xy-primary">입장</button><p id="xyGateError" role="alert"></p></div></div>
 
   <div class="chat-container" id="chat">
-    <div class="xy-secret-banner" id="secretChatNotice" role="status"><strong>Secret Chat · 임시 세션</strong>이 대화는 이 브라우저의 대화 기록·기억·코드 기록에 저장하지 않습니다. 단, 메시지는 답변 생성을 위해 Supabase 및 설정된 AI 제공자에 전송됩니다. 종단간 암호화나 익명성을 의미하지 않습니다.</div>
+    <div class="xy-secret-banner" id="secretChatNotice" role="status"><strong>Secret Chat · 임시 세션</strong><span>이 대화는 이 브라우저의 대화 기록·기억·코드 기록에 저장하지 않습니다. 단, 메시지는 답변 생성을 위해 Supabase 및 설정된 AI 제공자에 전송됩니다. 종단간 암호화나 익명성을 의미하지 않습니다.</span><button id="secretChatExit" type="button" class="xy-primary" style="margin-top:10px">Secret Chat 종료</button></div>
     <div class="welcome" id="welcome">
       <h1>How can I help?</h1>
       <p>Ask xyock about anything, explain code, or get help writing code</p>
@@ -2007,7 +2007,7 @@ int main() {
     }
 
     function queueSaveConversation() {
-      if (restoringConversation || !session?.user_id) return;
+      if (window.__xyockSecretMode || restoringConversation || !session?.user_id) return;
       const messages = currentMessages();
       if (!messages.length) return;
       saveQueue = saveQueue.then(() => persistConversation(messages)).catch(err => {
@@ -2619,9 +2619,33 @@ int main() {
  const get=(k,d="")=>{try{return localStorage.getItem(k)||d}catch{return d}},set=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
  const words={ko:{menu:"메뉴",plugins:"플러그인",sessions:"세션",account:"계정 설정",newchat:"새 대화",welcome:"무엇을 도와드릴까요?",sub:"무엇이든 질문하거나 코드를 작성해 보세요."},en:{menu:"Menu",plugins:"Plugins",sessions:"Sessions",account:"Account settings",newchat:"New chat",welcome:"How can I help?",sub:"Ask anything or get help writing code."}};
  const lang=()=>get(K.lang,"ko")==="en"?"en":"ko",closeScreens=()=>["xyMenu","xyAccount","xyCodes"].forEach(id=>$(id)?.classList.remove("open")),openScreen=id=>{closeScreens();const panel=$(id);if(panel){panel.scrollTop=0;panel.classList.add("open")}};
+ function enterSecretChat(){
+   window.__xyockSecretMode=true;
+   document.body.classList.add("xy-secret-active");
+   closeScreens();
+   $("xyockClearAttachments")?.click();
+   window.__xyockClearAttachments?.();
+   const chat=$("chat"),notice=$("secretChatNotice");
+   if(chat&&notice){chat.replaceChildren(notice);notice.hidden=false}
+   if($("searchInput"))$("searchInput").value="";
+   if($("sendBtn"))$("sendBtn").disabled=true;
+   $("modeIndicator")?.replaceChildren(document.createTextNode("Secret Chat"));
+   $("searchInput")?.focus();
+ }
+ function exitSecretChat(){
+   window.__xyockSecretMode=false;
+   document.body.classList.remove("xy-secret-active");
+   if($("secretChatNotice"))$("secretChatNotice").hidden=true;
+   if(typeof startNewConversation==="function")startNewConversation();
+   $("modeIndicator")?.replaceChildren(document.createTextNode("xyock"));
+   if($("searchInput"))$("searchInput").value="";
+   if($("sendBtn"))$("sendBtn").disabled=true;
+   window.__xyockClearAttachments?.();
+ }
+ $("secretChatExit")?.addEventListener("click",exitSecretChat);
  function applyLanguage(){const d=words[lang()];document.querySelectorAll("[data-i18n]").forEach(el=>{if(d[el.dataset.i18n])el.textContent=d[el.dataset.i18n]});const w=$("welcome"),name=get(K.nick).trim();if(w){const h=w.querySelector("h1"),p=w.querySelector("p");if(h)h.textContent=name?(lang()==="ko"?"환영합니다, "+name+"!":"Welcome, "+name+"!"):d.welcome;if(p)p.textContent=d.sub}if($("searchInput"))$("searchInput").placeholder=lang()==="ko"?"질문하거나 코드를 요청하세요...":"Ask a question or request code...";document.querySelectorAll("[data-xy-lang]").forEach(b=>b.classList.toggle("active",b.dataset.xyLang===lang()))}
  function setTheme(v){set(K.theme,v);document.body.classList.toggle("xy-light",v==="light");document.querySelectorAll("[data-xy-theme]").forEach(b=>b.classList.toggle("active",b.dataset.xyTheme===v))}
- document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"plugins":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"project":openScreen("xyAccount");break;case"review":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
+ document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"secret":enterSecretChat();break;case"plugins":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"project":openScreen("xyAccount");break;case"review":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
  $("xyMenuOpen")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openScreen("xyMenu")});$("xyOpenPlugins")?.addEventListener("click",()=>{$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"})});
  document.querySelectorAll("[data-xy-theme]").forEach(b=>b.addEventListener("click",()=>setTheme(b.dataset.xyTheme)));document.querySelectorAll("[data-xy-lang]").forEach(b=>b.addEventListener("click",()=>{set(K.lang,b.dataset.xyLang);applyLanguage()}));
  $("xySaveNickname")?.addEventListener("click",()=>{set(K.nick,($("xyNickname")?.value||"").trim());applyLanguage();alert(lang()==="ko"?"닉네임을 저장했습니다.":"Nickname saved.")});
