@@ -1917,7 +1917,7 @@ int main() {
           }
         }
 
-        const toneKey = (() => { try { return localStorage.getItem("xyock_account_tone_v1") || "balanced"; } catch { return "balanced"; } })();
+        const toneKey = (() => { try { return localStorage.getItem("xyock_account_tone_v1:" + (session?.user_id || "guest")) || "balanced"; } catch { return "balanced"; } })();
         const accountName = (() => { try { return localStorage.getItem("xyock_account_name_v1:" + (session?.user_id || "guest")) || ""; } catch { return ""; } })();
         const toneInstructions = {
           balanced: "Use a natural, balanced tone: clear, helpful, and appropriately detailed.",
