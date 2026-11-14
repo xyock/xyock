@@ -1506,6 +1506,7 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
       loginBtn.classList.toggle("logged-in", loggedIn);
       const u = session?.user_metadata || {};
       window.__xyockSessionProfile = loggedIn ? {
+        user_id: session.user_id || "",
         email: session.email || "",
         provider: session.provider || session.app_metadata?.provider || "email",
         user_metadata: u,
@@ -1915,6 +1916,19 @@ int main() {
             aiQuestion += "\n\n[GitHub 저장소 읽기 실패: " + githubError.message + "]. 저장소를 읽었다고 주장하지 말고 연결 상태 문제를 설명해.";
           }
         }
+
+        const toneKey = (() => { try { return localStorage.getItem("xyock_account_tone_v1") || "balanced"; } catch { return "balanced"; } })();
+        const accountName = (() => { try { return localStorage.getItem("xyock_account_name_v1:" + (session?.user_id || "guest")) || ""; } catch { return ""; } })();
+        const toneInstructions = {
+          balanced: "Use a natural, balanced tone: clear, helpful, and appropriately detailed.",
+          friendly: "Use a friendly, warm, encouraging tone without being overly familiar.",
+          professional: "Use a professional, respectful, precise tone.",
+          concise: "Be concise and prioritize the key answer; avoid unnecessary elaboration.",
+          detailed: "Explain carefully with useful context and clear step-by-step structure."
+        };
+        aiQuestion = "[XYOCK STYLE SETTINGS]\n" + (toneInstructions[toneKey] || toneInstructions.balanced) +
+          (accountName ? "\nAddress the user as " + accountName + " when natural; do not overuse the name." : "") +
+          "\nApply this style while following the current request.\n\n" + aiQuestion;
 
         const serializedAttachments = await Promise.all(attachments.map(serializeAttachment));
         const response = await fetch(`${FN_URL}/xyock-ai`, {
@@ -2855,10 +2869,12 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  $("xySaveNickname")?.addEventListener("click",()=>{set(K.nick,($("xyNickname")?.value||"").trim());applyLanguage();alert(lang()==="ko"?"닉네임을 저장했습니다.":"Nickname saved.")});
  const profileKeys={tone:"xyock_account_tone_v1",name:"xyock_account_name_v1",nickname:"xyock_profile_nickname_v1",avatar:"xyock_profile_avatar_v1"};
  let chosenAvatar=get(profileKeys.avatar,"◉"),avatarData="";
- const profileValue=k=>get(profileKeys[k],"");
+ const profileKey=k=>profileKeys[k]+":"+(window.__xyockSessionProfile?.user_id||"guest");
+ const profileValue=k=>get(profileKey(k),"");
+ const profileSet=(k,v)=>set(profileKey(k),v);
  function providerLabel(p){return ({github:"GitHub",google:"Google",naver:"Naver",email:"Email"})[String(p||"email").toLowerCase()]||String(p||"Account")}
  function providerNickname(profile){const u=profile?.user_metadata||{},ids=profile?.identities||[];const id=ids.find(x=>x.provider===profile?.provider)||ids[0]||{};const d=id.identity_data||{};return u.user_name||u.preferred_username||u.full_name||u.name||d.user_name||d.preferred_username||d.full_name||d.name||(profile?.email||"").split("@")[0]||"Account"}
- function renderProfile(){const p=window.__xyockSessionProfile||null,base=providerNickname(p),custom=profileValue("nickname"),label=custom||base;const name=$("xyProfileName"),provider=$("xyProfileProvider"),avatar=$("xyProfileAvatar"),login=$("xyProfileLoginAction");if(name)name.textContent=p?label:"로그인";if(provider)provider.textContent=p?providerLabel(p.provider):"xyock 계정";if(avatar){const saved=profileValue("avatar")||"◉";avatar.replaceChildren();if(saved.startsWith("data:image/")){const img=document.createElement("img");img.src=saved;img.alt="Profile";avatar.append(img)}else avatar.textContent=saved}if(login)login.textContent=p?"Log out":"Log in"}
+ function renderProfile(){const p=window.__xyockSessionProfile||null,base=providerNickname(p),custom=profileValue("nickname"),label=custom||base;const savedName=profileValue("name");set(K.nick,savedName);applyLanguage();const name=$("xyProfileName"),provider=$("xyProfileProvider"),avatar=$("xyProfileAvatar"),login=$("xyProfileLoginAction");if(name)name.textContent=p?label:"로그인";if(provider)provider.textContent=p?providerLabel(p.provider):"xyock 계정";if(avatar){const saved=profileValue("avatar")||"◉";avatar.replaceChildren();if(saved.startsWith("data:image/")){const img=document.createElement("img");img.src=saved;img.alt="Profile";avatar.append(img)}else avatar.textContent=saved}if(login)login.textContent=p?"Log out":"Log in"}
  function closeProfilePopover(){const pop=$("xyProfilePopover"),trigger=$("xyProfileTrigger");if(pop)pop.hidden=true;if(trigger)trigger.setAttribute("aria-expanded","false")}
  function openProfileEditor(which){closeProfilePopover();const back=$("xyProfileBackdrop"),account=which==="account";$("xyProfileDialogTitle").textContent=account?"Account settings":"Personalize";$("xyAccountEditor").hidden=!account;$("xyPersonalizeEditor").hidden=account;if(account){$("xyToneSelect").value=profileValue("tone")||"balanced";$("xyAccountName").value=profileValue("name")||get(K.nick,"")}else{$("xyPersonalNick").value=profileValue("nickname");chosenAvatar=profileValue("avatar")||"◉";avatarData=chosenAvatar.startsWith("data:image/")?chosenAvatar:"";document.querySelectorAll("[data-avatar]").forEach(b=>b.classList.toggle("selected",b.dataset.avatar===chosenAvatar))}back.hidden=false}
  $("xyProfileTrigger")?.addEventListener("click",async e=>{e.stopPropagation();const pop=$("xyProfilePopover");const open=pop.hidden;closeProfilePopover();if(open){pop.hidden=false;$("xyProfileTrigger").setAttribute("aria-expanded","true");if(window.xyockRefreshProfile)await window.xyockRefreshProfile();renderProfile()}});
@@ -2870,7 +2886,7 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("xyProfileBackdrop").hidden=true;closeProfilePopover()}});
  $("xyAvatarChoices")?.addEventListener("click",e=>{const b=e.target.closest("[data-avatar]");if(!b)return;chosenAvatar=b.dataset.avatar;avatarData="";document.querySelectorAll("[data-avatar]").forEach(x=>x.classList.toggle("selected",x===b))});
  $("xyAvatarUpload")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")){alert("이미지 파일을 선택해 주세요.");return}if(f.size>1024*1024){alert("이미지는 1 MB 이하로 선택해 주세요.");e.target.value="";return}const reader=new FileReader();reader.onload=()=>{avatarData=String(reader.result||"");chosenAvatar=avatarData;document.querySelectorAll("[data-avatar]").forEach(x=>x.classList.remove("selected"))};reader.readAsDataURL(f)});
- $("xyProfileSave")?.addEventListener("click",()=>{if(!$("xyAccountEditor").hidden){set(profileKeys.tone,$("xyToneSelect").value);const name=$("xyAccountName").value.trim();set(profileKeys.name,name);set(K.nick,name);applyLanguage()}else{set(profileKeys.nickname,$("xyPersonalNick").value.trim());set(profileKeys.avatar,avatarData||chosenAvatar)}$("xyProfileBackdrop").hidden=true;renderProfile()});
+ $("xyProfileSave")?.addEventListener("click",()=>{if(!$("xyAccountEditor").hidden){profileSet("tone",$("xyToneSelect").value);const name=$("xyAccountName").value.trim();profileSet("name",name);set(K.nick,name);applyLanguage()}else{profileSet("nickname",$("xyPersonalNick").value.trim());profileSet("avatar",avatarData||chosenAvatar)}$("xyProfileBackdrop").hidden=true;renderProfile()});
  window.addEventListener("xyock-profile-updated",renderProfile);
  renderProfile();
  async function hash(p,s){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveBits"]),b=await crypto.subtle.deriveBits({name:"PBKDF2",salt:new TextEncoder().encode(s),iterations:120000,hash:"SHA-256"},k,256);return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,"0")).join("")}
