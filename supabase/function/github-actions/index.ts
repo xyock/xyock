@@ -133,6 +133,13 @@ Deno.serve(async (req: Request) => {
     const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
     const body = await req.json();
     const op = body?.op;
+    const identityProviders = [
+      ud.user.app_metadata?.provider,
+      ...(Array.isArray(ud.user.identities) ? ud.user.identities.map((identity: any) => identity?.provider) : []),
+    ].filter(Boolean).map((value: unknown) => String(value).toLowerCase());
+    if (!identityProviders.includes("github")) {
+      return json({ error: "GitHub 계정 연결 후 저장소를 사용할 수 있습니다." }, 403);
+    }
 
     async function audit(requestId: string | null, event: string, details: unknown = {}) {
       const { error } = await admin.from("github_action_audit").insert({
