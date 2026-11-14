@@ -770,6 +770,31 @@ body.xy-light{color-scheme:light;background:#f4f7f6!important;color:#15201c!impo
 body.xy-entry-open{overflow:hidden!important}
 @media(max-width:480px){#xyEntryScreen{padding:22px 18px 14px}.xy-entry-brand img{width:38px;height:38px}}
 </style>
+<style id="xy-account-settings-header-fix">
+/* Keep Settings title and close control visible while the settings panel scrolls. */
+#xyAccount{scroll-padding-top:84px}
+#xyAccount .xy-screen-head{
+ position:sticky!important;top:calc(-1 * clamp(20px,5vw,52px))!important;
+ z-index:20!important;max-width:none!important;
+ margin:calc(-1 * clamp(20px,5vw,52px)) calc(-1 * clamp(20px,5vw,52px)) 0!important;
+ padding:clamp(16px,3vw,26px) clamp(20px,5vw,52px)!important;
+ min-height:76px;box-sizing:border-box;
+ background:rgba(8,13,11,.97)!important;
+ border-bottom:1px solid #26362e;
+ backdrop-filter:blur(16px);
+}
+#xyAccount .xy-screen-title{display:block!important;visibility:visible!important;opacity:1!important;color:#e8efeb!important;font-size:clamp(25px,4vw,36px)!important;line-height:1.2!important}
+#xyAccount .xy-close{display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center;justify-content:center;flex:0 0 auto;min-width:82px;min-height:42px;color:#f4faf6!important;background:#142019!important;border:1px solid #456353!important;border-radius:12px!important;font-size:14px!important;position:relative!important;z-index:21!important}
+#xyAccount .xy-settings{margin-top:28px!important}
+body.xy-light #xyAccount .xy-screen-head{background:rgba(244,247,246,.97)!important;border-color:#d6dfdc}
+body.xy-light #xyAccount .xy-screen-title{color:#15201c!important}
+body.xy-light #xyAccount .xy-close{color:#26332e!important;background:#fff!important;border-color:#c5d4cc!important}
+@media(max-width:620px){
+ #xyAccount .xy-screen-head{min-height:68px;padding:14px 18px!important;margin:-22px -18px 0!important;top:-22px!important}
+ #xyAccount .xy-screen-title{font-size:27px!important}
+ #xyAccount .xy-settings{margin-top:20px!important}
+}
+</style>
 <style id="xy-modern-typography">
 :root,html,body,button,input,textarea,select{font-family:Inter,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;letter-spacing:-.018em}
 body{font-feature-settings:"ss01" on,"cv11" on}
@@ -2679,7 +2704,7 @@ int main() {
  const $=id=>document.getElementById(id),K={nick:"xyock_beta_nickname_v2",theme:"xyock_beta_theme_v2",lang:"xyock_beta_language_v2",pass:"xyock_beta_password_v2",codes:"xyock_beta_code_history_v2"};
  const get=(k,d="")=>{try{return localStorage.getItem(k)||d}catch{return d}},set=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
  const words={ko:{menu:"메뉴",plugins:"플러그인",sessions:"세션",account:"계정 설정",newchat:"새 대화",welcome:"무엇을 도와드릴까요?",sub:"무엇이든 질문하거나 코드를 작성해 보세요."},en:{menu:"Menu",plugins:"Plugins",sessions:"Sessions",account:"Account settings",newchat:"New chat",welcome:"How can I help?",sub:"Ask anything or get help writing code."}};
- const lang=()=>get(K.lang,"ko")==="en"?"en":"ko",closeScreens=()=>["xyMenu","xyAccount","xyCodes"].forEach(id=>$(id)?.classList.remove("open")),openScreen=id=>{closeScreens();$(id)?.classList.add("open")};
+ const lang=()=>get(K.lang,"ko")==="en"?"en":"ko",closeScreens=()=>["xyMenu","xyAccount","xyCodes"].forEach(id=>$(id)?.classList.remove("open")),openScreen=id=>{closeScreens();const panel=$(id);if(panel){panel.scrollTop=0;panel.classList.add("open")}};
  function applyLanguage(){const d=words[lang()];document.querySelectorAll("[data-i18n]").forEach(el=>{if(d[el.dataset.i18n])el.textContent=d[el.dataset.i18n]});const w=$("welcome"),name=get(K.nick).trim();if(w){const h=w.querySelector("h1"),p=w.querySelector("p");if(h)h.textContent=name?(lang()==="ko"?"환영합니다, "+name+"!":"Welcome, "+name+"!"):d.welcome;if(p)p.textContent=d.sub}if($("searchInput"))$("searchInput").placeholder=lang()==="ko"?"질문하거나 코드를 요청하세요...":"Ask a question or request code...";document.querySelectorAll("[data-xy-lang]").forEach(b=>b.classList.toggle("active",b.dataset.xyLang===lang()))}
  function setTheme(v){set(K.theme,v);document.body.classList.toggle("xy-light",v==="light");document.querySelectorAll("[data-xy-theme]").forEach(b=>b.classList.toggle("active",b.dataset.xyTheme===v))}
  document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"plugins":openScreen("xyAccount");$("xyOpenPlugins")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"review":closeScreens();$("pluginBtn")?.click();$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
