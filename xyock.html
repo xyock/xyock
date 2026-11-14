@@ -3132,12 +3132,12 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
    if(panel){
      const opened=panel.classList.toggle("open");
      menuToggle.setAttribute("aria-expanded",String(opened));
-     menuToggle.setAttribute("aria-label",opened?"AI 메뉴 닫기":"AI 메뉴 열기");
-     menuToggle.title=opened?"AI 메뉴 닫기":"AI 메뉴 열기";
+     menuToggle.setAttribute("aria-label",opened?"메뉴 닫기":"메뉴 열기");
+     menuToggle.title=opened?"메뉴 닫기":"메뉴 열기";
    }
  },true);
  const menuPanel=document.getElementById("xyMenu");
- const syncMenuState=()=>{const opened=!!menuPanel?.classList.contains("open");menuToggle?.setAttribute("aria-expanded",String(opened));menuToggle?.setAttribute("aria-label",opened?"AI 메뉴 닫기":"AI 메뉴 열기");if(menuToggle)menuToggle.title=opened?"AI 메뉴 닫기":"AI 메뉴 열기"};
+ const syncMenuState=()=>{const opened=!!menuPanel?.classList.contains("open");menuToggle?.setAttribute("aria-expanded",String(opened));menuToggle?.setAttribute("aria-label",opened?"메뉴 닫기":"메뉴 열기");if(menuToggle)menuToggle.title=opened?"메뉴 닫기":"메뉴 열기"};
  if(menuPanel&&menuToggle){new MutationObserver(syncMenuState).observe(menuPanel,{attributes:true,attributeFilter:["class"]});syncMenuState()}
  const aiButton=document.getElementById("xySidebarAI"),aiPopover=document.getElementById("xyAiModelPopover"),aiClose=document.getElementById("xyAiModelClose"),aiList=document.getElementById("xyAiModelList");
  const placeAiPopover=()=>{if(!aiButton||!aiPopover)return;const r=aiButton.getBoundingClientRect();const width=Math.min(292,window.innerWidth-96);aiPopover.style.width=width+"px";aiPopover.style.left=Math.max(76,Math.min(r.left+r.width+12,window.innerWidth-width-10))+"px";aiPopover.style.top=Math.max(8,Math.min(r.top,window.innerHeight-aiPopover.offsetHeight-10))+"px"};
