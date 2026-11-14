@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>xyock</title>
 
-  <link rel="icon" href="/lock/favicon-3/favicon.ico?v=1" sizes="any" />
-  <link rel="icon" type="image/png" sizes="96x96" href="/lock/favicon-3/favicon-96x96.png?v=1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/lock/favicon-3/apple-touch-icon.png?v=1" />
+  <link rel="icon" href="/xyock/favicon-3/favicon.ico?v=1" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="/xyock/favicon-3/favicon-96x96.png?v=1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/xyock/favicon-3/apple-touch-icon.png?v=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="xyock" />
-  <link rel="manifest" href="/lock/favicon-3/site.webmanifest?v=1" />
+  <link rel="manifest" href="/xyock/favicon-3/site.webmanifest?v=1" />
   <meta name="theme-color" content="#0a0a0a" />
 
   <style>
@@ -796,7 +796,7 @@ h1,h2,h3,.logo,.xy-screen-title,.xy-menu-link{letter-spacing:-.035em}
 <section class="xy-screen" id="xyMenu"><div class="xy-screen-head"><div class="xy-screen-title" data-i18n="menu">메뉴</div><button class="xy-close" data-xy-close="xyMenu">닫기 ✕</button></div><nav class="xy-menu-list"><button class="xy-menu-link" data-xy-go="plugins">플러그인 <span>›</span></button><button class="xy-menu-link" data-xy-go="readme">README <span>↗</span></button><button class="xy-menu-link" data-xy-go="codes">코드 기록 <span>›</span></button><button class="xy-menu-link" data-xy-go="sessions">세션 <span>›</span></button></nav><div class="xy-menu-footer"><button data-xy-go="account">계정 설정</button><button data-xy-go="newchat">＋ 새 대화</button></div></section>
 <section class="xy-screen" id="xyAccount"><div class="xy-screen-head"><div class="xy-screen-title">Settings</div><button class="xy-close" data-xy-close="xyAccount">닫기 ✕</button></div><div class="xy-settings">
 <div class="xy-setting-row"><span>Language</span><span><button data-xy-lang="ko">한국어</button> <button data-xy-lang="en">English</button></span></div>
-<div class="xy-setting-row"><span>Plugins</span><span>›</span></div><div class="xy-setting-panel"><p>GitHub 및 Supabase 연결과 플러그인 관리</p><button id="xyOpenPlugins" class="xy-primary">플러그인 관리 열기</button><p style="margin-top:14px"><a href="https://github.com/xyock/lock" target="_blank" rel="noopener">xyock/lock GitHub 저장소</a></p></div>
+<div class="xy-setting-row"><span>Plugins</span><span>›</span></div><div class="xy-setting-panel"><p>GitHub 및 Supabase 연결과 플러그인 관리</p><button id="xyOpenPlugins" class="xy-primary">플러그인 관리 열기</button><p style="margin-top:14px"><a href="https://github.com/xyock/xyock" target="_blank" rel="noopener">xyock/xyock GitHub 저장소</a></p></div>
 <div class="xy-setting-row"><span>Passwords</span><span>›</span></div><div class="xy-setting-panel"><p>사이트 방문 시 입력할 화면 잠금 암호입니다. 서버 계정 인증을 대체하지 않습니다.</p><input id="xyPassword" type="password" autocomplete="new-password" placeholder="새 암호 (4자 이상)"><button id="xyApplyPassword" class="xy-primary">Apply</button> <button id="xyRemovePassword">암호 해제</button></div>
 <div class="xy-setting-row"><span>Theme</span><span><button data-xy-theme="light">Light</button> <button data-xy-theme="dark">Dark</button></span></div>
 <div class="xy-setting-row"><span>Account</span><span>›</span></div><div class="xy-setting-panel"><p>닉네임은 환영 문구에 표시됩니다.</p><input id="xyNickname" maxlength="28" placeholder="닉네임"><button id="xySaveNickname" class="xy-primary">저장</button></div>
@@ -836,7 +836,7 @@ h1,h2,h3,.logo,.xy-screen-title,.xy-menu-link{letter-spacing:-.035em}
           <div class="plugin-symbol" aria-label="GitHub"><svg viewBox="0 0 24 24" role="img"><path fill="#f4f4f4" d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.08c-3.1.67-3.76-1.32-3.76-1.32-.5-1.29-1.24-1.63-1.24-1.63-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 .1.77 2.2 3.32 1.57.1-.73.4-1.23.72-1.51-2.48-.28-5.09-1.24-5.09-5.53 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.44 3.05-1.14 3.05-1.14.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.3-2.61 5.25-5.1 5.52.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/></svg></div>
           <div class="plugin-info">
             <div class="plugin-name">GitHub</div>
-            <div class="plugin-desc">GitHub App이 연결된 xyock/lock 저장소의 작업을 요청하고, 직접 승인한 작업만 실행합니다.</div>
+            <div class="plugin-desc">GitHub App이 연결된 xyock/xyock 저장소의 작업을 요청하고, 직접 승인한 작업만 실행합니다.</div>
             <span class="plugin-status" id="githubPluginStatus">GitHub App 서버 연결 설정됨</span>
           </div>
           <button class="plugin-action" id="githubPluginConnect" type="button">계정 연결</button>
@@ -1712,7 +1712,7 @@ int main() {
         // 질문 본문(4,000자 제한)과 분리해 실제 저장소 파일을 텍스트 첨부로 전달합니다.
         if (wantsRepoContext && session && await ensureSession()) {
           try {
-            const inspected = await githubActionApi("inspect", { repo: "xyock/lock" });
+            const inspected = await githubActionApi("inspect", { repo: "xyock/xyock" });
             const selectedFiles = (inspected.selected || []).slice(0, 6);
             repoAttachments = selectedFiles.map(file => ({
               name: "GitHub/" + file.path,
@@ -2566,7 +2566,7 @@ int main() {
  const lang=()=>get(K.lang,"ko")==="en"?"en":"ko",closeScreens=()=>["xyMenu","xyAccount","xyCodes"].forEach(id=>$(id)?.classList.remove("open")),openScreen=id=>{closeScreens();$(id)?.classList.add("open")};
  function applyLanguage(){const d=words[lang()];document.querySelectorAll("[data-i18n]").forEach(el=>{if(d[el.dataset.i18n])el.textContent=d[el.dataset.i18n]});const w=$("welcome"),name=get(K.nick).trim();if(w){const h=w.querySelector("h1"),p=w.querySelector("p");if(h)h.textContent=name?(lang()==="ko"?"환영합니다, "+name+"!":"Welcome, "+name+"!"):d.welcome;if(p)p.textContent=d.sub}if($("searchInput"))$("searchInput").placeholder=lang()==="ko"?"질문하거나 코드를 요청하세요...":"Ask a question or request code...";document.querySelectorAll("[data-xy-lang]").forEach(b=>b.classList.toggle("active",b.dataset.xyLang===lang()))}
  function setTheme(v){set(K.theme,v);document.body.classList.toggle("xy-light",v==="light");document.querySelectorAll("[data-xy-theme]").forEach(b=>b.classList.toggle("active",b.dataset.xyTheme===v))}
- document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/lock#readme","_blank","noopener");break;case"plugins":openScreen("xyAccount");$("xyOpenPlugins")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
+ document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"plugins":openScreen("xyAccount");$("xyOpenPlugins")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
  $("xyMenuOpen")?.addEventListener("click",()=>openScreen("xyMenu"));$("xyOpenPlugins")?.addEventListener("click",()=>$("pluginBtn")?.click());
  document.querySelectorAll("[data-xy-theme]").forEach(b=>b.addEventListener("click",()=>setTheme(b.dataset.xyTheme)));document.querySelectorAll("[data-xy-lang]").forEach(b=>b.addEventListener("click",()=>{set(K.lang,b.dataset.xyLang);applyLanguage()}));
  $("xySaveNickname")?.addEventListener("click",()=>{set(K.nick,($("xyNickname")?.value||"").trim());applyLanguage();alert(lang()==="ko"?"닉네임을 저장했습니다.":"Nickname saved.")});
@@ -2581,7 +2581,7 @@ int main() {
 })();
 </script>
 <section id="xyEntryScreen" aria-label="XYOCK 시작 화면">
- <div class="xy-entry-brand"><img src="https://raw.githubusercontent.com/xyock/lock/main/logo.png" alt="XYOCK 로고"><span>XYOCK</span></div>
+ <div class="xy-entry-brand"><img src="https://raw.githubusercontent.com/xyock/xyock/main/logo.png" alt="XYOCK 로고"><span>XYOCK</span></div>
  <button class="xy-entry-planet" id="xyEntryPlanet" type="button" aria-label="XYOCK 시작하기"><span>XYOCK</span></button>
  <div class="xy-entry-tagline">for good and<br>coding</div>
  <div class="xy-entry-auth" aria-label="Sign in 방법">
