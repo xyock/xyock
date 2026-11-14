@@ -887,6 +887,19 @@ header .logo{margin-left:8px;flex:0 0 auto}
 header .header-icons{margin-left:auto}
 @media(max-width:640px){.xy-menu-trigger-left{margin-right:8px}header .logo{margin-left:5px}}
 </style>
+<style id="xy-header-final-position">
+header{display:flex!important;flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;gap:0!important}
+#xyMenuOpen.xy-menu-trigger-left{order:0!important;position:relative!important;left:auto!important;right:auto!important;inset:auto!important;transform:none!important;flex:0 0 40px!important;margin:0 16px 0 0!important;justify-self:auto!important}
+header .logo{order:1!important;position:relative!important;left:auto!important;right:auto!important;transform:none!important;flex:0 0 auto!important;margin:0!important}
+header .header-icons{order:2!important;flex:0 0 auto!important;margin-left:auto!important}
+header .auth-col{margin-left:auto!important}
+#loginBtn{position:static!important;justify-self:auto!important;margin-left:0!important}
+@media(max-width:640px){
+ header{padding-left:14px!important;padding-right:14px!important}
+ #xyMenuOpen.xy-menu-trigger-left{margin-right:12px!important}
+ header .logo{margin-left:0!important}
+}
+</style>
 </head>
 
 <body>
@@ -900,7 +913,7 @@ header .header-icons{margin-left:auto}
       <span class="mode-indicator" id="modeIndicator">xyock</span>
       <div class="auth-col">
         <button class="icon-btn" id="historyBtn" type="button" aria-label="대화 기록" title="대화 기록" onclick="openHistoryModal()">◷</button>
-        <button class="login-btn" id="loginBtn" type="button" onclick="if(typeof openLoginModal==='function')openLoginModal();else document.getElementById('loginModal')?.classList.add('show')">locked</button>
+        <button class="login-btn" id="loginBtn" type="button" onclick="if(typeof openLoginModal==='function')openLoginModal();else document.getElementById('loginModal')?.classList.add('show')">login</button>
       </div>
     </div>
   </header>
@@ -1521,7 +1534,7 @@ header .header-icons{margin-left:auto}
       indicator.style.display = "";
 
       const loggedIn = isLoggedIn();
-      loginBtn.textContent = loggedIn ? "로그아웃" : "locked";
+      loginBtn.textContent = loggedIn ? "로그아웃" : "login";
       loginBtn.classList.toggle("logged-in", loggedIn);
       const u = session?.user_metadata || {};
       window.__xyockSessionProfile = loggedIn ? {
