@@ -2682,21 +2682,21 @@ int main() {
  function reviewScore(messages){
    const replies=messages.filter(m=>m.role==="assistant"&&typeof m.content==="string"&&m.content.trim());
    const text=replies.map(m=>m.content),all=text.join("\n");
-   const words=s=>((s.match(/[\\p{L}\\p{N}]+/gu)||[]).length);
+   const words=s=>((s.match(/[\p{L}\p{N}]+/gu)||[]).length);
    const avg=text.length?text.reduce((n,s)=>n+words(s),0)/text.length:0;
    const count=(re,repl=all)=>((repl.match(re)||[]).length);
    const pct=n=>Math.max(0,Math.min(100,Math.round(n)));
-   const structure=count(/(^|\\n)\\s*(?:#{1,3}\\s|[-*•]\\s|\\d+[.)]\\s)/gm);
-   const reasoning=count(/\\b(because|therefore|since|thus|step|first|second|finally|reason|explain|evidence|trade-?off|approach)\\b/gi)+count(/(이유|따라서|먼저|다음으로|단계|근거|설명|비교|결론)/g);
-   const warm=count(/\\b(please|thank you|thanks|happy to|glad to|you can|let me know|great question|appreciate)\\b/gi)+count(/(고마워|감사|도와|괜찮|좋은 질문|알려줘|함께)/g);
-   const initiative=count(/\\b(next step|you can also|if you want|I can help|try this|for example|would you like)\\b/gi)+count(/(다음 단계|원한다면|필요하면|예를 들어|추가로|해볼 수)/g);
-   const code=count(/\`\`\`/g)/2;
+   const structure=count(/(^|\n)\s*(?:#{1,3}\s|[-*•]\s|\d+[.)]\s)/gm);
+   const reasoning=count(/\b(because|therefore|since|thus|step|first|second|finally|reason|explain|evidence|trade-?off|approach)\b/gi)+count(/(이유|따라서|먼저|다음으로|단계|근거|설명|비교|결론)/g);
+   const warm=count(/\b(please|thank you|thanks|happy to|glad to|you can|let me know|great question|appreciate)\b/gi)+count(/(고마워|감사|도와|괜찮|좋은 질문|알려줘|함께)/g);
+   const initiative=count(/\b(next step|you can also|if you want|I can help|try this|for example|would you like)\b/gi)+count(/(다음 단계|원한다면|필요하면|예를 들어|추가로|해볼 수)/g);
+   const code=count(/```/g)/2;
    const depth=pct(avg/1.8);
-   const clarity=pct(35+Math.min(35,structure*4)+Math.min(30,(text.length?text.filter(s=>s.includes("\\n")).length/text.length:0)*30));
+   const clarity=pct(35+Math.min(35,structure*4)+Math.min(30,(text.length?text.filter(s=>s.includes("\n")).length/text.length:0)*30));
    const reasoningScore=pct(25+Math.min(45,reasoning*3)+Math.min(30,avg/8));
    const warmth=pct(25+Math.min(75,warm*9));
    const initiativeScore=pct(20+Math.min(80,initiative*10));
-   const coding=pct(20+Math.min(55,code*9)+Math.min(25,count(/\\b(code|function|class|debug|error|compile|API|HTML|CSS|JavaScript|Python)\\b/gi)*1.2));
+   const coding=pct(20+Math.min(55,code*9)+Math.min(25,count(/\b(code|function|class|debug|error|compile|API|HTML|CSS|JavaScript|Python)\b/gi)*1.2));
    const engagement=pct(depth*.35+clarity*.2+initiativeScore*.2+reasoningScore*.25);
    const details=[
     ["Engagement & Effort",engagement,"Estimated from reply depth, structure, visible explanation, and useful next steps."],
