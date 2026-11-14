@@ -843,12 +843,12 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
       <div class="auth-col">
         <button class="icon-btn" id="historyBtn" type="button" aria-label="대화 기록" title="대화 기록" onclick="openHistoryModal()">◷</button>
         <button class="icon-btn xy-menu-trigger" id="xyMenuOpen" type="button" aria-label="메뉴 열기" title="메뉴">☰</button>
-        <button class="login-btn" id="loginBtn" type="button">locked</button>
+        <button class="login-btn" id="loginBtn" type="button" onclick="if(typeof openLoginModal==='function')openLoginModal();else document.getElementById('loginModal')?.classList.add('show')">locked</button>
       </div>
     </div>
   </header>
 
-<section class="xy-screen" id="xyMenu"><div class="xy-screen-head"><div class="xy-screen-title" data-i18n="menu">메뉴</div><button class="xy-close" data-xy-close="xyMenu">닫기 ✕</button></div><nav class="xy-menu-list"><div class="xy-nav-label">WORKSPACE</div><button class="xy-menu-link" data-xy-go="plugins"><span>⌂　Project</span><span>›</span></button><button class="xy-menu-link" data-xy-go="codes"><span>⌘　Code</span><span>›</span></button><button class="xy-menu-link" data-xy-go="plugins"><span>⌘　Plugins</span><span>›</span></button><button class="xy-menu-link" data-xy-go="review"><span>✓　Review</span><span>›</span></button><div class="xy-nav-label">PERSONAL</div><button class="xy-menu-link" data-xy-go="secret"><span>◉　Secret Chat</span><span class="xy-secret-tag">PRIVATE SESSION</span></button><button class="xy-menu-link" data-xy-go="readme"><span>Documentation</span><span>↗</span></button></nav><div class="xy-menu-footer"><button data-xy-go="account">계정 설정</button><button data-xy-go="newchat">＋ 새 대화</button></div></section>
+<section class="xy-screen" id="xyMenu"><div class="xy-screen-head"><div class="xy-screen-title" data-i18n="menu">메뉴</div><button class="xy-close" data-xy-close="xyMenu">닫기 ✕</button></div><nav class="xy-menu-list"><div class="xy-nav-label">WORKSPACE</div><button class="xy-menu-link" data-xy-go="project"><span>⌂　Project</span><span>›</span></button><button class="xy-menu-link" data-xy-go="codes"><span>⌘　Code</span><span>›</span></button><button class="xy-menu-link" data-xy-go="plugins"><span>⌘　Plugins</span><span>›</span></button><button class="xy-menu-link" data-xy-go="review"><span>✓　Review</span><span>›</span></button><div class="xy-nav-label">PERSONAL</div><button class="xy-menu-link" data-xy-go="secret"><span>◉　Secret Chat</span><span class="xy-secret-tag">PRIVATE SESSION</span></button><button class="xy-menu-link" data-xy-go="readme"><span>Documentation</span><span>↗</span></button></nav><div class="xy-menu-footer"><button data-xy-go="account">계정 설정</button><button data-xy-go="newchat">＋ 새 대화</button></div></section>
 <section class="xy-screen" id="xyAccount"><div class="xy-screen-head"><div class="xy-screen-title">Settings</div><button class="xy-close" data-xy-close="xyAccount">닫기 ✕</button></div><div class="xy-settings">
 <div class="xy-setting-row"><span>Language</span><span><button data-xy-lang="ko">한국어</button> <button data-xy-lang="en">English</button></span></div>
 <div class="xy-setting-row"><span>Plugins</span><span>›</span></div><div class="xy-setting-panel"><p>GitHub 및 Supabase 연결과 플러그인 관리</p><button id="xyOpenPlugins" class="xy-primary">플러그인 관리 열기</button><p style="margin-top:14px"><a href="https://github.com/xyock/xyock" target="_blank" rel="noopener">xyock/xyock GitHub 저장소</a></p></div>
@@ -878,7 +878,6 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
         placeholder="xyock에게 질문하거나 코드 요청하기..."
         autocomplete="off"
       />
-      <button class="plugin-btn" id="pluginBtn" type="button" title="플러그인" aria-label="플러그인" aria-haspopup="dialog" aria-controls="pluginModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7V3m6 4V3M8 7h8a2 2 0 0 1 2 2v3a4 4 0 0 1-4 4h-1v5h-2v-5h-1a4 4 0 0 1-4-4V9a2 2 0 0 1 2-2Z"/></svg></button>
       <button class="round-btn send-btn" id="sendBtn" type="button" title="보내기" disabled>↑</button>
     </div>
   </div>
@@ -2581,10 +2580,7 @@ int main() {
 
       sendBtn.addEventListener("click", sendMessage);
 
-      document.getElementById("pluginBtn").addEventListener("click", () => {
-        showModal("pluginModal");
-        refreshGitHubActions();
-      });
+      // Plugin dialog is opened from Menu > Plugins; no chat-bar plugin button remains.
       document.getElementById("ghActionType").addEventListener("change", updateGitHubActionFields);
       document.getElementById("ghRefreshBtn").addEventListener("click", () => refreshGitHubActions());
       document.getElementById("ghRequestBtn").addEventListener("click", createGitHubActionRequest);
@@ -2704,8 +2700,8 @@ int main() {
  const lang=()=>get(K.lang,"ko")==="en"?"en":"ko",closeScreens=()=>["xyMenu","xyAccount","xyCodes"].forEach(id=>$(id)?.classList.remove("open")),openScreen=id=>{closeScreens();const panel=$(id);if(panel){panel.scrollTop=0;panel.classList.add("open")}};
  function applyLanguage(){const d=words[lang()];document.querySelectorAll("[data-i18n]").forEach(el=>{if(d[el.dataset.i18n])el.textContent=d[el.dataset.i18n]});const w=$("welcome"),name=get(K.nick).trim();if(w){const h=w.querySelector("h1"),p=w.querySelector("p");if(h)h.textContent=name?(lang()==="ko"?"환영합니다, "+name+"!":"Welcome, "+name+"!"):d.welcome;if(p)p.textContent=d.sub}if($("searchInput"))$("searchInput").placeholder=lang()==="ko"?"질문하거나 코드를 요청하세요...":"Ask a question or request code...";document.querySelectorAll("[data-xy-lang]").forEach(b=>b.classList.toggle("active",b.dataset.xyLang===lang()))}
  function setTheme(v){set(K.theme,v);document.body.classList.toggle("xy-light",v==="light");document.querySelectorAll("[data-xy-theme]").forEach(b=>b.classList.toggle("active",b.dataset.xyTheme===v))}
- document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"plugins":openScreen("xyAccount");$("xyOpenPlugins")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"review":closeScreens();$("pluginBtn")?.click();$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
- $("xyMenuOpen")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openScreen("xyMenu")});$("xyOpenPlugins")?.addEventListener("click",()=>$("pluginBtn")?.click());
+ document.addEventListener("click",e=>{const close=e.target.closest("[data-xy-close]");if(close){closeScreens();return}const a=e.target.closest("[data-xy-go]");if(!a)return;switch(a.dataset.xyGo){case"readme":window.open("https://github.com/xyock/xyock#readme","_blank","noopener");break;case"plugins":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"project":openScreen("xyAccount");break;case"review":closeScreens();$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"});break;case"account":openScreen("xyAccount");break;case"codes":openScreen("xyCodes");renderCodes();break;case"sessions":closeScreens();$("historyBtn")?.click();break;case"newchat":closeScreens();$("newChatBtn")?.click();break}});
+ $("xyMenuOpen")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openScreen("xyMenu")});$("xyOpenPlugins")?.addEventListener("click",()=>{$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"})});
  document.querySelectorAll("[data-xy-theme]").forEach(b=>b.addEventListener("click",()=>setTheme(b.dataset.xyTheme)));document.querySelectorAll("[data-xy-lang]").forEach(b=>b.addEventListener("click",()=>{set(K.lang,b.dataset.xyLang);applyLanguage()}));
  $("xySaveNickname")?.addEventListener("click",()=>{set(K.nick,($("xyNickname")?.value||"").trim());applyLanguage();alert(lang()==="ko"?"닉네임을 저장했습니다.":"Nickname saved.")});
  async function hash(p,s){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveBits"]),b=await crypto.subtle.deriveBits({name:"PBKDF2",salt:new TextEncoder().encode(s),iterations:120000,hash:"SHA-256"},k,256);return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,"0")).join("")}
