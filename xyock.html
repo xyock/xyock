@@ -2709,7 +2709,7 @@ int main() {
    ];
    return {replies,words:text.reduce((n,s)=>n+words(s),0),details,codeBlocks:Math.round(code),userMessages:messages.filter(m=>m.role==="user").length};
  }
- async async function openReview(){
+ async function openReview(){
    closeScreens();showModal("reviewModal");await loadReview();
  }
  async function loadReview(){
