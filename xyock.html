@@ -1498,6 +1498,7 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
       try {
         await window.xyockSyncWorkspace?.();
         await window.xyockLoadLatestConversation?.();
+        if (currentMessages().length) queueSaveConversation();
       } catch (syncError) {
         console.error("Workspace sync after login failed", syncError);
         showToast("클라우드 동기화에 실패했습니다: " + syncError.message);
