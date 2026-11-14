@@ -78,28 +78,95 @@ function b64utf8(s: string) {
 }
 
 
-async function createGitHubClient() {
+async function createGitHubClient(user: any) {
   const appId = Deno.env.get("GITHUB_APP_ID")!;
-  const installationId = Deno.env.get("GITHUB_INSTALLATION_ID")!;
   const privateKey = Deno.env.get("GITHUB_PRIVATE_KEY")!;
-  if (!appId || !installationId || !privateKey) throw new Error("GitHub App secrets unavailable");
+  if (!appId || !privateKey) throw new Error("GitHub App secrets unavailable");
+
+  const githubIdentity = Array.isArray(user?.identities)
+    ? user.identities.find((identity: any) => String(identity?.provider || "").toLowerCase() === "github")
+    : null;
+  if (!githubIdentity) throw new Error("GitHub 계정을 먼저 연결해 주세요.");
+
+  const identityData = githubIdentity.identity_data && typeof githubIdentity.identity_data === "object"
+    ? githubIdentity.identity_data
+    : {};
+  const githubProviderId = String(
+    githubIdentity.provider_id ?? githubIdentity.id ?? identityData.provider_id ?? identityData.id ?? identityData.sub ?? ""
+  ).trim();
+  const githubLogin = String(
+    identityData.user_name ?? identityData.login ?? identityData.preferred_username ?? ""
+  ).trim().toLowerCase();
+  if (!githubProviderId && !githubLogin) {
+    throw new Error("연결된 GitHub 계정의 식별 정보를 확인할 수 없습니다. GitHub 계정을 다시 연결해 주세요.");
+  }
+
   const key = await importPKCS8(pkcs1ToPkcs8(privateKey), "RS256");
   const now = Math.floor(Date.now() / 1000);
   const appJwt = await new SignJWT({}).setProtectedHeader({ alg: "RS256", typ: "JWT" })
     .setIssuer(appId).setIssuedAt(now - 30).setExpirationTime(now + 8 * 60).sign(key);
-  const tokenRes = await fetch(`https://api.github.com/app/installations/${encodeURIComponent(installationId)}/access_tokens`, {
-    method: "POST", headers: { Authorization: `Bearer ${appJwt}`, Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json" }, body: "{}"
+
+  const installations: any[] = [];
+  for (let page = 1; page <= 10; page++) {
+    const response = await fetch(
+      "https://api.github.com/app/installations?per_page=100&page=" + page,
+      {
+        headers: {
+          Authorization: "Bearer " + appJwt,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error("GitHub App 설치 목록을 확인하지 못했습니다. (" + response.status + ")");
+    }
+    const rows = await response.json();
+    if (!Array.isArray(rows)) throw new Error("GitHub App 설치 목록 응답이 올바르지 않습니다.");
+    installations.push(...rows);
+    if (rows.length < 100) break;
+  }
+
+  const installation = installations.find((item: any) => {
+    const account = item?.account || {};
+    const sameId = githubProviderId && String(account.id ?? "") === githubProviderId;
+    const sameLogin = githubLogin && String(account.login ?? "").toLowerCase() === githubLogin;
+    return !!(sameId || sameLogin);
   });
+  if (!installation?.id) {
+    throw new Error("이 GitHub 계정에는 xyock GitHub App이 설치되어 있지 않습니다. GitHub App을 해당 계정에 설치하고 저장소 접근을 허용해 주세요.");
+  }
+
+  const tokenRes = await fetch(
+    "https://api.github.com/app/installations/" + encodeURIComponent(String(installation.id)) + "/access_tokens",
+    {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + appJwt,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    },
+  );
   if (!tokenRes.ok) throw new Error("GitHub installation token request failed (" + tokenRes.status + ")");
   const tokenData = await tokenRes.json();
+
   return async (path: string, init: RequestInit = {}) => {
     const res = await fetch("https://api.github.com" + path, {
-      ...init, headers: { Authorization: "Bearer " + tokenData.token, Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json", ...(init.headers || {}) }
+      ...init,
+      headers: {
+        Authorization: "Bearer " + tokenData.token,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+        ...(init.headers || {}),
+      },
     });
     const txt = await res.text();
-    let value: any = {}; try { value = txt ? JSON.parse(txt) : {}; } catch { value = { message: txt.slice(0, 500) }; }
+    let value: any = {};
+    try { value = txt ? JSON.parse(txt) : {}; } catch { value = { message: txt.slice(0, 500) }; }
     if (!res.ok) throw new Error("GitHub API error (" + res.status + "): " + (value.message || "request failed"));
     return value;
   };
@@ -149,7 +216,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (op === "repositories") {
-      const gh = await createGitHubClient();
+      const gh = await createGitHubClient(ud.user);
       const repositories = await listInstallationRepositories(gh);
       return json({ repositories: repositories.map((r: any) => ({
         full_name: r.full_name, private: !!r.private, default_branch: r.default_branch || "main"
@@ -159,7 +226,7 @@ Deno.serve(async (req: Request) => {
     if (op === "inspect") {
       const repo = body.repo;
       if (typeof repo !== "string" || repo.split("/").length !== 2 || repo.includes("..")) return json({ error: "Select a valid repository" }, 400);
-      const gh = await createGitHubClient();
+      const gh = await createGitHubClient(ud.user);
       const accessible = await listInstallationRepositories(gh);
       const repoEntry = accessible.find((r: any) => r.full_name.toLowerCase() === repo.toLowerCase());
       if (!repoEntry) return json({ error: "Repository is not connected to this GitHub App installation" }, 403);
@@ -186,7 +253,7 @@ Deno.serve(async (req: Request) => {
     if (op === "request") {
       const repo = body.repo;
       if (typeof repo !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) return json({ error: "Select a valid repository" }, 400);
-      const repoGh = await createGitHubClient();
+      const repoGh = await createGitHubClient(ud.user);
       const accessible = await listInstallationRepositories(repoGh);
       const repoEntry = accessible.find((r: any) => r.full_name.toLowerCase() === repo.toLowerCase());
       if (!repoEntry) return json({ error: "Repository is not connected to this GitHub App installation" }, 403);
@@ -306,7 +373,7 @@ Deno.serve(async (req: Request) => {
       await audit(row.id, "execution_started");
 
       try {
-        const gh = await createGitHubClient();
+        const gh = await createGitHubClient(ud.user);
         const allowedRepos = await listInstallationRepositories(gh);
         if (!allowedRepos.some((r: any) => r.full_name.toLowerCase() === String(row.repo).toLowerCase())) {
           throw new Error("Repository is no longer connected to this GitHub App installation");
