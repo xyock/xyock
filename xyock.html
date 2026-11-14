@@ -1533,19 +1533,9 @@ console.log(arr.sort((a, b) => a - b));`,
           loop: `for (int i = 0; i < 10; i++) {
   System.out.println(i);
 }`,
-          html: `import java.net.http.*;
-public class HTMLTest {
+          html: `public class HTMLTest {
   public static void main(String[] args) {
-    String html = "<html><body><h1>Hello from Java</h1>
-<script id="xyock-secret-chat-controller">
-(()=>{const $=id=>document.getElementById(id);let active=false;
-function clearChat(){const chat=$("chat");if(!chat)return;chat.querySelectorAll(".message,.remember-indicator").forEach(n=>n.remove());$("welcome")?.remove();const w=document.createElement("div");w.className="welcome";w.id="welcome";w.innerHTML="<h1>Secret Chat</h1><p>이 브라우저에 저장되지 않는 임시 대화 세션입니다.</p>";chat.insertBefore(w,$("secretChatNotice")?.nextSibling||null);$("searchInput").value="";$("sendBtn").disabled=true;}
-function setActive(value){active=!!value;window.__xyockSecretMode=active;document.body.classList.toggle("xy-secret-active",active);$("modeIndicator").textContent=active?"Secret Chat":"xyock";clearChat();document.querySelectorAll("#xyMenu .xy-menu-link").forEach(b=>b.classList.toggle("xy-secret-selected",active&&b.dataset.xyGo==="secret"));document.getElementById("xyMenu")?.classList.remove("open");if(active){$("searchInput").placeholder="Secret Chat에 메시지 보내기...";$("searchInput").focus();}else{$("searchInput").placeholder="xyock에게 질문하거나 코드 요청하기...";} }
-document.addEventListener("click",e=>{const b=e.target.closest('[data-xy-go="secret"]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();setActive(!active);if(active)alert("Secret Chat을 시작했습니다. 대화 내용은 이 앱의 기록에 저장되지 않지만, AI 답변을 위해 메시지는 서버와 AI 제공자에 전송됩니다.");else alert("Secret Chat을 종료하고 화면의 임시 대화를 지웠습니다.");},true);
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&active){setActive(false);}});
-})();
-<\/script>
-</body></html>";
+    String html = "<html><body><h1>Hello from Java</h1></body></html>";
     System.out.println(html);
   }
 }`
@@ -1599,109 +1589,6 @@ int main() {
 </head>
 <body>
   <h1>Hello, World!</h1>
-
-<script id="xyock-secret-chat-controller-v2">
-(() => {
-  const $ = id => document.getElementById(id);
-  let active = false;
-  const chat = () => $("chat");
-  function clearSession() {
-    const root = chat();
-    if (!root) return;
-    root.replaceChildren();
-    const welcome = document.createElement("div");
-    welcome.className = "welcome";
-    welcome.id = "welcome";
-    const heading = document.createElement("h1");
-    heading.textContent = active ? "Secret Chat" : "How can I help?";
-    const description = document.createElement("p");
-    description.textContent = active
-      ? "임시 대화입니다. 이 앱의 대화 기록과 기억에 저장하지 않습니다."
-      : "Ask xyock about anything, explain code, or get help writing code";
-    welcome.append(heading, description);
-    root.append(welcome);
-    $("searchInput").value = "";
-    window.__xyockClearAttachments?.();
-    $("sendBtn").disabled = true;
-    $("attachmentList").replaceChildren();
-  }
-  function setActive(next) {
-    if (active === Boolean(next)) return;
-    active = Boolean(next);
-    window.__xyockSecretMode = active;
-    document.body.classList.toggle("xy-secret-active", active);
-    const indicator = $("modeIndicator");
-    if (indicator) indicator.textContent = active ? "Secret Chat" : "xyock";
-    const banner = $("secretChatNotice");
-    if (banner) banner.hidden = !active;
-    $("searchInput").placeholder = active
-      ? "Secret Chat에 메시지 보내기..."
-      : "xyock에게 질문하거나 코드 요청하기...";
-    document.querySelectorAll('#xyMenu [data-xy-go="secret"]').forEach(button => {
-      button.classList.toggle("xy-secret-selected", active);
-      const tag = button.querySelector(".xy-secret-tag");
-      if (tag) tag.textContent = active ? "ACTIVE" : "PRIVATE SESSION";
-    });
-    $("xyMenu")?.classList.remove("open");
-    clearSession();
-    if (active) $("searchInput").focus();
-    if (!active) window.__xyockSecretMode = false;
-  }
-  document.addEventListener("click", event => {
-    const button = event.target.closest('#xyMenu [data-xy-go="secret"]');
-    if (!button) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    setActive(!active);
-    if (active) {
-      alert("Secret Chat을 시작했어요. xyock의 대화 기록·장기 기억·코드 기록에는 저장하지 않습니다. 다만 답변을 위해 메시지는 Supabase와 AI 제공자에 전송되며, 종단간 암호화는 아닙니다.");
-    } else {
-      alert("Secret Chat을 종료했어요. 임시 대화는 화면에서 지웠습니다.");
-    }
-  }, true);
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && active) setActive(false);
-  });
-  const banner = $("secretChatNotice");
-  if (banner) banner.hidden = true;
-  window.__xyockSecretMode = false;
-})();
-</script>
-
-
-<script id="xy-login-click-repair">
-(() => {
-  const open = () => {
-    const modal = document.getElementById("loginModal");
-    if (!modal) return;
-    if (typeof window.openLoginModal === "function") {
-      window.openLoginModal();
-    } else {
-      document.querySelectorAll(".modal.show").forEach(node => node.classList.remove("show"));
-      modal.classList.add("show");
-      modal.style.display = "flex";
-      modal.style.zIndex = "100001";
-    }
-  };
-  document.addEventListener("click", event => {
-    const button = event.target.closest("#loginBtn");
-    if (!button) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    open();
-  }, true);
-  window.addEventListener("error", event => {
-    if (event.target && event.target.tagName === "SCRIPT") {
-      console.error("xyock script failed to load:", event.target.src);
-    }
-  }, true);
-})();
-</script>
-<style id="xy-login-modal-visibility-repair">
-#loginModal.show{display:flex!important;position:fixed!important;inset:0!important;z-index:100001!important;align-items:center!important;justify-content:center!important}
-#loginModal.show .modal-content{position:relative!important;z-index:100002!important;visibility:visible!important;opacity:1!important}
-</style>
-
 </body>
 </html>`,
           button: `<button onclick="alert('Hello!')">Click me</button>`,
