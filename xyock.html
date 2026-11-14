@@ -961,7 +961,11 @@ header{padding-left:22px!important}
 .history-item{display:flex;align-items:center;gap:7px}.history-open{flex:1;min-width:0}.history-pin{border:1px solid #394b41;border-radius:8px;padding:6px 8px;background:#111a15;color:#b9e8cb;cursor:pointer}
 @media(max-width:620px){:root{--xy-rail:58px}#xySidebar{padding:8px 4px 11px;gap:9px}.xy-side-logo{width:46px;height:46px;flex-basis:46px}.xy-side-logo img{width:42px;height:42px}.xy-side-btn{width:40px;height:40px}#xySidebar #xyProfileTrigger{width:42px!important;height:42px!important;min-height:42px}#xySidebar .xy-profile-avatar{width:36px;height:36px;flex-basis:36px}header{padding-left:12px!important}}
 </style>
-</head>
+<style id="xy-sidebar-final-overrides">
+#xySidebar #historyBtn{width:48px!important;height:48px!important;min-width:48px!important;max-width:48px!important;grid-column:auto!important;grid-row:auto!important;border:0!important;border-radius:11px!important;background:transparent!important;color:#aebbb3!important}
+#xySidebar #historyBtn:hover{background:#1b2922!important;color:#8fe6b8!important}
+#xySidebar .xy-profile-popover[hidden]{display:none!important}
+</style></head>
 
 <body><aside id="xySidebar" aria-label="xyock sidebar">
 <button class="xy-side-logo" id="xyMenuOpen" type="button" title="메뉴" aria-label="메뉴 열기"><img src="logo.png" alt="xyock"><span class="xy-side-menu-glyph">☰</span></button>
@@ -1165,6 +1169,7 @@ header{padding-left:22px!important}
     const TABLE_URL = `${SUPABASE_URL}/rest/v1/terms`;
     const CONVERSATIONS_URL = `${SUPABASE_URL}/rest/v1/chat_conversations`;
     let currentConversationId = null;
+    window.xyockGetCurrentConversationId = () => currentConversationId;
     let currentConversationUserId = null;
     let restoringConversation = false;
     let saveQueue = Promise.resolve();
@@ -1764,8 +1769,8 @@ console.log(arr.sort((a, b) => a - b));`,
  const readPins=()=>{try{return JSON.parse(localStorage.getItem(pinKey())||"[]").filter(x=>typeof x==="string")}catch{return[]}};
  const writePins=a=>{try{localStorage.setItem(pinKey(),JSON.stringify(a))}catch{}};
  const pin=document.getElementById("xyPinCurrent");
- const paint=()=>{const id=window.currentConversationId||null;const on=!!id&&readPins().includes(id);pin?.classList.toggle("active",on);pin?.setAttribute("title",on?"대화 고정 해제":"현재 대화 고정")};
- pin?.addEventListener("click",()=>{const id=window.currentConversationId;if(!id){showToast("먼저 대화를 시작해 주세요.");return}const a=readPins(),i=a.indexOf(id);if(i>=0)a.splice(i,1);else a.push(id);writePins(a);paint();showToast(i>=0?"고정을 해제했습니다.":"대화를 고정했습니다.")});
+ const paint=()=>{const id=window.xyockGetCurrentConversationId?.()||null;const on=!!id&&readPins().includes(id);pin?.classList.toggle("active",on);pin?.setAttribute("title",on?"대화 고정 해제":"현재 대화 고정")};
+ pin?.addEventListener("click",()=>{const id=window.xyockGetCurrentConversationId?.();if(!id){showToast("먼저 대화를 시작해 주세요.");return}const a=readPins(),i=a.indexOf(id);if(i>=0)a.splice(i,1);else a.push(id);writePins(a);paint();showToast(i>=0?"고정을 해제했습니다.":"대화를 고정했습니다.")});
  document.getElementById("xySidebarPlugins")?.addEventListener("click",()=>showModal("pluginModal"));
  const pop=document.getElementById("xyConversationSearch"),inp=document.getElementById("xyConversationSearchInput"),out=document.getElementById("xyConversationSearchResults");
  document.getElementById("xySidebarSearch")?.addEventListener("click",()=>{pop.hidden=false;inp.focus()});
@@ -2320,13 +2325,32 @@ int main() {
         const rows = await res.json();
         list.replaceChildren();
         if (!rows.length) { list.textContent = "저장된 대화가 없습니다."; return; }
+        const pinKey = "xyock_pinned_conversations_v1:" + session.user_id;
+        let pinned = [];
+        try { pinned = JSON.parse(localStorage.getItem(pinKey) || "[]").filter(x => typeof x === "string"); } catch {}
+        rows.sort((a,b) => {
+          const ai=pinned.indexOf(a.id), bi=pinned.indexOf(b.id);
+          if(ai>=0&&bi>=0)return ai-bi;
+          if(ai>=0)return -1;
+          if(bi>=0)return 1;
+          return new Date(b.updated_at)-new Date(a.updated_at);
+        });
         rows.forEach(row => {
           const item = document.createElement("div");
-          item.className = "history-item";
+          item.className = "history-item" + (pinned.includes(row.id) ? " is-pinned" : "");
           const open = document.createElement("button");
           open.type = "button"; open.className = "history-open";
-          open.textContent = row.title || "새 대화";
+          open.textContent = (pinned.includes(row.id) ? "📌 " : "") + (row.title || "새 대화");
           open.addEventListener("click", () => restoreConversation(row.id));
+          const pin = document.createElement("button");
+          pin.type = "button"; pin.className = "history-pin"; pin.textContent = pinned.includes(row.id) ? "고정 해제" : "📌";
+          pin.title = pinned.includes(row.id) ? "고정 해제" : "대화 고정";
+          pin.addEventListener("click", () => {
+            const at = pinned.indexOf(row.id);
+            if(at>=0)pinned.splice(at,1);else pinned.push(row.id);
+            localStorage.setItem(pinKey,JSON.stringify(pinned));
+            openHistoryModal();
+          });
           const del = document.createElement("button");
           del.type = "button"; del.className = "history-delete"; del.textContent = "삭제";
           del.addEventListener("click", async () => {
@@ -2339,7 +2363,7 @@ int main() {
             if (currentConversationId === row.id) currentConversationId = null;
             openHistoryModal();
           });
-          item.append(open, del); list.append(item);
+          item.append(open, pin, del); list.append(item);
         });
       } catch (err) {
         list.textContent = "대화 기록 오류: " + err.message;
