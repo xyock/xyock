@@ -2726,7 +2726,9 @@ int main() {
       const input = document.getElementById("searchInput");
       const sendBtn = document.getElementById("sendBtn");
 
-      document.getElementById("logoBtn").addEventListener("click", () => {
+      // The old header logo button was replaced by the sidebar menu toggle.
+      // Keep initialization running when that legacy element is absent.
+      document.getElementById("logoBtn")?.addEventListener("click", () => {
         location.href = "index.html";
       });
 
