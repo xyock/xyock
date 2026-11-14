@@ -965,6 +965,10 @@ header{padding-left:22px!important}
 #xySidebar #historyBtn{width:48px!important;height:48px!important;min-width:48px!important;max-width:48px!important;grid-column:auto!important;grid-row:auto!important;border:0!important;border-radius:11px!important;background:transparent!important;color:#aebbb3!important}
 #xySidebar #historyBtn:hover{background:#1b2922!important;color:#8fe6b8!important}
 #xySidebar .xy-profile-popover[hidden]{display:none!important}
+</style><style id="xy-sidebar-control-fix">
+#xySidebar #xyMenuOpen{display:grid!important;place-items:center!important;width:52px!important;height:52px!important;min-width:52px!important;flex:0 0 52px!important;padding:2px!important;border:0!important;background:transparent!important}
+#xySidebar #xyMenuOpen img{width:48px!important;height:48px!important;max-width:48px!important;max-height:48px!important}
+@media(max-width:620px){#xySidebar #xyMenuOpen{width:46px!important;height:46px!important;min-width:46px!important;flex-basis:46px!important}#xySidebar #xyMenuOpen img{width:42px!important;height:42px!important}}
 </style></head>
 
 <body><aside id="xySidebar" aria-label="xyock sidebar">
@@ -1779,7 +1783,10 @@ console.log(arr.sort((a, b) => a - b));`,
  document.addEventListener("keydown",e=>{if(e.key==="Escape")pop.hidden=true});
  const profile=document.getElementById("xyProfileTrigger")?.parentElement,slot=document.getElementById("xySideAccountSlot");if(profile&&slot)slot.append(profile);
  const hist=document.getElementById("historyBtn");hist?.classList.add("xy-side-btn");
- window.addEventListener("xyock-profile-updated",paint);paint();
+ window.addEventListener("xyock-profile-updated",paint);
+ const chat=document.getElementById("chat");
+ if(chat)new MutationObserver(paint).observe(chat,{childList:true,subtree:true});
+ paint();
 })();
 </script>
 </body></html>";
