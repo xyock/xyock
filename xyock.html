@@ -997,8 +997,7 @@ header::after{
 </style>
 
 <style id="xyock-free-tier-ui">
-.xy-free-note{display:block;margin:7px 0 0 2px;color:#737b76;font-size:10px;line-height:1.45;font-weight:400;letter-spacing:.01em;opacity:.78}
-#xy-free-login-prompt{position:fixed;z-index:12000;left:50%;top:calc(env(safe-area-inset-top,0px) + 76px);transform:translateX(-50%);width:min(440px,calc(100vw - 28px));padding:15px 42px 15px 17px;border:1px solid #34483b;border-radius:15px;background:rgba(17,25,20,.97);box-shadow:0 14px 42px #0009;color:#edf5ef;font:inherit;animation:xyFreePromptIn .22s ease-out}
+#xy-free-login-prompt{position:fixed;z-index:12000;left:50%;top:0;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));padding:15px 42px 15px 17px;border:1px solid #34483b;border-radius:15px;background:rgba(17,25,20,.97);box-shadow:0 14px 42px #0009;color:#edf5ef;font:inherit;animation:xyFreePromptIn .22s ease-out}
 #xy-free-login-prompt[hidden]{display:none!important}
 #xy-free-login-prompt strong{display:block;font-size:14px;font-weight:650;letter-spacing:.01em}
 #xy-free-login-prompt span{display:block;margin-top:4px;color:#aab8ae;font-size:12px;line-height:1.45}
@@ -1320,12 +1319,6 @@ header::after{
     function addAIMessage(text, type = "normal") {
       const bubble = appendMessage("ai", "", type);
       renderAIContent(bubble, text).then(() => {
-        if (!window.__xyockSecretMode && !isLoggedIn()) {
-          const note = document.createElement("small");
-          note.className = "xy-free-note";
-          note.textContent = "You are using a free version of xyock. Log in to use more features.";
-          bubble.parentElement?.appendChild(note);
-        }
         if (!restoringConversation && !window.__xyockSecretMode) queueSaveConversation();
       });
     }
@@ -1928,8 +1921,7 @@ int main() {
           const count = Number(localStorage.getItem(key) || 0) + 1;
           localStorage.setItem(key, String(count));
           if (count % 15 === 0) {
-            const prompt = document.getElementById("xyock-free-login-prompt");
-            if (prompt) prompt.hidden = false;
+            window.xyockShowGuestLoginPrompt?.();
           }
         } catch (error) { console.warn("Guest prompt counter unavailable", error); }
       }
@@ -3278,13 +3270,29 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
 (()=>{
  const prompt=document.getElementById("xyock-free-login-prompt");
  const close=document.getElementById("xyock-free-prompt-close");
- close?.addEventListener("click",()=>{if(prompt)prompt.hidden=true});
- const sync=()=>{
-   const guest=!window.__xyockSessionProfile?.user_id;
-   if(!guest&&prompt)prompt.hidden=true;
+ const chat=document.getElementById("chat");
+ const place=()=>{
+   if(!prompt||!chat)return;
+   const rect=chat.getBoundingClientRect();
+   const width=Math.max(0,Math.min(440,rect.width-32));
+   prompt.style.left=(rect.left+rect.width/2)+"px";
+   prompt.style.top=Math.max(8,rect.top+12)+"px";
+   prompt.style.width=width+"px";
  };
- window.addEventListener("xyock-profile-updated",sync);
- sync();
+ const hide=()=>{if(prompt)prompt.hidden=true};
+ const show=()=>{
+   if(!prompt||!chat||window.__xyockSessionProfile?.user_id||window.__xyockSecretMode)return;
+   place();
+   prompt.hidden=false;
+ };
+ close?.addEventListener("click",hide);
+ window.addEventListener("resize",()=>{if(prompt&&!prompt.hidden)place()});
+ window.addEventListener("scroll",()=>{if(prompt&&!prompt.hidden)place()},true);
+ window.addEventListener("xyock-profile-updated",()=>{
+   if(window.__xyockSessionProfile?.user_id)hide();
+ });
+ window.xyockShowGuestLoginPrompt=show;
+ if(window.__xyockSessionProfile?.user_id)hide();
 })();
 </script>
 </body>
