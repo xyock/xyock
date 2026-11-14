@@ -912,14 +912,35 @@ header #historyBtn{order:1!important;flex:0 0 auto!important}
  header #loginBtn{margin-left:6px!important}
 }
 </style>
+<style id="xy-menu-logo-hover">
+header .xy-menu-logo-trigger{
+  order:0!important;position:relative!important;display:grid!important;place-items:center!important;
+  flex:0 0 52px!important;width:52px!important;height:52px!important;margin:0 16px 0 0!important;
+  padding:0!important;border:0!important;border-radius:12px!important;background:transparent!important;
+  color:#e8e8e8!important;cursor:pointer!important;z-index:120!important;overflow:hidden!important;
+  transition:background .18s ease,transform .18s ease!important;
+}
+header .xy-menu-logo-image{display:block!important;width:48px!important;height:48px!important;object-fit:contain!important;transition:opacity .16s ease,transform .18s ease!important}
+header .xy-menu-hover-mark{position:absolute!important;inset:0!important;display:grid!important;place-items:center!important;
+  font:300 27px/1 sans-serif!important;letter-spacing:0!important;opacity:0!important;transform:scale(.82)!important;
+  transition:opacity .16s ease,transform .18s ease!important;pointer-events:none!important}
+header .xy-menu-logo-trigger:hover .xy-menu-logo-image,
+header .xy-menu-logo-trigger:focus-visible .xy-menu-logo-image{opacity:0!important;transform:scale(.78)!important}
+header .xy-menu-logo-trigger:hover .xy-menu-hover-mark,
+header .xy-menu-logo-trigger:focus-visible .xy-menu-hover-mark{opacity:1!important;transform:scale(1)!important}
+header .xy-menu-logo-trigger:hover,
+header .xy-menu-logo-trigger:focus-visible{background:#202020!important;outline:none!important}
+header .xy-menu-logo-trigger:active{transform:scale(.95)!important}
+@media(max-width:640px){header .xy-menu-logo-trigger{margin-right:12px!important;width:44px!important;height:44px!important;flex-basis:44px!important}header .xy-menu-logo-image{width:42px!important;height:42px!important}}
+</style>
 </head>
 
 <body>
   <header>
-    <button class="icon-btn xy-menu-trigger xy-menu-trigger-left" id="xyMenuOpen" type="button" aria-label="메뉴 열기" title="메뉴">☰</button>
-    <div class="logo" id="logoBtn" title="새로고침">
-      <img class="logo-img" src="logo.png" alt="" />xyock
-    </div>
+    <button class="xy-menu-logo-trigger" id="xyMenuOpen" type="button" aria-label="메뉴 열기" title="메뉴">
+      <img src="logo.png" alt="" class="xy-menu-logo-image" />
+      <span class="xy-menu-hover-mark" aria-hidden="true">☰</span>
+    </button>
 
     <div class="header-icons">
       <span class="mode-indicator" id="modeIndicator">xyock</span>
