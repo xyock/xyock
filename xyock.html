@@ -2715,6 +2715,53 @@ int main() {
       return providers.includes("github");
     }
 
+    async function connectGitHubIdentity() {
+      if (!session || !await ensureSession()) {
+        showToast("먼저 xyock 계정에 로그인해 주세요.");
+        openLoginModal();
+        return;
+      }
+      if (isGitHubAccountConnected()) {
+        try {
+          const repositories = await loadGitHubRepositories(true);
+          const status = document.getElementById("githubPluginStatus");
+          if (status) status.textContent = repositories.length
+            ? "GitHub 계정 및 App 연결됨 · " + repositories.length + "개 저장소 사용 가능"
+            : "GitHub 계정 연결됨 · App 설치 및 저장소 권한을 확인해 주세요.";
+          showToast(repositories.length ? "GitHub 연결이 확인되었습니다." : "GitHub App 설치와 저장소 권한을 확인해 주세요.");
+        } catch (error) {
+          showToast(error.message || "GitHub 연결을 확인하지 못했습니다.");
+        }
+        return;
+      }
+      try {
+        const redirectTo = location.origin + location.pathname + location.search;
+        const authorizeUrl = new URL(AUTH_URL + "/user/identities/authorize");
+        authorizeUrl.searchParams.set("provider", "github");
+        authorizeUrl.searchParams.set("redirect_to", redirectTo);
+        authorizeUrl.searchParams.set("skip_http_redirect", "true");
+        const response = await fetch(authorizeUrl.toString(), {
+          method: "GET",
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: "Bearer " + session.access_token
+          }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.msg || data.message || data.error_description ||
+            "GitHub 계정을 연결하지 못했습니다. Supabase에서 Manual Linking 설정을 확인해 주세요.");
+        }
+        const redirectUrl = data.url || data.data?.url;
+        if (typeof redirectUrl !== "string" || !redirectUrl.startsWith("https://")) {
+          throw new Error("GitHub 연결 주소를 받지 못했습니다. Supabase Manual Linking 설정을 확인해 주세요.");
+        }
+        location.assign(redirectUrl);
+      } catch (error) {
+        showToast(error.message || "GitHub 계정 연결에 실패했습니다.");
+      }
+    }
+
     function renderGitHubRepositories(repositories) {
       const select = document.getElementById("ghRepoSelect");
       const notice = document.getElementById("ghActionNotice");
@@ -3066,15 +3113,18 @@ int main() {
       document.getElementById("pluginModal").addEventListener("click", e => {
         if (e.target.id === "pluginModal") e.currentTarget.classList.remove("show");
       });
-      document.getElementById("githubPluginConnect").addEventListener("click", () => {
-        location.href = AUTH_URL + "/authorize?provider=github&redirect_to=" + encodeURIComponent(location.origin + location.pathname);
-      });
+      document.getElementById("githubPluginConnect").addEventListener("click", connectGitHubIdentity);
       document.getElementById("supabasePluginConnect").addEventListener("click", startSupabaseOAuth);
       document.getElementById("sbRefreshBtn").addEventListener("click", loadSupabaseAccount);
       document.getElementById("sbDisconnectBtn").addEventListener("click", disconnectSupabaseAccount);
       document.getElementById("sbOrganizationSelect").addEventListener("change", loadSupabaseProjects);
       if (session) {
-        document.getElementById("githubPluginStatus").textContent = "xyock 계정 로그인됨 · GitHub 권한은 별도 확인 필요";
+        document.getElementById("githubPluginStatus").textContent = isGitHubAccountConnected()
+          ? "GitHub 계정 연결됨 · App 설치 확인 중"
+          : "xyock 계정 로그인됨 · GitHub 계정 연결 필요";
+        if (isGitHubAccountConnected()) loadGitHubRepositories().catch(error => {
+          document.getElementById("githubPluginStatus").textContent = error.message || "GitHub App 설치 확인 필요";
+        });
         loadSupabaseAccount();
       }
 
