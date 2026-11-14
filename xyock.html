@@ -2010,11 +2010,11 @@ int main() {
 
     function parseGitHubChangePlan(answer) {
       const source=String(answer||"");
-      const marker=/<XYOCK_GITHUB_CHANGES>\\s*([\\s\\S]*?)\\s*<\\/XYOCK_GITHUB_CHANGES>/i;
+      const marker=/<XYOCK_GITHUB_CHANGES>\s*([\s\S]*?)\s*<\/XYOCK_GITHUB_CHANGES>/i;
       const match=source.match(marker);
       if(!match)return {visibleText:source,plan:null,error:null};
       try{
-        const raw=match[1].trim().replace(/^\\x60{3}(?:json)?\\s*/i,"").replace(/\\s*\\x60{3}$/,"");
+        const raw=match[1].trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"");
         const parsed=JSON.parse(raw);
         if(!parsed||typeof parsed!=="object"||!Array.isArray(parsed.changes)||parsed.changes.length<1||parsed.changes.length>12)
           throw new Error("파일 변경 목록이 올바르지 않습니다.");
@@ -2022,7 +2022,7 @@ int main() {
         const changes=parsed.changes.map(item=>{
           const path=String(item?.path||"");
           const content=item?.content;
-          if(!path||path.length>240||path.startsWith("/")||path.includes("..")||path.includes("\\\\")||path.split("/").some(part=>!part||part===".")||typeof content!=="string")
+          if(!path||path.length>240||path.startsWith("/")||path.includes("\\")||path.includes("\\\\")||path.split("/").some(part=>!part||part===".")||typeof content!=="string")
             throw new Error("파일 경로 또는 전체 파일 내용이 올바르지 않습니다.");
           if(seen.has(path))throw new Error("변경 목록에 같은 파일이 중복되었습니다: "+path);
           seen.add(path);
