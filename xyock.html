@@ -1668,6 +1668,40 @@ int main() {
 })();
 </script>
 
+
+<script id="xy-login-click-repair">
+(() => {
+  const open = () => {
+    const modal = document.getElementById("loginModal");
+    if (!modal) return;
+    if (typeof window.openLoginModal === "function") {
+      window.openLoginModal();
+    } else {
+      document.querySelectorAll(".modal.show").forEach(node => node.classList.remove("show"));
+      modal.classList.add("show");
+      modal.style.display = "flex";
+      modal.style.zIndex = "100001";
+    }
+  };
+  document.addEventListener("click", event => {
+    const button = event.target.closest("#loginBtn");
+    if (!button) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    open();
+  }, true);
+  window.addEventListener("error", event => {
+    if (event.target && event.target.tagName === "SCRIPT") {
+      console.error("xyock script failed to load:", event.target.src);
+    }
+  }, true);
+})();
+</script>
+<style id="xy-login-modal-visibility-repair">
+#loginModal.show{display:flex!important;position:fixed!important;inset:0!important;z-index:100001!important;align-items:center!important;justify-content:center!important}
+#loginModal.show .modal-content{position:relative!important;z-index:100002!important;visibility:visible!important;opacity:1!important}
+</style>
+
 </body>
 </html>`,
           button: `<button onclick="alert('Hello!')">Click me</button>`,
