@@ -912,7 +912,7 @@ header .auth-col{margin-left:auto!important}
     <div class="header-icons">
       <span class="mode-indicator" id="modeIndicator">xyock</span>
       <div class="auth-col">
-        <button class="icon-btn" id="historyBtn" type="button" aria-label="대화 기록" title="대화 기록" onclick="openHistoryModal()">◷</button>
+        <button class="icon-btn" id="historyBtn" type="button" aria-label="대화 기록" title="대화 기록">◷</button>
         <button class="login-btn" id="loginBtn" type="button" onclick="if(typeof openLoginModal==='function')openLoginModal();else document.getElementById('loginModal')?.classList.add('show')">login</button>
       </div>
     </div>
@@ -2237,7 +2237,7 @@ int main() {
       }
       list.textContent = "불러오는 중…";
       try {
-        const res = await fetch(CONVERSATIONS_URL + "?select=id,title,updated_at&order=updated_at.desc&limit=100", {
+        const res = await fetch(CONVERSATIONS_URL + "?select=id,title,updated_at&user_id=eq." + encodeURIComponent(session.user_id) + "&order=updated_at.desc&limit=100", {
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token }
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -2255,7 +2255,7 @@ int main() {
           del.type = "button"; del.className = "history-delete"; del.textContent = "삭제";
           del.addEventListener("click", async () => {
             if (!confirm("이 대화를 삭제할까요?")) return;
-            const dr = await fetch(CONVERSATIONS_URL + "?id=eq." + encodeURIComponent(row.id), {
+            const dr = await fetch(CONVERSATIONS_URL + "?id=eq." + encodeURIComponent(row.id) + "&user_id=eq." + encodeURIComponent(session.user_id), {
               method: "DELETE",
               headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token }
             });
@@ -2274,7 +2274,7 @@ int main() {
       try {
         if (!session?.user_id || !await ensureSession()) throw new Error("로그인이 필요합니다.");
         await saveQueue;
-        const res = await fetch(CONVERSATIONS_URL + "?select=id,title,messages&id=eq." + encodeURIComponent(id) + "&limit=1", {
+        const res = await fetch(CONVERSATIONS_URL + "?select=id,title,messages&id=eq." + encodeURIComponent(id) + "&user_id=eq." + encodeURIComponent(session.user_id) + "&limit=1", {
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token }
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -2811,6 +2811,16 @@ int main() {
     }
 
     init();
+    // Bind the history control directly instead of relying on inline HTML handlers.
+    window.openHistoryModal = openHistoryModal;
+    document.getElementById("historyBtn")?.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      openHistoryModal();
+    });
+    document.getElementById("historyCloseBtn")?.addEventListener("click", () => {
+      document.getElementById("historyModal")?.classList.remove("show");
+    });
   </script>
 
 <style id="xy-profile-popups">
