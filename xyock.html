@@ -1712,7 +1712,8 @@ int main() {
         // 질문 본문(4,000자 제한)과 분리해 실제 저장소 파일을 텍스트 첨부로 전달합니다.
         if (wantsRepoContext && session && await ensureSession()) {
           try {
-            const inspected = await githubActionApi("inspect", { repo: "xyock/xyock" });
+            const contextRepo = document.getElementById("ghRepoSelect")?.value || "xyock/xyock";
+            const inspected = await githubActionApi("inspect", { repo: contextRepo });
             const selectedFiles = (inspected.selected || []).slice(0, 6);
             repoAttachments = selectedFiles.map(file => ({
               name: "GitHub/" + file.path,
