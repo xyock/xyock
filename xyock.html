@@ -1878,6 +1878,10 @@ int main() {
         : "맞춤법 검사: 문제 없습니다.";
     }
 
+    function isGitHubEditIntent(text) {
+      return /(수정|고쳐|고치|추가|삭제|제거|변경|바꿔|구현|만들|작성해|생성해|적용|반영|커밋|푸시|업데이트|리팩터링|fix|modify|edit|implement|create|update|remove|delete|refactor|commit|push)/i.test(String(text||""));
+    }
+
     async function sendMessage() {
       const input = document.getElementById("searchInput");
       const query = sanitize(input.value).trim().slice(0, MAX_INPUT_LEN);
@@ -1986,55 +1990,206 @@ int main() {
       scrollToBottom();
     }
 
+    function parseGitHubChangePlan(answer) {
+      const source=String(answer||"");
+      const marker=/<XYOCK_GITHUB_CHANGES>\\s*([\\s\\S]*?)\\s*<\\/XYOCK_GITHUB_CHANGES>/i;
+      const match=source.match(marker);
+      if(!match)return {visibleText:source,plan:null,error:null};
+      try{
+        const raw=match[1].trim().replace(/^\\x60{3}(?:json)?\\s*/i,"").replace(/\\s*\\x60{3}$/,"");
+        const parsed=JSON.parse(raw);
+        if(!parsed||typeof parsed!=="object"||!Array.isArray(parsed.changes)||parsed.changes.length<1||parsed.changes.length>12)
+          throw new Error("파일 변경 목록이 올바르지 않습니다.");
+        const seen=new Set();let totalBytes=0;
+        const changes=parsed.changes.map(item=>{
+          const path=String(item?.path||"");
+          const content=item?.content;
+          if(!path||path.length>240||path.startsWith("/")||path.includes("..")||path.includes("\\\\")||path.split("/").some(part=>!part||part===".")||typeof content!=="string")
+            throw new Error("파일 경로 또는 전체 파일 내용이 올바르지 않습니다.");
+          if(seen.has(path))throw new Error("변경 목록에 같은 파일이 중복되었습니다: "+path);
+          seen.add(path);
+          const bytes=new TextEncoder().encode(content).length;
+          if(bytes>100000)throw new Error(path+" 파일이 100 KB를 초과합니다.");
+          totalBytes+=bytes;
+          if(totalBytes>600000)throw new Error("전체 변경 내용이 600 KB를 초과합니다.");
+          return {path,content};
+        });
+        const message=String(parsed.message||"Update files").trim().slice(0,200);
+        if(!message)throw new Error("커밋 메시지가 비어 있습니다.");
+        return {visibleText:source.replace(match[0],"").trim(),plan:{message,changes},error:null};
+      }catch(error){
+        return {visibleText:source.replace(match[0],"").trim(),plan:null,error:error.message||"변경안을 해석하지 못했습니다."};
+      }
+    }
+
+    function addGitHubCommitApprovalCard(bubble, request, plan) {
+      const card=document.createElement("section");
+      card.className="xy-chat-commit-card";
+      const title=document.createElement("div");
+      title.className="xy-commit-title";
+      title.textContent="GitHub commit review";
+      const meta=document.createElement("div");
+      meta.className="xy-commit-meta";
+      meta.textContent=request.repo+" · "+(request.payload?.branch||"default branch")+" · "+plan.changes.length+"개 파일";
+      const message=document.createElement("div");
+      message.className="xy-commit-meta";
+      message.textContent="커밋 메시지: "+plan.message;
+      const files=document.createElement("div");
+      files.className="xy-commit-files";
+      plan.changes.forEach(change=>{
+        const details=document.createElement("details");
+        const summary=document.createElement("summary");
+        summary.textContent=change.path;
+        const pre=document.createElement("pre");
+        pre.textContent=change.content;
+        details.append(summary,pre);
+        files.append(details);
+      });
+      const status=document.createElement("div");
+      status.className="xy-commit-status";
+      status.textContent="변경 내용을 확인한 뒤 승인하면 하나의 커밋으로 반영됩니다. 승인 대기는 10분 동안 유지됩니다.";
+      const actions=document.createElement("div");
+      actions.className="xy-commit-actions";
+      const commit=document.createElement("button");
+      commit.type="button";
+      commit.textContent="검토 후 커밋";
+      const reject=document.createElement("button");
+      reject.type="button";
+      reject.className="secondary";
+      reject.textContent="거부";
+      actions.append(commit,reject);
+      card.append(title,meta,message,files,status,actions);
+      bubble.append(card);
+      commit.addEventListener("click",async()=>{
+        if(!confirm(request.repo+"의 "+plan.changes.length+"개 파일을 "+(request.payload?.branch||"기본 브랜치")+"에 커밋할까요?"))return;
+        commit.disabled=true;reject.disabled=true;
+        status.textContent="승인 및 커밋 중…";
+        try{
+          await githubActionApi("approve",{id:request.id});
+          const result=await githubActionApi("execute",{id:request.id});
+          if(result.status!=="completed")throw new Error(result.error||"GitHub 커밋이 완료되지 않았습니다.");
+          const commitResult=result.result||{};
+          status.textContent="커밋 완료 · "+(commitResult.branch||request.payload?.branch||"");
+          if(commitResult.commit)status.textContent+=" · "+String(commitResult.commit).slice(0,7);
+          if(commitResult.html_url){
+            const link=document.createElement("a");
+            link.href=commitResult.html_url;
+            link.target="_blank";
+            link.rel="noopener noreferrer";
+            link.textContent="GitHub 커밋 열기";
+            card.append(link);
+          }
+          actions.remove();
+          queueSaveConversation();
+          showToast("GitHub 커밋을 완료했습니다.");
+        }catch(error){
+          status.textContent="커밋 실패: "+(error.message||"알 수 없는 오류");
+          commit.disabled=false;
+          reject.disabled=false;
+          showToast("GitHub 커밋 실패");
+        }
+        scrollToBottom();
+      });
+      reject.addEventListener("click",async()=>{
+        if(!confirm("이 GitHub 변경 요청을 거부할까요?"))return;
+        commit.disabled=true;reject.disabled=true;
+        try{
+          await githubActionApi("reject",{id:request.id});
+          status.textContent="변경 요청을 거부했습니다. 저장소에는 아무것도 반영되지 않았습니다.";
+          actions.remove();
+          queueSaveConversation();
+        }catch(error){
+          status.textContent="거부 처리 실패: "+(error.message||"");
+          commit.disabled=false;reject.disabled=false;
+        }
+      });
+      scrollToBottom();
+      queueSaveConversation();
+      return card;
+    }
+
     async function askLocalxyock(question, attachments = []) {
       const pending = appendMessage("ai", "xyock is responding…");
       pending.parentElement?.classList.add("thinking");
 
       try {
-        // 이전 대화의 최근 흐름을 함께 전달해 "그거", "아까 말한 것" 같은 후속 질문을 이해합니다.
         const recentHistory = currentMessages()
           .filter(message => message.content !== "xyock is responding…")
           .slice(-14)
           .slice(0, -1);
         const historyText = recentHistory.map(message =>
           (message.role === "user" ? "사용자" : "XYOCK") + ": " + message.content.slice(0, 650)
-        ).join("\n");
+        ).join("\\n");
         const contextInstruction = historyText
-          ? "[이전 대화 문맥]\n" + historyText +
-            "\n[문맥 사용 지침]\n현재 질문은 위 대화의 연속일 수 있다. '그거', '아까 것', '그렇게', '수정해' 같은 표현은 앞선 대화에서 지칭 대상을 찾아 해석하라. 이미 제공된 정보나 합의된 사항을 다시 묻지 말고, 현재 질문과 이전 대화를 함께 고려해 자연스럽게 답하라. 이전 대화에 없는 사실은 지어내지 마라.\n\n"
+          ? "[이전 대화 문맥]\\n" + historyText +
+            "\\n[문맥 사용 지침]\\n현재 질문은 위 대화의 연속일 수 있다. '그거', '아까 것', '그렇게', '수정해' 같은 표현은 앞선 대화에서 지칭 대상을 찾아 해석하라. 이미 제공된 정보나 합의된 사항을 다시 묻지 말고, 현재 질문과 이전 대화를 함께 고려해 자연스럽게 답하라. 이전 대화에 없는 사실은 지어내지 마라.\\n\\n"
           : "";
         const savedMemories = window.__xyockSecretMode ? [] : getLongTermMemories();
         const memoryContext = savedMemories.length
-          ? "[사용자가 이전에 영구 기억해 달라고 요청한 선호 및 지침]\n" + savedMemories.map((item, index) => (index + 1) + ". " + item).join("\n") + "\n이 지침을 현재 대화와 이후 대화에서도 자연스럽게 반영하라. 현재 요청과 충돌하면 현재 요청을 우선하라.\n\n"
+          ? "[사용자가 이전에 영구 기억해 달라고 요청한 선호 및 지침]\\n" + savedMemories.map((item, index) => (index + 1) + ". " + item).join("\\n") + "\\n이 지침을 현재 대화와 이후 대화에서도 자연스럽게 반영하라. 현재 요청과 충돌하면 현재 요청을 우선하라.\\n\\n"
           : "";
         let aiQuestion = (memoryContext + contextInstruction + "[현재 질문]\\n" + question).slice(0, 3900);
         let repoAttachments = [];
-        const wantsRepoContext = /github|저장소|레포|repo|파일 목록|코드|코딩|앱을 만들|웹사이트|프로젝트|수정해|구현해/i.test(question);
+        const wantsGitHubCommit = !window.__xyockSecretMode && !!session && isGitHubEditIntent(question);
+        const wantsRepoContext = /github|저장소|레포|repo|파일 목록|코드|코딩|앱|웹사이트|프로젝트/i.test(question) || isGitHubEditIntent(question);
+        let contextRepo = "";
+        let githubCommitReady = false;
+        let githubBlockedReason = "";
 
-        // 질문 본문(4,000자 제한)과 분리해 실제 저장소 파일을 텍스트 첨부로 전달합니다.
         if (!window.__xyockSecretMode && wantsRepoContext && session && await ensureSession()) {
-          try {
-            const contextRepo = document.getElementById("ghRepoSelect")?.value || "xyock/xyock";
-            const inspected = await githubActionApi("inspect", { repo: contextRepo });
-            const selectedFiles = (inspected.selected || []).slice(0, 6);
-            repoAttachments = selectedFiles.map(file => ({
-              name: "GitHub/" + file.path,
-              type: "text/plain",
-              text: String(file.content || "").slice(0, 9000)
-            }));
-            const fileList = (inspected.files || []).slice(0, 100).join(", ");
-            aiQuestion = [
-              question,
-              "",
-              "[실제 GitHub 저장소 읽기 결과]",
-              "저장소: " + inspected.repo + " / 브랜치: " + inspected.branch,
-              "파일 목록: " + fileList,
-              "실제 파일 내용은 별도 텍스트 첨부로 전달했다. 첨부 파일을 먼저 읽고 답하라.",
-              "읽지 않은 파일 내용을 추측하지 말고, 실제로 확인한 파일과 확인하지 못한 파일을 구분하라. 변경 작업은 사용자의 요청 범위에서만 수행하라."
-            ].join("\n").slice(0, 3900);
-          } catch (githubError) {
-            aiQuestion += "\n\n[GitHub 저장소 읽기 실패: " + githubError.message + "]. 저장소를 읽었다고 주장하지 말고 연결 상태 문제를 설명해.";
+          if (!isGitHubAccountConnected()) {
+            githubBlockedReason = "GitHub 플러그인에서 GitHub 계정을 먼저 연결해 주세요.";
+          } else {
+            try {
+              const repositories = await loadGitHubRepositories();
+              if (!repositories.length) throw new Error("GitHub App에 설치된 저장소가 없습니다.");
+              const preferred = selectedGitHubRepo();
+              contextRepo = repositories.some(item => item.full_name === preferred)
+                ? preferred
+                : repositories.find(item => item.full_name.toLowerCase() === "xyock/xyock")?.full_name || repositories[0].full_name;
+              const select = document.getElementById("ghRepoSelect");
+              if (select) select.value = contextRepo;
+              localStorage.setItem(githubRepoStorageKey(),contextRepo);
+
+              const inspected = await githubActionApi("inspect", { repo: contextRepo });
+              const selectedFiles = (inspected.selected || []).slice(0, 6);
+              repoAttachments = selectedFiles.map(file => ({
+                name: "GitHub/" + file.path,
+                type: "text/plain",
+                text: String(file.content || "").slice(0, 9000)
+              }));
+              const fileList = (inspected.files || []).slice(0, 70).join(", ");
+              githubCommitReady = wantsGitHubCommit;
+              const instructions = wantsGitHubCommit
+                ? [
+                    "[XYOCK GITHUB COMMIT CONTRACT]",
+                    "The user explicitly requested changes to this connected repository. Work only from the actual repository file list and attached file contents. Do not invent file contents for files that were not inspected.",
+                    "Return a concise Korean summary, then exactly one machine-readable block using these exact tags:",
+                    "<XYOCK_GITHUB_CHANGES>",
+                    "{\"message\":\"short commit message\",\"changes\":[{\"path\":\"relative/path\",\"content\":\"COMPLETE replacement file content\"}]}",
+                    "</XYOCK_GITHUB_CHANGES>",
+                    "The changes array may contain up to 12 files. Each content must be the complete UTF-8 file content, not a diff or partial patch. Keep unrelated code and existing behavior intact. Never say the files are committed; they are only a proposal until the user approves the commit card."
+                  ].join("\\n")
+                : "실제 파일 내용을 읽고 답하라. 파일을 읽었다고 주장하지 말고, 확인한 파일과 확인하지 못한 파일을 구분하라.";
+              aiQuestion = [
+                question.slice(0, 1300),
+                "[실제 GitHub 저장소 읽기 결과]",
+                "저장소: " + inspected.repo + " / 브랜치: " + inspected.branch,
+                "파일 목록: " + fileList,
+                "선택된 파일들의 실제 내용은 GitHub/ 첨부 파일로 전달했다.",
+                instructions
+              ].join("\\n\\n").slice(0, 3900);
+            } catch (githubError) {
+              githubBlockedReason = githubError.message || "GitHub 저장소에 연결하지 못했습니다.";
+            }
           }
+        } else if (wantsGitHubCommit) {
+          githubBlockedReason = "GitHub에 커밋하려면 xyock 로그인과 GitHub 계정 연결이 필요합니다.";
+        }
+
+        if (wantsGitHubCommit && !githubCommitReady) {
+          aiQuestion += "\\n\\n[GitHub 연결 상태] " + githubBlockedReason +
+            " 저장소를 수정하거나 커밋했다고 말하지 말고, 연결이 필요하다고 설명하라.";
         }
 
         const toneKey = (() => { try { return localStorage.getItem("xyock_account_tone_v1:" + (session?.user_id || "guest")) || "balanced"; } catch { return "balanced"; } })();
@@ -2046,9 +2201,9 @@ int main() {
           concise: "Be concise and prioritize the key answer; avoid unnecessary elaboration.",
           detailed: "Explain carefully with useful context and clear step-by-step structure."
         };
-        aiQuestion = "[XYOCK STYLE SETTINGS]\n" + (toneInstructions[toneKey] || toneInstructions.balanced) +
-          (accountName ? "\nAddress the user as " + accountName + " when natural; do not overuse the name." : "") +
-          "\nApply this style while following the current request.\n\n" + aiQuestion;
+        aiQuestion = "[XYOCK STYLE SETTINGS]\\n" + (toneInstructions[toneKey] || toneInstructions.balanced) +
+          (accountName ? "\\nAddress the user as " + accountName + " when natural; do not overuse the name." : "") +
+          "\\nApply this style while following the current request.\\n\\n" + aiQuestion;
 
         const serializedAttachments = await Promise.all(attachments.map(serializeAttachment));
         const response = await fetch(`${FN_URL}/xyock-ai`, {
@@ -2062,7 +2217,6 @@ int main() {
         });
 
         const data = await response.json().catch(() => ({}));
-
         if (!response.ok) {
           const details = data.error || `서버 오류 (${response.status})`;
           if (response.status === 429) {
@@ -2075,7 +2229,34 @@ int main() {
         }
 
         pending.parentElement?.classList.remove("thinking");
-        await typewriterText(pending, data.answer || "AI didn't respond.");
+        const answer = String(data.answer || "AI didn't respond.");
+        const parsedPlan = githubCommitReady ? parseGitHubChangePlan(answer) : {visibleText:answer,plan:null,error:null};
+        await typewriterText(pending, parsedPlan.visibleText || "변경 요청을 처리했습니다.");
+        if (githubCommitReady) {
+          if (parsedPlan.plan) {
+            try {
+              const response = await githubActionApi("request", {
+                repo: contextRepo,
+                action_type: "commit_changes",
+                target_path: null,
+                payload: parsedPlan.plan
+              });
+              addGitHubCommitApprovalCard(pending, response.request, parsedPlan.plan);
+            } catch (requestError) {
+              const note=document.createElement("div");
+              note.className="xy-commit-status";
+              note.textContent="GitHub 승인 요청을 만들지 못했습니다: "+(requestError.message||"알 수 없는 오류");
+              pending.append(note);
+            }
+          } else {
+            const note=document.createElement("div");
+            note.className="xy-commit-status";
+            note.textContent=parsedPlan.error
+              ? "AI 변경안을 GitHub 승인 형식으로 읽지 못했습니다: "+parsedPlan.error
+              : "AI가 이번 요청에 대한 커밋 가능한 전체 파일 변경안을 만들지 않았습니다. 필요한 파일 경로와 변경 내용을 더 구체적으로 요청해 주세요.";
+            pending.append(note);
+          }
+        }
       } catch (error) {
         pending.parentElement?.classList.remove("thinking");
         pending.textContent = `xyock에 연결하지 못했습니다. ${error.message || "Supabase Edge Function error."}`;
