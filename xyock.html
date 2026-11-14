@@ -3135,8 +3135,12 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  document.addEventListener("click",event=>{
    const target=event.target instanceof Element?event.target:null;
    if(!target)return;
+   const menuHistory=target.closest('#xyMenu [data-xy-go="history"]');
+   if(menuHistory){event.preventDefault();event.stopImmediatePropagation();document.getElementById("xyMenu")?.classList.remove("open");if(typeof window.openHistoryModal==="function")window.openHistoryModal();else window.xyockToast?.("대화 기록 기능을 초기화하지 못했습니다. 새로고침해 주세요.");return}
+   const menuPin=target.closest('#xyMenu [data-xy-go="pin"]');
+   if(menuPin){event.preventDefault();event.stopImmediatePropagation();document.getElementById("xyMenu")?.classList.remove("open");if(typeof window.xyockToggleCurrentPin==="function")window.xyockToggleCurrentPin();else window.xyockToast?.("핀 기능을 초기화하지 못했습니다. 새로고침해 주세요.");return}
    const history=target.closest("#historyBtn");
-   if(history){event.preventDefault();event.stopImmediatePropagation();window.openHistoryModal?.();return}
+   if(history){event.preventDefault();event.stopImmediatePropagation();if(typeof window.openHistoryModal==="function")window.openHistoryModal();else window.xyockToast?.("대화 기록 기능을 초기화하지 못했습니다. 새로고침해 주세요.");return}
    const currentPin=target.closest("#xyPinCurrent");
    if(currentPin){event.preventDefault();event.stopImmediatePropagation();handlePin();return}
    const plugins=target.closest("#xySidebarPlugins");
