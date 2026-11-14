@@ -898,7 +898,7 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
     </div>
   </header>
 
-<section class="xy-screen" id="xyMenu"><div class="xy-screen-head"><div class="xy-screen-title" data-i18n="menu">메뉴</div><button class="xy-close" data-xy-close="xyMenu">닫기 ✕</button></div><nav class="xy-menu-list"><button class="xy-menu-link xy-menu-newchat" data-xy-go="newchat"><span class="xy-menu-link-label"><svg class="xy-menu-newchat-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M11.8 3.2H4.7A1.7 1.7 0 0 0 3 4.9v10.4A1.7 1.7 0 0 0 4.7 17h10.4a1.7 1.7 0 0 0 1.7-1.7V8.2M8 12l.5-2.5 7.7-7.7a1.8 1.8 0 0 1 2.5 2.5L11 11.9 8 12Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="newchat">새 대화</span></span><span>›</span></button><div class="xy-nav-label">WORKSPACE</div><button class="xy-menu-link" data-xy-go="project"><span>⌂　Project</span><span>›</span></button><button class="xy-menu-link" data-xy-go="codes"><span>⌘　Code</span><span>›</span></button><button class="xy-menu-link" data-xy-go="plugins"><span>⌘　Plugins</span><span>›</span></button><button class="xy-menu-link" data-xy-go="review"><span>✓　Review</span><span>›</span></button><div class="xy-nav-label">PERSONAL</div><button class="xy-menu-link" data-xy-go="secret"><span>◉　Secret Chat</span><span class="xy-secret-tag">PRIVATE SESSION</span></button><button class="xy-menu-link" data-xy-go="readme"><span>Documentation</span><span>↗</span></button></nav><div class="xy-menu-footer"><button data-xy-go="account">계정 설정</button></div></section>
+<section class="xy-screen" id="xyMenu"><div class="xy-screen-head"><div class="xy-screen-title" data-i18n="menu">메뉴</div><button class="xy-close" data-xy-close="xyMenu">닫기 ✕</button></div><nav class="xy-menu-list"><button class="xy-menu-link xy-menu-newchat" data-xy-go="newchat"><span class="xy-menu-link-label"><svg class="xy-menu-newchat-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M11.8 3.2H4.7A1.7 1.7 0 0 0 3 4.9v10.4A1.7 1.7 0 0 0 4.7 17h10.4a1.7 1.7 0 0 0 1.7-1.7V8.2M8 12l.5-2.5 7.7-7.7a1.8 1.8 0 0 1 2.5 2.5L11 11.9 8 12Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="newchat">새 대화</span></span><span>›</span></button><div class="xy-nav-label">WORKSPACE</div><button class="xy-menu-link" data-xy-go="project"><span>⌂　Project</span><span>›</span></button><button class="xy-menu-link" data-xy-go="codes"><span>⌘　Code</span><span>›</span></button><button class="xy-menu-link" data-xy-go="plugins"><span>⌘　Plugins</span><span>›</span></button><button class="xy-menu-link" data-xy-go="review"><span>✓　Review</span><span>›</span></button><div class="xy-nav-label">PERSONAL</div><button class="xy-menu-link" data-xy-go="secret"><span>◉　Secret Chat</span><span class="xy-secret-tag">PRIVATE SESSION</span></button><button class="xy-menu-link" data-xy-go="readme"><span>Documentation</span><span>↗</span></button></nav><div class="xy-menu-footer"><button type="button" id="xyProfileTrigger" class="xy-profile-trigger" aria-haspopup="true" aria-expanded="false"><span class="xy-profile-avatar" id="xyProfileAvatar">◉</span><span class="xy-profile-identity"><strong id="xyProfileName">로그인</strong><small id="xyProfileProvider">계정 프로필</small></span><span class="xy-profile-chevron">⌃</span></button><div class="xy-profile-popover" id="xyProfilePopover" hidden><button type="button" data-profile-open="account">Account settings</button><button type="button" data-profile-open="personalize">Personalize</button><button type="button" id="xyProfileLoginAction">Log in</button></div></div></section>
 <section class="xy-screen" id="xyAccount"><div class="xy-screen-head"><div class="xy-screen-title">Settings</div><button class="xy-close" data-xy-close="xyAccount">닫기 ✕</button></div><div class="xy-settings">
 <div class="xy-setting-row"><span>Language</span><span><button data-xy-lang="ko">한국어</button> <button data-xy-lang="en">English</button></span></div>
 <div class="xy-setting-row"><span>Plugins</span><span>›</span></div><div class="xy-setting-panel"><p>GitHub 및 Supabase 연결과 플러그인 관리</p><button id="xyOpenPlugins" class="xy-primary">플러그인 관리 열기</button><p style="margin-top:14px"><a href="https://github.com/xyock/xyock" target="_blank" rel="noopener">xyock/xyock GitHub 저장소</a></p></div>
@@ -906,6 +906,25 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
 <div class="xy-setting-row"><span>Theme</span><span><button data-xy-theme="light">Light</button> <button data-xy-theme="dark">Dark</button></span></div>
 <div class="xy-setting-row"><span>Account</span><span>›</span></div><div class="xy-setting-panel"><p>닉네임은 환영 문구에 표시됩니다.</p><input id="xyNickname" maxlength="28" placeholder="닉네임"><button id="xySaveNickname" class="xy-primary">저장</button></div>
 </div></section>
+<div class="xy-profile-backdrop" id="xyProfileBackdrop" hidden>
+ <section class="xy-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="xyProfileDialogTitle">
+  <div class="xy-profile-dialog-head"><div><small>XYOCK PROFILE</small><h2 id="xyProfileDialogTitle">Account settings</h2></div><button type="button" id="xyProfileDialogClose" aria-label="Close">✕</button></div>
+  <div id="xyAccountEditor">
+   <label class="xy-profile-label" for="xyToneSelect">xyock 말투 설정</label>
+   <select id="xyToneSelect"><option value="balanced">Balanced · 자연스럽고 균형 있게</option><option value="friendly">Friendly · 친근하고 따뜻하게</option><option value="professional">Professional · 전문적이고 정중하게</option><option value="concise">Concise · 짧고 핵심만</option><option value="detailed">Detailed · 자세하고 단계적으로</option></select>
+   <label class="xy-profile-label" for="xyAccountName">이름 입력</label><input id="xyAccountName" maxlength="32" placeholder="xyock이 부를 이름">
+   <p class="xy-profile-hint">이 설정은 xyock의 대화 스타일과 앱 안의 호칭을 정합니다.</p>
+  </div>
+  <div id="xyPersonalizeEditor" hidden>
+   <label class="xy-profile-label" for="xyPersonalNick">계정에 표시할 닉네임</label><input id="xyPersonalNick" maxlength="28" placeholder="표시할 닉네임">
+   <label class="xy-profile-label">프로필 이미지 선택</label>
+   <div class="xy-avatar-choices" id="xyAvatarChoices"><button type="button" data-avatar="◉">◉</button><button type="button" data-avatar="✦">✦</button><button type="button" data-avatar="◈">◈</button><button type="button" data-avatar="☄">☄</button><button type="button" data-avatar="☀">☀</button><button type="button" data-avatar="🌙">🌙</button><button type="button" data-avatar="🪐">🪐</button><button type="button" data-avatar="🐈">🐈</button></div>
+   <label class="xy-profile-upload">이미지 업로드<input id="xyAvatarUpload" type="file" accept="image/*" hidden><span>파일 선택</span></label>
+   <p class="xy-profile-hint">선택한 이미지와 닉네임은 이 브라우저의 계정 프로필에 저장됩니다.</p>
+  </div>
+  <div class="xy-profile-dialog-actions"><button type="button" id="xyProfileSave">Save changes</button></div>
+ </section>
+</div>
 <section class="xy-screen" id="xyProjects" aria-label="Projects"><div class="xy-project-wrap">
 <div class="xy-screen-head"><div class="xy-screen-title">Projects</div><button class="xy-close" data-xy-close="xyProjects">Close ✕</button></div>
 <div id="xyProjectListView"><div id="xyProjectList" class="xy-project-list"></div>
@@ -1274,12 +1293,17 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
     }
 
     function toSession(data, fallbackEmail, previous = null) {
+      const user = data.user || {};
       return {
         access_token: data.access_token,
         refresh_token: data.refresh_token,
         expires_at: Math.floor(Date.now() / 1000) + (Number(data.expires_in) || 3600),
-        email: (data.user?.email || previous?.email || fallbackEmail || "").toLowerCase(),
-        user_id: data.user?.id || previous?.user_id || ""
+        email: (user.email || previous?.email || fallbackEmail || "").toLowerCase(),
+        user_id: user.id || previous?.user_id || "",
+        provider: user.app_metadata?.provider || previous?.provider || user.identities?.[0]?.provider || "email",
+        user_metadata: user.user_metadata || previous?.user_metadata || {},
+        app_metadata: user.app_metadata || previous?.app_metadata || {},
+        identities: user.identities || previous?.identities || []
       };
     }
 
@@ -1480,7 +1504,33 @@ body.xy-secret-active .mode-indicator{color:#83dfb4}
       const loggedIn = isLoggedIn();
       loginBtn.textContent = loggedIn ? "로그아웃" : "locked";
       loginBtn.classList.toggle("logged-in", loggedIn);
+      const u = session?.user_metadata || {};
+      window.__xyockSessionProfile = loggedIn ? {
+        email: session.email || "",
+        provider: session.provider || session.app_metadata?.provider || "email",
+        user_metadata: u,
+        app_metadata: session.app_metadata || {},
+        identities: session.identities || []
+      } : null;
+      window.dispatchEvent(new Event("xyock-profile-updated"));
     }
+
+    async function refreshXyockProfile() {
+      if (!session) return null;
+      try {
+        const res = await fetch(`${AUTH_URL}/user`, {
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}` }
+        });
+        if (res.ok) {
+          const user = await res.json();
+          session = { ...session, provider: user.app_metadata?.provider || session.provider || user.identities?.[0]?.provider || "email", user_metadata: user.user_metadata || session.user_metadata || {}, app_metadata: user.app_metadata || session.app_metadata || {}, identities: user.identities || session.identities || [] };
+          saveSession(session);
+          updateUI();
+        }
+      } catch (err) { console.warn("Profile refresh unavailable", err); }
+      return window.__xyockSessionProfile || null;
+    }
+    window.xyockRefreshProfile = refreshXyockProfile;
 
     function getSelectedModel() {
       try {
@@ -2689,6 +2739,28 @@ int main() {
     init();
   </script>
 
+<style id="xy-profile-popups">
+#xyMenu{position:fixed!important}
+#xyMenu .xy-menu-list{max-height:calc(100dvh - 190px);overflow-y:auto;overscroll-behavior:contain;padding-right:5px}
+#xyMenu .xy-menu-footer{position:absolute!important;left:18px!important;right:18px!important;bottom:16px!important;margin:0!important;display:block!important;z-index:30}
+#xyMenu .xy-profile-trigger{width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px!important;border:1px solid #293a33!important;border-radius:14px!important;background:#111916!important;color:#eaf2ed!important;text-align:left!important}
+.xy-profile-avatar{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#264b3b,#14251e);border:1px solid #4b8066;color:#b8f4d2;font-size:19px}
+.xy-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.xy-profile-identity{display:grid;gap:3px;min-width:0;flex:1}.xy-profile-identity strong{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.xy-profile-identity small{font-size:10px;color:#8b9a92}.xy-profile-chevron{color:#8da99a}
+#xyMenu .xy-profile-popover{position:absolute;left:0;right:0;bottom:calc(100% + 9px);padding:7px;border:1px solid #34483d;border-radius:13px;background:#111916;box-shadow:0 16px 42px #000b;z-index:50}
+#xyMenu .xy-profile-popover button{width:100%;padding:12px 13px;border:0;border-radius:8px;background:transparent;color:#e8f0eb;text-align:left;font:inherit;font-size:13px;cursor:pointer}
+#xyMenu .xy-profile-popover button:hover{background:#1b2a22}
+.xy-profile-backdrop{position:fixed;inset:0;z-index:100020;display:flex;align-items:center;justify-content:center;padding:18px;background:#0009;backdrop-filter:blur(5px)}
+.xy-profile-backdrop[hidden]{display:none!important}
+.xy-profile-dialog{width:min(430px,100%);max-height:min(82vh,620px);overflow:auto;padding:22px;border:1px solid #34443b;border-radius:18px;background:#101714;color:#edf4ef;box-shadow:0 24px 80px #000b}
+.xy-profile-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}.xy-profile-dialog-head small{font-size:9px;letter-spacing:2px;color:#7ae5b3}.xy-profile-dialog-head h2{margin-top:5px;font-size:21px;font-weight:450}.xy-profile-dialog-head>button{width:34px;height:34px;border:1px solid #35443c;border-radius:9px;background:#17211b;color:#dce8e0;cursor:pointer}
+.xy-profile-label{display:block;margin:15px 0 8px;color:#b9c9bf;font-size:12px}.xy-profile-dialog input:not([type=file]),.xy-profile-dialog select{width:100%;padding:12px 13px;border:1px solid #35443c;border-radius:10px;background:#0b100d;color:#edf4ef;font:inherit;font-size:13px;outline:none}.xy-profile-dialog input:focus,.xy-profile-dialog select:focus{border-color:#70c99a}
+.xy-profile-hint{margin-top:12px;color:#819188;font-size:11px;line-height:1.6}.xy-profile-dialog-actions{display:flex;justify-content:flex-end;margin-top:22px}.xy-profile-dialog-actions button{padding:10px 17px;border:1px solid #397454;border-radius:10px;background:#173426;color:#a9f0c7;font:inherit;font-size:13px;cursor:pointer}
+.xy-avatar-choices{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px}.xy-avatar-choices button{aspect-ratio:1;border:1px solid #34443b;border-radius:11px;background:#151e19;color:#dff5e7;font-size:19px;cursor:pointer}.xy-avatar-choices button.selected{border-color:#7ae5b3;background:#1d3b2b;box-shadow:0 0 0 1px #7ae5b3}
+.xy-profile-upload{display:flex;align-items:center;justify-content:space-between;margin-top:12px;color:#aebdb4;font-size:12px}.xy-profile-upload span{padding:8px 11px;border:1px solid #35443c;border-radius:8px;background:#17211b;cursor:pointer}
+body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#cbd9d0}body.xy-light .xy-profile-dialog input:not([type=file]),body.xy-light .xy-profile-dialog select{background:#fff;color:#17231c;border-color:#cbd9d0}body.xy-light #xyMenu .xy-profile-popover{background:#f8fbf9;border-color:#cbd9d0}body.xy-light #xyMenu .xy-profile-popover button{color:#17231c}body.xy-light #xyMenu .xy-profile-trigger{background:#fff!important;color:#17231c!important;border-color:#cbd9d0!important}
+@media(max-width:620px){#xyMenu .xy-menu-footer{left:14px!important;right:14px!important;bottom:12px!important}.xy-profile-dialog{padding:19px}.xy-avatar-choices{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
 <script id="xy-beta-settings-controller">
 (() => {
  const $=id=>document.getElementById(id),K={nick:"xyock_beta_nickname_v2",theme:"xyock_beta_theme_v2",lang:"xyock_beta_language_v2",pass:"xyock_beta_password_v2",codes:"xyock_beta_code_history_v2"};
@@ -2781,6 +2853,26 @@ int main() {
  $("xyMenuOpen")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openScreen("xyMenu")});$("xyOpenPlugins")?.addEventListener("click",()=>{$("pluginModal")?.classList.add("show");$("ghActionPanel")?.scrollIntoView({behavior:"smooth",block:"center"})});
  document.querySelectorAll("[data-xy-theme]").forEach(b=>b.addEventListener("click",()=>setTheme(b.dataset.xyTheme)));document.querySelectorAll("[data-xy-lang]").forEach(b=>b.addEventListener("click",()=>{set(K.lang,b.dataset.xyLang);applyLanguage()}));
  $("xySaveNickname")?.addEventListener("click",()=>{set(K.nick,($("xyNickname")?.value||"").trim());applyLanguage();alert(lang()==="ko"?"닉네임을 저장했습니다.":"Nickname saved.")});
+ const profileKeys={tone:"xyock_account_tone_v1",name:"xyock_account_name_v1",nickname:"xyock_profile_nickname_v1",avatar:"xyock_profile_avatar_v1"};
+ let chosenAvatar=get(profileKeys.avatar,"◉"),avatarData="";
+ const profileValue=k=>get(profileKeys[k],"");
+ function providerLabel(p){return ({github:"GitHub",google:"Google",naver:"Naver",email:"Email"})[String(p||"email").toLowerCase()]||String(p||"Account")}
+ function providerNickname(profile){const u=profile?.user_metadata||{},ids=profile?.identities||[];const id=ids.find(x=>x.provider===profile?.provider)||ids[0]||{};const d=id.identity_data||{};return u.user_name||u.preferred_username||u.full_name||u.name||d.user_name||d.preferred_username||d.full_name||d.name||(profile?.email||"").split("@")[0]||"Account"}
+ function renderProfile(){const p=window.__xyockSessionProfile||null,base=providerNickname(p),custom=profileValue("nickname"),label=custom||base;const name=$("xyProfileName"),provider=$("xyProfileProvider"),avatar=$("xyProfileAvatar"),login=$("xyProfileLoginAction");if(name)name.textContent=p?label:"로그인";if(provider)provider.textContent=p?providerLabel(p.provider):"xyock 계정";if(avatar){const saved=profileValue("avatar")||"◉";avatar.replaceChildren();if(saved.startsWith("data:image/")){const img=document.createElement("img");img.src=saved;img.alt="Profile";avatar.append(img)}else avatar.textContent=saved}if(login)login.textContent=p?"Log out":"Log in"}
+ function closeProfilePopover(){const pop=$("xyProfilePopover"),trigger=$("xyProfileTrigger");if(pop)pop.hidden=true;if(trigger)trigger.setAttribute("aria-expanded","false")}
+ function openProfileEditor(which){closeProfilePopover();const back=$("xyProfileBackdrop"),account=which==="account";$("xyProfileDialogTitle").textContent=account?"Account settings":"Personalize";$("xyAccountEditor").hidden=!account;$("xyPersonalizeEditor").hidden=account;if(account){$("xyToneSelect").value=profileValue("tone")||"balanced";$("xyAccountName").value=profileValue("name")||get(K.nick,"")}else{$("xyPersonalNick").value=profileValue("nickname");chosenAvatar=profileValue("avatar")||"◉";avatarData=chosenAvatar.startsWith("data:image/")?chosenAvatar:"";document.querySelectorAll("[data-avatar]").forEach(b=>b.classList.toggle("selected",b.dataset.avatar===chosenAvatar))}back.hidden=false}
+ $("xyProfileTrigger")?.addEventListener("click",async e=>{e.stopPropagation();const pop=$("xyProfilePopover");const open=pop.hidden;closeProfilePopover();if(open){pop.hidden=false;$("xyProfileTrigger").setAttribute("aria-expanded","true");if(window.xyockRefreshProfile)await window.xyockRefreshProfile();renderProfile()}});
+ $("xyProfilePopover")?.addEventListener("click",e=>{const b=e.target.closest("[data-profile-open]");if(b)openProfileEditor(b.dataset.profileOpen)});
+ $("xyProfileLoginAction")?.addEventListener("click",()=>{closeProfilePopover();if(window.__xyockSessionProfile){$("loginBtn")?.click()}else $("loginBtn")?.click()});
+ document.addEventListener("click",e=>{if(!e.target.closest("#xyProfileTrigger")&&!e.target.closest("#xyProfilePopover"))closeProfilePopover()});
+ $("xyProfileDialogClose")?.addEventListener("click",()=>$("xyProfileBackdrop").hidden=true);
+ $("xyProfileBackdrop")?.addEventListener("click",e=>{if(e.target.id==="xyProfileBackdrop")e.currentTarget.hidden=true});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("xyProfileBackdrop").hidden=true;closeProfilePopover()}});
+ $("xyAvatarChoices")?.addEventListener("click",e=>{const b=e.target.closest("[data-avatar]");if(!b)return;chosenAvatar=b.dataset.avatar;avatarData="";document.querySelectorAll("[data-avatar]").forEach(x=>x.classList.toggle("selected",x===b))});
+ $("xyAvatarUpload")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")){alert("이미지 파일을 선택해 주세요.");return}if(f.size>1024*1024){alert("이미지는 1 MB 이하로 선택해 주세요.");e.target.value="";return}const reader=new FileReader();reader.onload=()=>{avatarData=String(reader.result||"");chosenAvatar=avatarData;document.querySelectorAll("[data-avatar]").forEach(x=>x.classList.remove("selected"))};reader.readAsDataURL(f)});
+ $("xyProfileSave")?.addEventListener("click",()=>{if(!$("xyAccountEditor").hidden){set(profileKeys.tone,$("xyToneSelect").value);const name=$("xyAccountName").value.trim();set(profileKeys.name,name);set(K.nick,name);applyLanguage()}else{set(profileKeys.nickname,$("xyPersonalNick").value.trim());set(profileKeys.avatar,avatarData||chosenAvatar)}$("xyProfileBackdrop").hidden=true;renderProfile()});
+ window.addEventListener("xyock-profile-updated",renderProfile);
+ renderProfile();
  async function hash(p,s){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveBits"]),b=await crypto.subtle.deriveBits({name:"PBKDF2",salt:new TextEncoder().encode(s),iterations:120000,hash:"SHA-256"},k,256);return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,"0")).join("")}
  $("xyApplyPassword")?.addEventListener("click",async()=>{const p=$("xyPassword")?.value||"";if(p.length<4){alert("암호를 4자 이상 입력하세요.");return}try{const salt=Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,"0")).join("");set(K.pass,JSON.stringify({salt,hash:await hash(p,salt)}));$("xyPassword").value="";alert("암호가 저장되었습니다.")}catch{alert("이 브라우저에서는 암호 설정을 지원하지 않습니다.")}});
  $("xyRemovePassword")?.addEventListener("click",()=>{try{localStorage.removeItem(K.pass)}catch{}alert("암호를 해제했습니다.")});
