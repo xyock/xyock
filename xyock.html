@@ -357,6 +357,8 @@
     .plugin-name { color: #f1f1f1; font-weight: 600; }
     .plugin-desc { color: #888; font-size: .8em; line-height: 1.45; margin-top: 4px; }
     .plugin-status { display: inline-block; margin-top: 6px; color: #7ae5b3; font-size: .76em; }
+    .plugin-install-link { display:inline-block;margin-top:6px;color:#8fe6b8;font-size:11px;text-decoration:underline;text-underline-offset:3px; }
+    .plugin-install-link:hover { color:#b5f5d0; }
     .plugin-action { flex: 0 0 auto; border: 1px solid #3a3a3a; border-radius: 8px; padding: 8px 11px; background: #1a1a1a; color: #ddd; cursor: pointer; font: inherit; font-size: .82em; }
     .plugin-action:hover { background: #252525; border-color: #555; }
     @media (prefers-reduced-motion: reduce) { .plugin-btn { animation: none; } }
@@ -1083,8 +1085,9 @@ header::after{
           <div class="plugin-symbol" aria-label="GitHub"><svg viewBox="0 0 24 24" role="img"><path fill="#f4f4f4" d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.08c-3.1.67-3.76-1.32-3.76-1.32-.5-1.29-1.24-1.63-1.24-1.63-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 .1.77 2.2 3.32 1.57.1-.73.4-1.23.72-1.51-2.48-.28-5.09-1.24-5.09-5.53 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.44 3.05-1.14 3.05-1.14.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.3-2.61 5.25-5.1 5.52.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/></svg></div>
           <div class="plugin-info">
             <div class="plugin-name">GitHub</div>
-            <div class="plugin-desc">GitHub App이 연결된 xyock/xyock 저장소의 작업을 요청하고, 직접 승인한 작업만 실행합니다.</div>
-            <span class="plugin-status" id="githubPluginStatus">GitHub App 서버 연결 설정됨</span>
+            <div class="plugin-desc">연결한 GitHub 계정에 설치된 저장소를 일반 채팅에서 읽고, 변경 내용을 검토한 뒤 하나의 커밋으로 반영합니다.</div>
+            <span class="plugin-status" id="githubPluginStatus">GitHub 계정 연결 필요</span>
+            <a class="plugin-install-link" href="https://github.com/apps/xyock/installations/new" target="_blank" rel="noopener noreferrer">GitHub App 설치 및 저장소 권한 관리 ↗</a>
           </div>
           <button class="plugin-action" id="githubPluginConnect" type="button">계정 연결</button>
         </div>
