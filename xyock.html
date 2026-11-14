@@ -1544,7 +1544,7 @@ function setActive(value){active=!!value;window.__xyockSecretMode=active;documen
 document.addEventListener("click",e=>{const b=e.target.closest('[data-xy-go="secret"]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();setActive(!active);if(active)alert("Secret Chat을 시작했습니다. 대화 내용은 이 앱의 기록에 저장되지 않지만, AI 답변을 위해 메시지는 서버와 AI 제공자에 전송됩니다.");else alert("Secret Chat을 종료하고 화면의 임시 대화를 지웠습니다.");},true);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&active){setActive(false);}});
 })();
-</script>
+<\/script>
 </body></html>";
     System.out.println(html);
   }
