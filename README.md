@@ -4,8 +4,8 @@
 
 **A focused AI workspace for learning, writing, and building code.**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Open-7AE5B3?style=for-the-badge&logo=github)](https://xyock.github.io/lock/)
-[![Repository](https://img.shields.io/badge/GitHub-xyock%2Flock-181717?style=for-the-badge&logo=github)](https://github.com/xyock/lock)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Open-7AE5B3?style=for-the-badge&logo=github)](https://xyock.github.io/xyock/)
+[![Repository](https://img.shields.io/badge/GitHub-xyock%2Fxyock-181717?style=for-the-badge&logo=github)](https://github.com/xyock/xyock)
 
 An AI-powered chat interface that combines code assistance, conversational context, saved preferences, and a lightweight learning experience in one place.
 
@@ -33,7 +33,7 @@ The application is backed by a Supabase Edge Function, which forwards requests t
 
 ## Live application
 
-**[Launch XYOCK](https://xyock.github.io/lock/)**
+**[Launch XYOCK](https://xyock.github.io/xyock/)**
 
 The site is deployed with GitHub Pages. The frontend is served as a static web application; AI requests are handled by the configured backend function.
 
@@ -84,7 +84,7 @@ The default model and available alternatives are configured in the frontend. The
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/xyock/lock.git
+   git clone https://github.com/xyock/xyock.git
    cd lock
    ```
 
