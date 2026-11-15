@@ -2023,7 +2023,7 @@ body.xy-light .xy-work-site{background:#fff;border-color:#dce7df}
     return bytes;
   };
   const apiAction = async body => {
-    if (!window.session?.user_id || typeof ensureSession !== "function" || !await ensureSession()) {
+    if (!session?.user_id || typeof ensureSession !== "function" || !await ensureSession()) {
       throw new Error("알림은 로그인한 계정에서 사용할 수 있습니다.");
     }
     const response = await fetch(FN_URL + "/xyock-ai", {
@@ -2060,12 +2060,12 @@ body.xy-light .xy-work-site{background:#fff;border-color:#dce7df}
     enableButton.hidden = active;
     disableButton.hidden = !active;
     if (active) status.textContent = "이 기기에서 xyock 답변 완료 알림을 받고 있습니다.";
-    else if (!window.session?.user_id) status.textContent = "로그인 후 이 기기의 알림을 설정할 수 있습니다.";
+    else if (!session?.user_id) status.textContent = "로그인 후 이 기기의 알림을 설정할 수 있습니다.";
     else status.textContent = "알림이 꺼져 있습니다.";
   }
 
   enableButton.addEventListener("click", async () => {
-    if (!window.session?.user_id) {
+    if (!session?.user_id) {
       say("알림을 켜려면 먼저 로그인해 주세요.");
       if (typeof openLoginModal === "function") openLoginModal();
       return;
