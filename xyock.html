@@ -2007,15 +2007,7 @@ console.log(arr.sort((a, b) => a - b));`,
           html: `public class HTMLTest {
   public static void main(String[] args) {
     String html = "<html><body><h1>Hello from Java</h1>
-<style id="xy-compact-responding-status">
-.message.ai{flex-direction:column;align-items:flex-start}
-.xy-work-tracker{display:flex;align-items:center;gap:7px;width:auto;max-width:min(70%,680px);margin:-7px 0 0 18px;padding:0;border:0;border-radius:0;background:transparent;color:#858d88;font-size:10px;font-weight:400;line-height:1.35;letter-spacing:.01em}
-.xy-work-spinner{width:9px;height:9px;flex:0 0 9px;border-width:1.5px;border-color:rgba(150,160,153,.2);border-top-color:#91a99a}
-.xy-work-tracker[data-stage="completed"] .xy-work-current-label{color:#8fa99a}
-.xy-work-tracker[data-stage="error"] .xy-work-current-label{color:#d68b8b}
-body.xy-light .xy-work-tracker{background:transparent;border:0;color:#78847b}
-@media(max-width:620px){.xy-work-tracker{max-width:calc(100% - 24px);margin:-7px 0 0 12px;font-size:10px}}
-</style>
+
 
 </body></html>";
     System.out.println(html);
@@ -2367,107 +2359,20 @@ int main() {
       const pending = appendMessage("ai", "xyock is responding…");
       pending.parentElement?.classList.add("thinking");
 
-      const workTracker = document.createElement("div");
-      workTracker.className = "xy-work-tracker";
-      workTracker.setAttribute("aria-live", "polite");
-      workTracker.innerHTML = '<span class="xy-work-spinner" aria-hidden="true"></span><span class="xy-work-current-label">checking the request</span>';
-      pending.parentElement?.appendChild(workTracker);
-
-      const workStatusLabel = workTracker.querySelector(".xy-work-current-label");
-      const workSpinner = workTracker.querySelector(".xy-work-spinner");
-      const workSites = workTracker.querySelector(".xy-work-sites");
-      const workSitesList = workTracker.querySelector(".xy-work-sites-list");
-      const workSearchMeta = workTracker.querySelector(".xy-work-search-meta");
-      const workSearchIcon = workTracker.querySelector(".xy-work-search-icon");
-      const workSearchText = workTracker.querySelector(".xy-work-search-text");
       const workStageLabels = {
-        analyzing: "checking the request",
-        thinking: "thinking through the request",
+        analyzing: "understanding your request",
+        thinking: "thinking",
         inspecting_repo: "inspecting GitHub repo",
         searching: "searching the web",
-        reviewing: "reviewing search results",
-        search_unavailable: "preparing without web search",
-        answering: "writing a response",
-        completed: "completed",
-        error: "couldn't complete the request"
+        reviewing: "checking sources",
+        search_unavailable: "preparing an answer",
+        answering: "writing a response"
       };
+      pending.setAttribute("aria-live", "polite");
       function setWorkStage(stage) {
-        const label = workStageLabels[stage] || workStageLabels.analyzing;
-        if (workStatusLabel) workStatusLabel.textContent = label;
-        workTracker.dataset.stage = stage;
-        if (workSpinner) workSpinner.hidden = stage === "completed" || stage === "error";
-        workTracker.dataset.stage = stage;
+        if (stage === "completed" || stage === "error") return;
+        pending.textContent = workStageLabels[stage] || workStageLabels.analyzing;
       }
-      function renderWorkSearchInfo(event) {
-        if (!workSearchMeta || !workSearchText || !workSearchIcon) return;
-        const engine = String(event.engine || "Bing").slice(0, 40);
-        const query = String(event.query || "").trim().slice(0, 240);
-        if (!query) return;
-        workSearchIcon.src = "https://www.google.com/s2/favicons?domain=bing.com&sz=64";
-        workSearchIcon.onerror = () => { workSearchIcon.style.visibility = "hidden"; };
-        workSearchText.textContent = engine + "에서 검색 중 · “" + query + "”";
-        workSearchMeta.hidden = false;
-      }
-      function renderWorkSources(sources) {
-        if (!workSitesList || !workSites || !Array.isArray(sources)) return;
-        workSitesList.replaceChildren();
-        const validSources = sources.slice(0, 8).filter(source => {
-          try {
-            const url = new URL(String(source.url || ""));
-            return (url.protocol === "https:" || url.protocol === "http:") && url.hostname;
-          } catch { return false; }
-        });
-        if (!validSources.length) {
-          workSites.hidden = true;
-          return;
-        }
-        workSites.hidden = false;
-        validSources.forEach(source => {
-          const url = new URL(String(source.url));
-          const domain = String(source.domain || url.hostname).replace(/^www\./i, "").slice(0, 180);
-          const siteName = String(source.siteName || domain).slice(0, 100);
-          const card = document.createElement("a");
-          card.className = "xy-work-site";
-          card.href = url.toString();
-          card.target = "_blank";
-          card.rel = "noopener noreferrer";
-          card.title = String(source.title || siteName);
-          card.setAttribute("aria-label", siteName + " 사이트 열기");
-          const iconBox = document.createElement("span");
-          iconBox.className = "xy-work-site-icon";
-          const fallback = document.createElement("span");
-          fallback.className = "xy-work-site-fallback";
-          fallback.style.display = "none";
-          fallback.textContent = (siteName.charAt(0) || "W").toUpperCase();
-          const icon = document.createElement("img");
-          icon.alt = "";
-          icon.loading = "lazy";
-          icon.referrerPolicy = "no-referrer";
-          icon.src = "https://www.google.com/s2/favicons?domain_url=" + encodeURIComponent(url.origin) + "&sz=64";
-          icon.onerror = () => {
-            if (icon.dataset.directFallback !== "1") {
-              icon.dataset.directFallback = "1";
-              icon.src = new URL("/favicon.ico", url.origin).toString();
-            } else {
-              icon.remove();
-              fallback.style.display = "grid";
-            }
-          };
-          iconBox.append(icon, fallback);
-          const copy = document.createElement("span");
-          copy.className = "xy-work-site-copy";
-          const title = document.createElement("span");
-          title.className = "xy-work-site-title";
-          title.textContent = siteName;
-          const host = document.createElement("span");
-          host.className = "xy-work-site-domain";
-          host.textContent = String(source.title || domain).slice(0, 150);
-          copy.append(title, host);
-          card.append(iconBox, copy);
-          workSitesList.appendChild(card);
-        });
-      }
-
       try {
         const recentHistory = currentMessages()
           .filter(message => message.content !== "xyock is responding…")
@@ -2587,7 +2492,6 @@ int main() {
         const handleAIEvent = event => {
           if (!event || typeof event !== "object") return;
           if (event.type === "status") { setWorkStage(event.stage); if (event.stage === "searching") renderWorkSearchInfo(event); }
-          if (event.type === "sources") renderWorkSources(event.sources);
           if (event.type === "done") data = event;
           if (event.type === "error") streamedError = String(event.error || "AI 요청에 실패했습니다.");
         };
@@ -2638,7 +2542,6 @@ int main() {
 
         if (streamedError) throw new Error(streamedError);
         if (!data.answer) throw new Error("AI 응답 스트림이 정상적으로 끝나지 않았습니다.");
-        if (Array.isArray(data.sources)) renderWorkSources(data.sources);
         setWorkStage("answering");
         pending.parentElement?.classList.remove("thinking");
         const answer = String(data.answer || "AI didn't respond.");
