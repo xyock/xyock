@@ -1289,6 +1289,75 @@ header::after{
       });
     }
 
+    function beginUserMessageEdit(bubble, editButton) {
+      const message = bubble?.closest(".message.user");
+      if (!message || message.classList.contains("xy-message-editing")) return;
+
+      const originalText = bubble.textContent || "";
+      const editor = document.createElement("div");
+      editor.className = "xy-message-editor";
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "xy-message-edit-input";
+      textarea.setAttribute("aria-label", "메시지 편집");
+      textarea.maxLength = 4000;
+      textarea.value = originalText;
+
+      const actions = document.createElement("div");
+      actions.className = "xy-message-edit-actions";
+      const saveButton = document.createElement("button");
+      saveButton.type = "button";
+      saveButton.className = "xy-message-edit-save";
+      saveButton.textContent = "저장";
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "xy-message-edit-cancel";
+      cancelButton.textContent = "취소";
+      actions.append(saveButton, cancelButton);
+      editor.append(textarea, actions);
+
+      const finish = save => {
+        if (save) {
+          const nextText = sanitize(textarea.value).trim();
+          if (!nextText) {
+            showToast("메시지는 비워둘 수 없습니다.");
+            textarea.focus();
+            return;
+          }
+          bubble.textContent = nextText;
+        }
+
+        bubble.hidden = false;
+        editor.remove();
+        message.classList.remove("xy-message-editing");
+        editButton.hidden = false;
+
+        if (save) {
+          queueSaveConversation();
+          showToast("메시지를 수정했습니다.");
+        }
+      };
+
+      saveButton.addEventListener("click", () => finish(true));
+      cancelButton.addEventListener("click", () => finish(false));
+      textarea.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          finish(false);
+        } else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          finish(true);
+        }
+      });
+
+      bubble.hidden = true;
+      editButton.hidden = true;
+      message.classList.add("xy-message-editing");
+      message.insertBefore(editor, editButton);
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }
+
     function appendMessage(role, text, type = "normal") {
       const chat = document.getElementById("chat");
       const msg = document.createElement("div");
@@ -1299,6 +1368,16 @@ header::after{
       bubble.textContent = text;
 
       msg.appendChild(bubble);
+      if (role === "user") {
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "xy-message-edit";
+        editButton.setAttribute("aria-label", "메시지 편집");
+        editButton.title = "메시지 편집";
+        editButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14.5 5.5 4 4M4 20l4.2-.9L19.5 7.8a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="xy-message-edit-label">편집</span>';
+        editButton.addEventListener("click", () => beginUserMessageEdit(bubble, editButton));
+        msg.appendChild(editButton);
+      }
       chat.appendChild(msg);
       if (!restoringConversation && !window.__xyockSecretMode) queueSaveConversation();
       scrollToBottom();
@@ -4419,6 +4498,36 @@ body.xy-light .xy-work-site{background:#fff;border-color:#dce7df}
 })();
 </script>
 
+<style id="xy-message-edit-controls">
+.message.user{align-items:flex-start;gap:6px}
+.xy-message-edit{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 30px;width:30px;height:30px;margin-top:4px;padding:0;border:1px solid transparent;border-radius:9px;background:transparent;color:#929e96;opacity:0;pointer-events:none;cursor:pointer;transition:opacity .14s ease,background .14s ease,border-color .14s ease,color .14s ease}
+.xy-message-edit svg{display:block;width:16px;height:16px}
+.xy-message-edit:hover,.xy-message-edit:focus-visible{border-color:#39483f;background:#1a241e;color:#e8f1eb;outline:none}
+.message.user:hover .xy-message-edit,.message.user:focus-within .xy-message-edit{opacity:1;pointer-events:auto}
+.xy-message-edit[hidden]{display:none!important}
+.xy-message-editor{display:grid;gap:8px;width:min(70%,650px);min-width:min(240px,100%);box-sizing:border-box}
+.xy-message-edit-input{display:block;width:100%;min-height:90px;max-height:320px;box-sizing:border-box;resize:vertical;padding:12px 14px;border:1px solid #52685a;border-radius:13px;background:#111a15;color:#edf5ef;font:inherit;font-size:13px;line-height:1.55;outline:none}
+.xy-message-edit-input:focus{border-color:#83b99a;box-shadow:0 0 0 3px #83b99a20}
+.xy-message-edit-actions{display:flex;justify-content:flex-end;gap:7px}
+.xy-message-edit-actions button{min-width:58px;padding:7px 11px;border:1px solid #526057;border-radius:9px;background:#303a33;color:#edf3ef;font:inherit;font-size:11px;cursor:pointer}
+.xy-message-edit-actions .xy-message-edit-save{border-color:#718378;background:#46544a;color:#fff}
+.xy-message-edit-actions button:hover{filter:brightness(1.15)}
+body.xy-light .xy-message-edit{color:#68776d}
+body.xy-light .xy-message-edit:hover,body.xy-light .xy-message-edit:focus-visible{background:#edf3ef;border-color:#c9d6cd;color:#26372d}
+body.xy-light .xy-message-edit-input{background:#fff;color:#17251c;border-color:#c6d5cb}
+body.xy-light .xy-message-edit-actions button{background:#eef2ef;color:#25352b;border-color:#c7d3ca}
+body.xy-light .xy-message-edit-actions .xy-message-edit-save{background:#dce8e0;color:#1c2e23;border-color:#9eafa3}
+.message.user.xy-message-editing .bubble{display:none}
+@media(max-width:620px){
+  .message.user{flex-direction:column;align-items:flex-end;gap:3px}
+  .xy-message-edit{opacity:1;pointer-events:auto;flex:0 0 auto;width:auto;min-width:58px;height:27px;margin:0 3px 0 0;padding:0 8px;border:1px solid #35443a;border-radius:8px;background:#121a15;color:#aebbb2;font-size:10px}
+  .xy-message-edit-label{display:inline}
+  .xy-message-editor{width:min(100%,650px);min-width:0}
+  .xy-message-edit-input{min-height:82px;font-size:16px}
+}
+@media(min-width:621px){.xy-message-edit-label{display:none}}
+@media(prefers-reduced-motion:reduce){.xy-message-edit{transition:none}}
+</style>
 </body>
 
 </html>
