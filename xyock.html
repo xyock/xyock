@@ -1246,6 +1246,8 @@ header::after{
     let currentConversationContext = { id: null, userId: null };
     let restoringConversation = false;
     let saveQueue = Promise.resolve();
+    let previousConversationSearchCache = { userId: null, loadedAt: 0, rows: [] };
+    const PREVIOUS_CONVERSATION_CACHE_MS = 30_000;
     const AUTH_URL = `${SUPABASE_URL}/auth/v1`;
     const FN_URL = `${SUPABASE_URL}/functions/v1`;
 
@@ -1340,7 +1342,7 @@ header::after{
       const message = bubble?.closest(".message.user");
       if (!message || message.classList.contains("xy-message-editing")) return;
 
-      const originalText = bubble.textContent || "";
+      const originalText = bubble.dataset.rawContent ?? bubble.textContent ?? "";
       const editor = document.createElement("div");
       editor.className = "xy-message-editor";
 
@@ -1371,7 +1373,9 @@ header::after{
             textarea.focus();
             return;
           }
-          bubble.textContent = nextText;
+          bubble.dataset.rawContent = nextText;
+          bubble.replaceChildren();
+          renderInlineCodeSync(bubble, nextText);
         }
 
         bubble.hidden = false;
@@ -1412,6 +1416,7 @@ header::after{
 
       const bubble = document.createElement("div");
       bubble.className = "bubble";
+      bubble.dataset.rawContent = String(text ?? "");
       if (role === "user") renderInlineCodeSync(bubble, text);
       else bubble.textContent = text;
 
@@ -1455,6 +1460,7 @@ header::after{
 
     function addAIMessage(text, type = "normal") {
       const bubble = appendMessage("ai", "", type);
+      bubble.dataset.rawContent = String(text ?? "");
       renderAIContent(bubble, text).then(() => {
         appendGuestLoginFooter(bubble);
         if (!restoringConversation && !window.__xyockSecretMode) queueSaveConversation();
@@ -1869,6 +1875,7 @@ header::after{
       await revokeRemoteSession();
       currentConversationId = null;
       currentConversationUserId = null;
+      previousConversationSearchCache = { userId: null, loadedAt: 0, rows: [] };
       startNewConversation();
       clearSession();
       updateUI();
@@ -2628,14 +2635,40 @@ int main() {
           (message.role === "user" ? "사용자" : "XYOCK") + ": " + message.content.slice(0, 650)
         ).join("\\n");
         const contextInstruction = historyText
-          ? "[이전 대화 문맥]\\n" + historyText +
+          ? "[현재 채팅 안의 이전 문맥]\\n" + historyText +
             "\\n[문맥 사용 지침]\\n현재 질문은 위 대화의 연속일 수 있다. '그거', '아까 것', '그렇게', '수정해' 같은 표현은 앞선 대화에서 지칭 대상을 찾아 해석하라. 이미 제공된 정보나 합의된 사항을 다시 묻지 말고, 현재 질문과 이전 대화를 함께 고려해 자연스럽게 답하라. 이전 대화에 없는 사실은 지어내지 마라.\\n\\n"
           : "";
-        const savedMemories = window.__xyockSecretMode ? [] : getLongTermMemories();
+        let previousConversationContext = null;
+        let previousConversationSearchStatus = "";
+        if (!window.__xyockSecretMode && session?.user_id && isPreviousConversationRecallRequest(question)) {
+          try {
+            setWorkStage("searching_previous_chats");
+            previousConversationContext = await findRelevantPreviousConversations(question);
+            previousConversationSearchStatus = previousConversationContext.status || "";
+          } catch (memorySearchError) {
+            console.warn("Previous conversation search failed:", memorySearchError);
+            previousConversationSearchStatus = "error";
+          }
+        }
+        const previousConversationInstruction = previousConversationContext?.text
+          ? "[저장된 과거 대화 검색 완료]\\n계정의 실제 저장 대화에서 검색한 내용이 'XYOCK 이전 대화 검색 결과.txt' 첨부 파일에 포함되어 있다. 그 기록을 먼저 읽고 현재 질문에 실제로 반영하라. 관련 대화의 제목과 내용을 근거로 답하고, 서로 다른 과거 대화의 내용을 섞지 마라. 기록에 없는 내용은 기억하는 척하거나 지어내지 마라.\\n\\n"
+          : previousConversationSearchStatus === "empty"
+            ? "[저장된 과거 대화 검색 결과] 이전 대화 기록이 없다. 기억한다고 주장하지 말고, 찾을 수 있는 저장 대화가 없다고 말하라.\\n\\n"
+            : previousConversationSearchStatus === "login_required"
+              ? "[저장된 과거 대화 검색 결과] 과거 대화 검색에는 xyock 로그인이 필요하다.\\n\\n"
+              : previousConversationSearchStatus === "error"
+                ? "[저장된 과거 대화 검색 결과] 기록을 불러오지 못했다. 기억한다고 주장하지 말고, 불러오기 실패를 솔직히 알리라.\\n\\n"
+                : "";
+                const savedMemories = window.__xyockSecretMode ? [] : getLongTermMemories();
         const memoryContext = savedMemories.length
           ? "[사용자가 이전에 영구 기억해 달라고 요청한 선호 및 지침]\\n" + savedMemories.map((item, index) => (index + 1) + ". " + item).join("\\n") + "\\n이 지침을 현재 대화와 이후 대화에서도 자연스럽게 반영하라. 현재 요청과 충돌하면 현재 요청을 우선하라.\\n\\n"
           : "";
-        let aiQuestion = (memoryContext + contextInstruction + "[현재 질문]\\n" + question).slice(0, 3900);
+        const sharedConversationContext = [
+          memoryContext.slice(0, 650),
+          contextInstruction.slice(0, 850),
+          previousConversationInstruction
+        ].filter(Boolean).join("\\n\\n").slice(0, 2200);
+        let aiQuestion = (sharedConversationContext + "[현재 질문]\\n" + question).slice(0, 3900);
         let repoAttachments = [];
         const wantsGitHubCommit = !window.__xyockSecretMode && !!session && isGitHubEditIntent(question);
         const wantsRepoContext = /github|저장소|레포|repo|파일 목록|코드|코딩|앱|웹사이트|프로젝트/i.test(question) || isGitHubEditIntent(question);
@@ -2680,7 +2713,8 @@ int main() {
                   ].join("\\n")
                 : "실제 파일 내용을 읽고 답하라. 파일을 읽었다고 주장하지 말고, 확인한 파일과 확인하지 못한 파일을 구분하라.";
               aiQuestion = [
-                question.slice(0, 1300),
+                sharedConversationContext,
+                "[현재 질문]\\n" + question.slice(0, 1000),
                 "[실제 GitHub 저장소 읽기 결과]",
                 "저장소: " + inspected.repo + " / 브랜치: " + inspected.branch,
                 "파일 목록: " + fileList,
@@ -2714,6 +2748,24 @@ int main() {
           "\\nApply this style while following the current request.\\n\\n" + aiQuestion;
 
         const serializedAttachments = await Promise.all(attachments.map(serializeAttachment));
+        const requestAttachments = [...serializedAttachments];
+        if (previousConversationContext?.text) {
+          if (requestAttachments.length < 4) {
+            requestAttachments.push({
+              name: "XYOCK 이전 대화 검색 결과.txt",
+              type: "text/plain",
+              text: previousConversationContext.text
+            });
+          } else {
+            const excerpt = previousConversationContext.text.slice(0, 1150);
+            const tail = "\\n\\n[저장된 이전 대화 발췌]\\n" + excerpt;
+            aiQuestion = aiQuestion.slice(0, Math.max(0, 3900 - tail.length)) + tail;
+          }
+        }
+        for (const repoAttachment of repoAttachments) {
+          if (requestAttachments.length >= 4) break;
+          requestAttachments.push(repoAttachment);
+        }
         let durableConversationId = null;
         if (!window.__xyockSecretMode && session?.user_id) {
           await saveQueue;
@@ -2730,7 +2782,7 @@ int main() {
             "apikey": SUPABASE_ANON_KEY,
             "Authorization": "Bearer " + (isLoggedIn() ? session.access_token : SUPABASE_ANON_KEY)
           },
-          body: JSON.stringify({ q: aiQuestion, model: getSelectedModel(), reasoning_level: window.xyockGetReasoningLevel?.() || "balanced", conversation_id: durableConversationId, attachments: [...serializedAttachments, ...repoAttachments].slice(0, 4) })
+          body: JSON.stringify({ q: aiQuestion, model: getSelectedModel(), reasoning_level: window.xyockGetReasoningLevel?.() || "balanced", conversation_id: durableConversationId, attachments: requestAttachments })
         });
 
         let data = {};
@@ -2793,7 +2845,8 @@ int main() {
         const answer = String(data.answer || "AI didn't respond.");
         const parsedPlan = githubCommitReady ? parseGitHubChangePlan(answer) : {visibleText:answer,plan:null,error:null};
         pending.replaceChildren();
-        await renderAIContent(pending, parsedPlan.visibleText || "변경 요청을 처리했습니다.");
+        pending.dataset.rawContent = parsedPlan.visibleText || "변경 요청을 처리했습니다.";
+        await renderAIContent(pending, pending.dataset.rawContent);
         setWorkStage("completed");
         if (githubCommitReady) {
           if (parsedPlan.plan) {
@@ -2825,6 +2878,7 @@ int main() {
         setWorkStage("error");
         pending.parentElement?.classList.remove("thinking");
         pending.textContent = "xyock에 연결하지 못했습니다. " + (error.message || "Supabase Edge Function error.");
+        pending.dataset.rawContent = pending.textContent;
         pending.parentElement?.classList.add("error");
       }
 
@@ -3007,13 +3061,122 @@ int main() {
 
     function currentMessages() {
       return Array.from(document.querySelectorAll("#chat .message")).map(el => {
-        const copy = el.querySelector(".bubble")?.cloneNode(true);
+        const bubble = el.querySelector(".bubble");
+        const copy = bubble?.cloneNode(true);
         copy?.querySelectorAll(".xy-chat-commit-card").forEach(card => card.remove());
+        const rawContent = bubble?.dataset?.rawContent;
         return {
           role: el.classList.contains("user") ? "user" : "assistant",
-          content: copy?.textContent || ""
+          content: typeof rawContent === "string" ? rawContent : (copy?.textContent || "")
         };
       }).filter(m => m.content.trim()).slice(-200);
+    }
+
+
+    function isPreviousConversationRecallRequest(value) {
+      return /(?:이전\s*(?:대화|채팅)|전\s*(?:대화|채팅)|예전\s*(?:대화|채팅)|지난번|저번|아까|전에\s*(?:말한|했던|만든|요청|보낸|하던)|기억(?:나|해|하)|previous\s+(?:chat|conversation)|last\s+time|earlier\s+(?:chat|conversation)|remember\s+(?:when|what|the))/i.test(String(value || ""));
+    }
+    function previousConversationSearchTerms(value) {
+      const stop = new Set([
+        "전","이전","예전","대화","채팅","지난번","저번","아까","전에","기억","기억나","기억해",
+        "했던","했던거","만든","말한","요청","보낸","하던","거","것","내용","찾아","실제","반영",
+        "가능","가능하게","하면","냐고","내가","내","우리","다시","좀","해","해줘","하나","뭐",
+        "무엇","어떤","에서","에","을","를","은","는","이","가","와","과","도","의","로","으로",
+        "그","그거","그것","같은","할","한","했","하는","있는","있던","혹시","해주세요",
+        "previous","conversation","conversations","chat","chats","remember","before","earlier","last","time"
+      ]);
+      const normalized = String(value || "").toLowerCase()
+        .replace(/\x60{3}[\s\S]*?\x60{3}/g, " ")
+        .replace(/[^\uAC00-\uD7A3a-z0-9_+#.-]+/gi, " ");
+      const terms = normalized.split(/\s+/).filter(term => term.length >= 2 && !stop.has(term));
+      const aliases = {
+        "파이썬":"python","자바스크립트":"javascript","자바":"java",
+        "타입스크립트":"typescript","깃허브":"github","수파베이스":"supabase",
+        "리액트":"react","자이옥":"xyock","엑스와이옥":"xyock"
+      };
+      for (const term of [...terms]) if (aliases[term]) terms.push(aliases[term]);
+      return [...new Set(terms)].slice(0, 18);
+    }
+    function previousConversationMessageScore(content, terms) {
+      const text = String(content || "").toLowerCase();
+      let score = 0;
+      for (const term of terms) if (text.includes(term)) score += 1;
+      return score;
+    }
+    function compactPreviousConversationMessage(value) {
+      const text = String(value || "").trim();
+      if (text.length <= 2600) return text;
+      return text.slice(0, 1450) + "\n...[중간 내용 생략]...\n" + text.slice(-1050);
+    }
+    async function findRelevantPreviousConversations(question) {
+      if (window.__xyockSecretMode) return { status: "disabled", text: "" };
+      if (!session?.user_id || !await ensureSession()) return { status: "login_required", text: "" };
+      await saveQueue.catch(() => {});
+      const userId = session.user_id;
+      let rows;
+      if (previousConversationSearchCache.userId === userId &&
+          Date.now() - previousConversationSearchCache.loadedAt < PREVIOUS_CONVERSATION_CACHE_MS) {
+        rows = previousConversationSearchCache.rows;
+      } else {
+        rows = await window.xyockFetchSavedConversations();
+        previousConversationSearchCache = { userId, loadedAt: Date.now(), rows: Array.isArray(rows) ? rows : [] };
+        rows = previousConversationSearchCache.rows;
+      }
+      const currentId = currentConversationContext?.userId === userId ? currentConversationContext.id : null;
+      const terms = previousConversationSearchTerms(question);
+      const candidates = (Array.isArray(rows) ? rows : []).filter(row => {
+        if (currentId && row.id === currentId) return false;
+        if (!currentId && Array.isArray(row.messages) &&
+            row.messages.some(message => message?.role === "user" && String(message.content || "").trim() === String(question || "").trim())) return false;
+        return true;
+      }).map(row => {
+        const messages = Array.isArray(row.messages) ? row.messages : [];
+        const title = String(row.title || "");
+        const messageScores = messages.map(message => previousConversationMessageScore(message?.content, terms));
+        let score = 0;
+        for (const term of terms) {
+          if (title.toLowerCase().includes(term)) score += 6;
+          for (let i = 0; i < messages.length; i++) {
+            if (String(messages[i]?.content || "").toLowerCase().includes(term)) {
+              score += messages[i]?.role === "user" ? 3 : 1;
+            }
+          }
+        }
+        return { row, messages, messageScores, score };
+      }).sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return new Date(b.row.updated_at || 0) - new Date(a.row.updated_at || 0);
+      });
+      if (!candidates.length) return { status: "empty", text: "" };
+      const hasMatch = terms.length > 0 && candidates.some(item => item.score > 0);
+      const selected = (hasMatch ? candidates.filter(item => item.score > 0) : candidates).slice(0, 3);
+      const blocks = [];
+      for (const item of selected) {
+        const indexes = new Set();
+        if (hasMatch && item.messageScores.some(score => score > 0)) {
+          item.messageScores.map((score, index) => ({ score, index }))
+            .filter(entry => entry.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 4)
+            .forEach(entry => {
+              indexes.add(entry.index);
+              if (entry.index > 0) indexes.add(entry.index - 1);
+              if (entry.index + 1 < item.messages.length) indexes.add(entry.index + 1);
+            });
+        } else {
+          for (let i = Math.max(0, item.messages.length - 6); i < item.messages.length; i++) indexes.add(i);
+        }
+        let chosen = [...indexes].sort((a, b) => a - b);
+        if (chosen.length > 8) chosen = chosen.slice(-8);
+        const when = item.row.updated_at ? new Date(item.row.updated_at).toLocaleString("ko-KR") : "날짜 정보 없음";
+        const lines = chosen.map(index => {
+          const message = item.messages[index];
+          const role = message?.role === "user" ? "사용자" : "xyock";
+          return role + ": " + compactPreviousConversationMessage(message?.content);
+        }).filter(line => !line.endsWith(": "));
+        if (lines.length) blocks.push("[대화 제목: " + (item.row.title || "제목 없는 대화") + " | 마지막 수정: " + when + "]\n" + lines.join("\n"));
+      }
+      return { status: hasMatch ? "matched" : "recent", text: blocks.join("\n\n").slice(0, 18_000), conversationCount: blocks.length };
     }
 
     function queueSaveConversation() {
@@ -3060,6 +3223,7 @@ int main() {
         const rows = await res.json();
         context.id = rows?.[0]?.id || null;
       }
+      previousConversationSearchCache = { userId: null, loadedAt: 0, rows: [] };
       if (currentConversationContext === context) {
         currentConversationId = context.id;
         currentConversationUserId = context.userId;
@@ -3164,7 +3328,8 @@ int main() {
           if (role === "user") appendMessage("user", m.content || "");
           else {
             const restoredBubble = appendMessage("ai", "");
-            await renderAIContent(restoredBubble, m.content || "");
+            restoredBubble.dataset.rawContent = String(m.content || "");
+            await renderAIContent(restoredBubble, restoredBubble.dataset.rawContent);
           }
         }
         restoringConversation = false;
