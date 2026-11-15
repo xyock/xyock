@@ -5101,6 +5101,36 @@ body.xy-light .code-card[data-language="bash"] .code-token {
     }
   </style>
 
+  <style id="xy-desktop-sidebar-logo-icon-only">
+    @media (min-width:621px) {
+      #xySidebar #xyMenuOpen,
+      #xySidebar #xyMenuOpen:hover,
+      #xySidebar #xyMenuOpen:focus,
+      #xySidebar #xyMenuOpen:focus-visible,
+      #xySidebar #xyMenuOpen:active {
+        border:0!important;
+        outline:0!important;
+        box-shadow:none!important;
+        border-radius:0!important;
+        background:transparent!important;
+      }
+      #xySidebar #xyMenuOpen img {
+        display:block!important;
+        width:48px!important;
+        height:48px!important;
+        object-fit:contain!important;
+      }
+      #xySidebar #xyMenuOpen:hover img,
+      #xySidebar #xyMenuOpen:focus-visible img {
+        opacity:0!important;
+        transform:scale(.8)!important;
+      }
+      #xySidebar #xyMenuOpen .xy-side-menu-glyph {
+        pointer-events:none!important;
+      }
+    }
+  </style>
+
   <script src="https://xyock.github.io/xyock/review/feedback-widget.js?v=1" defer></script>
 </body>
 
