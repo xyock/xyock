@@ -2,14 +2,94 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const ALLOWED_ORIGIN = "https://xyock.github.io";
-const PROVIDER_URL = "https://ai-gateway.kilo.ai/api/v1/chat/completions";
+const PROVIDER_URL = "https://api.kilo.ai/api/gateway/chat/completions";
+const KILO_MODELS_URL = "https://api.kilo.ai/api/gateway/models";
 const DEFAULT_MODEL = "kilo-auto/free";
-const FREE_MODELS = new Set([
-  "kilo-auto/free",
-  "nvidia/nemotron-3.5-super-vl:free",
-  "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "dots-studio/dots-3-note-preview:free",
-]);
+const MODEL_CATALOG_TTL_MS = 60_000;
+
+type FreeModel = { id: string; name: string; provider: string; contextLength?: number };
+let freeModelCatalogCache: { fetchedAt: number; models: FreeModel[] } | null = null;
+let freeModelCatalogInFlight: Promise<FreeModel[]> | null = null;
+
+function isZeroPrice(value: unknown): boolean {
+  if (typeof value !== "string" && typeof value !== "number") return false;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed === 0;
+}
+
+function extractModelRows(payload: unknown): Record<string, unknown>[] {
+  if (Array.isArray(payload)) {
+    return payload.filter((item): item is Record<string, unknown> => !!item && typeof item === "object");
+  }
+  if (!payload || typeof payload !== "object") return [];
+  const value = payload as Record<string, unknown>;
+  const rows = Array.isArray(value.data) ? value.data
+    : Array.isArray(value.models) ? value.models
+    : Array.isArray(value.items) ? value.items
+    : [];
+  return rows.filter((item): item is Record<string, unknown> => !!item && typeof item === "object");
+}
+
+async function getFreeModelCatalog(allowStale = false): Promise<FreeModel[]> {
+  const now = Date.now();
+  if (freeModelCatalogCache && now - freeModelCatalogCache.fetchedAt < MODEL_CATALOG_TTL_MS) {
+    return freeModelCatalogCache.models;
+  }
+  if (freeModelCatalogInFlight) return await freeModelCatalogInFlight;
+
+  freeModelCatalogInFlight = (async () => {
+    const response = await fetch(KILO_MODELS_URL, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) throw new Error(`Kilo model catalog returned HTTP ${response.status}`);
+    const payload: unknown = await response.json();
+    const rows = extractModelRows(payload);
+    if (!rows.length) throw new Error("Kilo model catalog was empty or had an unknown format");
+
+    const seen = new Set<string>();
+    const models: FreeModel[] = [];
+    for (const row of rows) {
+      const id = typeof row.id === "string" ? row.id.trim() : "";
+      if (!id || id.length > 180 || !/^[a-z0-9][a-z0-9._:/-]*$/i.test(id) || seen.has(id)) continue;
+
+      const pricing = row.pricing && typeof row.pricing === "object"
+        ? row.pricing as Record<string, unknown>
+        : row.cost && typeof row.cost === "object"
+        ? row.cost as Record<string, unknown>
+        : {};
+      const inputPrice = pricing.prompt ?? pricing.input ?? row.input_price;
+      const outputPrice = pricing.completion ?? pricing.output ?? row.output_price;
+      if (!isZeroPrice(inputPrice) || !isZeroPrice(outputPrice)) continue;
+
+      seen.add(id);
+      const provider = typeof row.owned_by === "string" && row.owned_by.trim()
+        ? row.owned_by.trim()
+        : id.split("/")[0] || "Kilo";
+      const name = typeof row.name === "string" && row.name.trim() ? row.name.trim() : id;
+      const contextLength = Number(row.context_length ?? row.contextLength);
+      models.push({
+        id,
+        name: name.slice(0, 120),
+        provider: provider.slice(0, 80),
+        ...(Number.isFinite(contextLength) && contextLength > 0 ? { contextLength } : {}),
+      });
+    }
+
+    models.sort((a, b) => a.name.localeCompare(b.name));
+    freeModelCatalogCache = { fetchedAt: Date.now(), models };
+    return models;
+  })();
+
+  try {
+    return await freeModelCatalogInFlight;
+  } catch (error) {
+    if (allowStale && freeModelCatalogCache) return freeModelCatalogCache.models;
+    throw error;
+  } finally {
+    freeModelCatalogInFlight = null;
+  }
+}
 const MAX_QUESTION_CHARS = 4000;
 const MAX_REQUEST_BYTES = 20_000_000;
 const GUEST_DAILY_LIMIT = 100;
@@ -176,14 +256,50 @@ Deno.serve(async (req: Request) => {
   const requestBody = payload && typeof payload === "object"
     ? payload as Record<string, unknown>
     : {};
+
+  if (requestBody.action === "list_free_models") {
+    try {
+      const models = await getFreeModelCatalog(true);
+      return jsonResponse({
+        models: [
+          { id: DEFAULT_MODEL, name: "Auto Free", provider: "Kilo", recommended: true },
+          ...models,
+        ],
+        refreshedAt: freeModelCatalogCache
+          ? new Date(freeModelCatalogCache.fetchedAt).toISOString()
+          : null,
+        stale: !!freeModelCatalogCache &&
+          Date.now() - freeModelCatalogCache.fetchedAt >= MODEL_CATALOG_TTL_MS,
+      }, 200, allowedOrigin);
+    } catch (error) {
+      console.warn("Kilo free model catalog unavailable:", error);
+      return jsonResponse({
+        models: [{ id: DEFAULT_MODEL, name: "Auto Free", provider: "Kilo", recommended: true }],
+        refreshedAt: null,
+        stale: true,
+      }, 200, allowedOrigin);
+    }
+  }
+
   const q = requestBody.q;
   const rawAttachments = requestBody.attachments;
   const requestedModel = requestBody.model;
-  const model = typeof requestedModel === "string" && FREE_MODELS.has(requestedModel)
-    ? requestedModel
-    : DEFAULT_MODEL;
-  if (requestedModel !== undefined && (typeof requestedModel !== "string" || !FREE_MODELS.has(requestedModel))) {
-    return jsonResponse({ error: "선택한 무료 모델을 사용할 수 없습니다." }, 400, allowedOrigin);
+  let model = DEFAULT_MODEL;
+  if (requestedModel !== undefined) {
+    if (typeof requestedModel !== "string" || requestedModel.length > 180) {
+      return jsonResponse({ error: "선택한 무료 모델을 사용할 수 없습니다." }, 400, allowedOrigin);
+    }
+    let liveModels: FreeModel[] = [];
+    try {
+      liveModels = await getFreeModelCatalog(false);
+    } catch (error) {
+      console.warn("Kilo free model validation unavailable:", error);
+    }
+    const allowedModels = new Set([DEFAULT_MODEL, ...liveModels.map((entry) => entry.id)]);
+    if (!allowedModels.has(requestedModel)) {
+      return jsonResponse({ error: "선택한 모델이 현재 Kilo 무료 목록에 없습니다. 모델 목록을 새로고침해 주세요." }, 400, allowedOrigin);
+    }
+    model = requestedModel;
   }
 
   if (typeof q !== "string" || !q.trim()) {
