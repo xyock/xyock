@@ -218,19 +218,41 @@
     .bubble-actions { margin-top: 8px; display: flex; gap: 14px; }
 
     .bubble.ai { max-width: min(900px, 92%); width: 100%; }
-    .code-card { margin: 12px 0; overflow: hidden; border: 1px solid #494949; border-radius: 10px; background: #303030; }
-    .code-card-header { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 11px 7px 14px; border-bottom: 1px solid #4a4a4a; background: #3a3a3a; color: #e0e0e0; font-size: .78em; }
-    .code-card-language { font-weight: 650; letter-spacing: .02em; text-transform: lowercase; }
-    .code-copy-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid #626262; border-radius: 6px; background: #494949; color: #f0f0f0; font: inherit; cursor: pointer; }
-    .code-copy-btn:hover { background: #555; border-color: #777; }
-    .code-card pre { margin: 0; padding: 16px; overflow-x: auto; color: #f0f0f0; font: .88em/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; tab-size: 2; }
-    .code-card code { font: inherit; }
-    .xy-inline-code { display:inline; padding:.12em .38em; border:1px solid #4a4a4a; border-radius:5px; background:#383838; color:#f1f1f1; font: .9em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+    /* Rounded, unified code panel modeled after the reference chat UI. */
+    .code-card { margin: 14px 0 16px; overflow: hidden; border: 1px solid #3d3d3d; border-radius: 25px; background: #2b2b2b; }
+    .code-card-header { min-height: 42px; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:7px 15px 2px; background:transparent; color:#ededed; font-size:.86em; }
+    .code-card-language-wrap { display:inline-flex; align-items:center; gap:9px; min-width:0; }
+    .code-card-mark { width:17px; height:17px; flex:0 0 17px; display:block; color:currentColor; }
+    .code-card-language { font-weight:600; letter-spacing:0; text-transform:none; }
+    .code-card-actions { display:flex; align-items:center; gap:7px; }
+    .code-action-btn,.code-copy-btn { width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 32px; padding:6px; border:0; border-radius:8px; background:transparent; color:inherit; cursor:pointer; transition:background .15s ease,color .15s ease; }
+    .code-action-btn svg,.code-copy-btn svg { width:20px; height:20px; display:block; }
+    .code-action-btn:hover,.code-copy-btn:hover { background:#ffffff18; color:#fff; }
+    .code-card pre { margin:0; padding:5px 20px 18px; overflow-x:auto; color:#e8e8e8; font:.88em/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; white-space:pre; tab-size:2; }
+    .code-card code { font:inherit; }
+    .code-token-comment { color:#8d969e; font-style:italic; }
+    .code-token-string { color:#54bd91; }
+    .code-token-number { color:#d6a45e; }
+    .code-token-keyword { color:#c28bea; font-weight:600; }
+    .code-token-function { color:#82b8ff; }
+    .code-token-constant { color:#ef9dbb; }
+    .code-token-command { color:#a987ed; }
+    .code-card[data-language="bash"] .code-card-source,.code-card[data-language="bash"] .code-token { color:#a987ed; }
+    .xy-inline-code { display:inline; padding:.12em .38em; border:1px solid #4a4a4a; border-radius:5px; background:#383838; color:#f1f1f1; font:.9em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
     .ai-text-run { white-space:pre-wrap; }
-    body.xy-light .code-card { background:#e8e8e8; border-color:#c9c9c9; }
-    body.xy-light .code-card-header { background:#dedede; border-color:#c7c7c7; color:#333; }
-    body.xy-light .code-card pre { color:#202020; }
-    body.xy-light .code-copy-btn { background:#f5f5f5; border-color:#c2c2c2; color:#222; }
+    body.xy-light .code-card { background:#e9e9e9; border-color:#d5d5d5; }
+    body.xy-light .code-card-header { background:transparent; color:#1c1c1c; }
+    body.xy-light .code-card pre { color:#343434; }
+    body.xy-light .code-action-btn,body.xy-light .code-copy-btn { color:#252525; }
+    body.xy-light .code-action-btn:hover,body.xy-light .code-copy-btn:hover { background:#00000012; color:#000; }
+    body.xy-light .code-token-comment { color:#888; }
+    body.xy-light .code-token-string { color:#16845d; }
+    body.xy-light .code-token-number { color:#a46b22; }
+    body.xy-light .code-token-keyword { color:#8250bd; }
+    body.xy-light .code-token-function { color:#2869bd; }
+    body.xy-light .code-token-constant { color:#b34f78; }
+    body.xy-light .code-token-command { color:#8050c8; }
+    body.xy-light .code-card[data-language="bash"] .code-card-source,body.xy-light .code-card[data-language="bash"] .code-token { color:#8050c8; }
     body.xy-light .xy-inline-code { background:#e5e5e5; border-color:#ccc; color:#202020; }
 
     .teach-link {
@@ -786,7 +808,7 @@ body.xy-light #xyProjects .xy-project-item,body.xy-light #xyProjects .xy-project
 .xy-screen.open:not(#xyMenu){display:block}.xy-screen-head{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:900px;margin:0 auto}#xyMenu .xy-screen-head{margin:0 0 28px}#xyMenu .xy-screen-title{font-size:27px;letter-spacing:-.7px}.xy-screen-title{font-size:clamp(30px,6vw,52px);font-weight:850}.xy-close{border:1px solid #303b38;background:#111716;color:#fff;border-radius:12px;padding:11px 15px;font-weight:700;cursor:pointer}
 .xy-menu-list,.xy-settings{max-width:900px;margin:8vh auto 0}#xyMenu .xy-menu-list{margin:0}#xyMenu .xy-menu-link{font-size:17px;font-weight:600;padding:17px 5px;letter-spacing:-.2px}#xyMenu .xy-menu-footer{margin:28px 0 0;display:grid;gap:10px}#xyMenu .xy-menu-footer button{width:100%;text-align:left;font-size:15px;padding:14px 15px}.xy-menu-link{width:100%;display:flex;justify-content:space-between;padding:25px 6px;background:transparent;border:0;border-bottom:1px solid #28302e;color:#f3f6f5;font-size:clamp(22px,4vw,34px);font-weight:750;cursor:pointer}.xy-menu-link-label{display:inline-flex;align-items:center;gap:10px}.xy-menu-newchat{margin:0 0 24px;padding:14px 10px;border:1px solid #30463d;border-radius:12px;background:linear-gradient(100deg,rgba(122,229,179,.09),rgba(122,229,179,.025));font-size:16px;font-weight:650}.xy-menu-newchat:hover{border-color:#5b9b7d;background:rgba(122,229,179,.12)}.xy-menu-newchat-icon{width:17px;height:17px;flex:0 0 17px;color:#8fe6b8}.xy-menu-footer{max-width:900px;margin:12vh auto 0;display:flex;justify-content:space-between;gap:12px}.xy-menu-footer button,.xy-setting-row button,.xy-setting-panel button{border:1px solid #38423f;background:#121817;color:#f4f7f5;border-radius:10px;padding:11px 14px;cursor:pointer}.xy-setting-row{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;padding:24px 4px;border-bottom:1px solid #29312f;font-size:clamp(18px,3.4vw,25px);font-weight:700}.xy-setting-row button.active,.xy-setting-panel button.xy-primary{border-color:var(--accent);background:#14312c;color:var(--accent)}.xy-setting-panel{padding:18px 4px 24px;border-bottom:1px solid #29312f;color:#b9c3bf}.xy-setting-panel p{margin:0 0 12px;line-height:1.6}.xy-setting-panel input{display:block;width:min(460px,100%);padding:13px 14px;border:1px solid #38423f;border-radius:10px;background:#0e1312;color:#fff;font-size:16px;margin:8px 0}.xy-setting-panel a{color:var(--accent)}
 .xy-gate{position:fixed;inset:0;z-index:5000;background:#050606;display:none;align-items:center;justify-content:center;padding:22px}.xy-gate.open{display:flex}.xy-gate-card{width:min(420px,100%);padding:30px;border:1px solid #34413d;border-radius:20px;background:#101615;color:#fff}.xy-gate-card input{width:100%;padding:13px;background:#080c0b;color:#fff;border:1px solid #394641;border-radius:10px;margin:10px 0}.xy-code-entry{border:1px solid #293532;border-radius:14px;background:#111716;padding:16px;margin:12px 0}.xy-code-entry pre{white-space:pre-wrap;overflow:auto;max-height:260px;font-size:12px}
-body.xy-light{color-scheme:light;background:#f4f7f6!important;color:#15201c!important}body.xy-light header{background:#fff!important;border-color:#d6dfdc!important}body.xy-light .xy-screen{background:#f4f7f6;color:#15201c}body.xy-light .xy-screen-title,body.xy-light .xy-menu-link,body.xy-light .xy-menu-footer button{color:#15201c}body.xy-light .xy-menu-link{border-color:#d6dfdc}body.xy-light .xy-close,body.xy-light .xy-menu-footer button,body.xy-light .xy-setting-row button,body.xy-light .xy-setting-panel button{background:#fff;color:#26332e;border-color:#d6dfdc}body.xy-light .xy-setting-panel{color:#52615a}body.xy-light .xy-setting-panel input{background:#fff;color:#15201c;border-color:#ccd7d2}body.xy-light .welcome h1{color:#15201c!important}body.xy-light .welcome p{color:#64736d!important}body.xy-light .input-section{background:linear-gradient(180deg,transparent,#f4f7f6 32%)!important}body.xy-light .input-wrapper{background:#fff!important;border-color:#d0dbd6!important}body.xy-light .search-input{color:#15201c!important}body.xy-light .message.user .bubble{background:#e2f3ee;color:#15201c;border-color:#c5e6dc}body.xy-light .message.ai .bubble{color:#26332e}body.xy-light .code-card{background:#fff!important;border-color:#d6dfdc!important}body.xy-light .code-card-header{background:#edf2f0!important}body.xy-light .modal-content{background:#fff!important;color:#15201c!important}
+body.xy-light{color-scheme:light;background:#f4f7f6!important;color:#15201c!important}body.xy-light header{background:#fff!important;border-color:#d6dfdc!important}body.xy-light .xy-screen{background:#f4f7f6;color:#15201c}body.xy-light .xy-screen-title,body.xy-light .xy-menu-link,body.xy-light .xy-menu-footer button{color:#15201c}body.xy-light .xy-menu-link{border-color:#d6dfdc}body.xy-light .xy-close,body.xy-light .xy-menu-footer button,body.xy-light .xy-setting-row button,body.xy-light .xy-setting-panel button{background:#fff;color:#26332e;border-color:#d6dfdc}body.xy-light .xy-setting-panel{color:#52615a}body.xy-light .xy-setting-panel input{background:#fff;color:#15201c;border-color:#ccd7d2}body.xy-light .welcome h1{color:#15201c!important}body.xy-light .welcome p{color:#64736d!important}body.xy-light .input-section{background:linear-gradient(180deg,transparent,#f4f7f6 32%)!important}body.xy-light .input-wrapper{background:#fff!important;border-color:#d0dbd6!important}body.xy-light .search-input{color:#15201c!important}body.xy-light .message.user .bubble{background:#e2f3ee;color:#15201c;border-color:#c5e6dc}body.xy-light .message.ai .bubble{color:#26332e}body.xy-light .code-card{background:#e9e9e9!important;border-color:#d5d5d5!important}body.xy-light .code-card-header{background:transparent!important;color:#1c1c1c!important}body.xy-light .code-card pre{color:#343434!important}body.xy-light .modal-content{background:#fff!important;color:#15201c!important}
 @media(max-width:620px){#xyMenu.xy-screen{width:min(78vw,360px);min-width:270px;padding:22px 18px}.xy-menu-list,.xy-settings{margin-top:6vh}.xy-menu-link{padding:21px 4px}.xy-setting-row{font-size:18px}.xy-menu-footer{margin-top:8vh}}
 </style>
 
@@ -1523,6 +1545,72 @@ header::after{
       }
     }
 
+    function codeLanguageLabel(language) {
+      const labels = {
+        javascript:"JavaScript",typescript:"TypeScript",jsx:"JSX",tsx:"TSX",
+        python:"Python",bash:"Bash",php:"PHP",html:"HTML",css:"CSS",json:"JSON",
+        yaml:"YAML",sql:"SQL",c:"C",cpp:"C++",csharp:"C#",java:"Java",
+        kotlin:"Kotlin",swift:"Swift",go:"Go",rust:"Rust",ruby:"Ruby",
+        powershell:"PowerShell",markdown:"Markdown",text:"Text"
+      };
+      return labels[language] || (String(language || "text").charAt(0).toUpperCase() + String(language || "text").slice(1));
+    }
+
+    function highlightCodeElement(element, source, language) {
+      const code = String(source ?? "");
+      const lang = String(language || "text").toLowerCase();
+      const hashComments = ["python","bash","ruby","yaml","powershell"].includes(lang);
+      const pattern = new RegExp(
+        "(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*|" +
+        (hashComments ? "#[^\\n]*" : "(?!)") +
+        "|\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|\\x60(?:\\\\.|[^\\x60\\\\])*\\x60|\\b\\d+(?:\\.\\d+)?\\b|\\b[A-Za-z_$][\\w$]*\\b)",
+        "g"
+      );
+      const keywordText = [
+        "const let var function return if else for while do switch case break continue class new this super extends",
+        "import from export default async await try catch finally throw in of typeof instanceof void delete",
+        "def lambda pass raise with as yield global nonlocal and or not is None True False",
+        "public private protected static final void int long short byte float double char boolean String",
+        "package interface implements enum abstract null undefined true false",
+        "fn mut pub use mod struct impl trait match loop move ref self Self",
+        "SELECT FROM WHERE INSERT INTO UPDATE SET DELETE CREATE TABLE ALTER JOIN ON AS AND OR NOT NULL",
+        "echo cd pwd ls mkdir rm cp mv cat grep find chmod chown sudo git npm npx node python"
+      ].join(" ").split(/\s+/);
+      const keywords = new Set(keywordText);
+      const fragment = document.createDocumentFragment();
+      let cursor = 0;
+      let match;
+      while ((match = pattern.exec(code))) {
+        if (match.index > cursor) fragment.appendChild(document.createTextNode(code.slice(cursor, match.index)));
+        const token = match[0];
+        let kind = "";
+        if (token.startsWith("/*") || token.startsWith("//") || (hashComments && token.startsWith("#"))) {
+          kind = "comment";
+        } else if (token.startsWith('"') || token.startsWith("'") || token.charCodeAt(0) === 96) {
+          kind = "string";
+        } else if (/^\d/.test(token)) {
+          kind = "number";
+        } else if (keywords.has(token)) {
+          kind = "keyword";
+        } else if (/^[A-Z][A-Z0-9_]{1,}$/.test(token)) {
+          kind = "constant";
+        } else if (/^[$A-Za-z_][\w$]*$/.test(token) && /^\s*\(/.test(code.slice(pattern.lastIndex))) {
+          kind = "function";
+        }
+        if (kind) {
+          const span = document.createElement("span");
+          span.className = "code-token code-token-" + kind;
+          span.textContent = token;
+          fragment.appendChild(span);
+        } else {
+          fragment.appendChild(document.createTextNode(token));
+        }
+        cursor = pattern.lastIndex;
+      }
+      if (cursor < code.length) fragment.appendChild(document.createTextNode(code.slice(cursor)));
+      element.replaceChildren(fragment);
+    }
+
     async function renderAIContent(container, value) {
       const source = String(value ?? "");
       const fence = /```([^\n`]*)\n([\s\S]*?)```/g;
@@ -1540,19 +1628,56 @@ header::after{
         const language = detectCodeLanguage(code, match[1]);
         const card = document.createElement("section");
         card.className = "code-card";
+        card.dataset.language = language;
         const header = document.createElement("div");
         header.className = "code-card-header";
+        const languageWrap = document.createElement("span");
+        languageWrap.className = "code-card-language-wrap";
+        const mark = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        mark.setAttribute("viewBox", "0 0 24 24");
+        mark.setAttribute("fill", "none");
+        mark.setAttribute("stroke", "currentColor");
+        mark.setAttribute("stroke-width", "1.8");
+        mark.setAttribute("stroke-linecap", "round");
+        mark.setAttribute("stroke-linejoin", "round");
+        mark.setAttribute("aria-hidden", "true");
+        mark.classList.add("code-card-mark");
+        const markPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        markPath.setAttribute("d", "m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14");
+        mark.appendChild(markPath);
         const label = document.createElement("span");
         label.className = "code-card-language";
-        label.textContent = language;
+        label.textContent = codeLanguageLabel(language);
+        languageWrap.append(mark, label);
+
+        const actions = document.createElement("div");
+        actions.className = "code-card-actions";
+        const insert = document.createElement("button");
+        insert.className = "code-action-btn";
+        insert.type = "button";
+        insert.title = "코드를 입력창에 추가";
+        insert.setAttribute("aria-label", "코드를 입력창에 추가");
+        insert.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 21h16"/></svg>';
+        insert.addEventListener("click", () => {
+          const input = document.getElementById("searchInput");
+          if (!input) return;
+          const current = String(input.value || "");
+          input.value = current ? current.replace(/\\s*$/, "") + "\\n" + code : code;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.focus();
+        });
+
         const copy = document.createElement("button");
         copy.className = "code-copy-btn";
         copy.type = "button";
-        copy.textContent = "복사";
+        copy.title = "코드 복사";
+        copy.setAttribute("aria-label", "코드 복사");
+        copy.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>';
         copy.addEventListener("click", async () => {
+          let copied = false;
           try {
             await navigator.clipboard.writeText(code);
-            copy.textContent = "복사됨";
+            copied = true;
           } catch {
             const field = document.createElement("textarea");
             field.value = code;
@@ -1560,19 +1685,28 @@ header::after{
             field.style.opacity = "0";
             document.body.appendChild(field);
             field.select();
-            const copied = document.execCommand("copy");
+            copied = document.execCommand("copy");
             field.remove();
-            copy.textContent = copied ? "복사됨" : "복사 실패";
           }
-          setTimeout(() => { copy.textContent = "복사"; }, 1600);
+          copy.title = copied ? "복사됨" : "복사 실패";
+          copy.setAttribute("aria-label", copy.title);
+          copy.dataset.copied = copied ? "true" : "false";
+          setTimeout(() => {
+            copy.title = "코드 복사";
+            copy.setAttribute("aria-label", "코드 복사");
+            delete copy.dataset.copied;
+          }, 1600);
         });
-        header.append(label, copy);
+        actions.append(insert, copy);
+        header.append(languageWrap, actions);
         const pre = document.createElement("pre");
         const codeElement = document.createElement("code");
+        codeElement.className = "code-card-source";
         pre.appendChild(codeElement);
         card.append(header, pre);
         container.appendChild(card);
         await typewriterText(codeElement, code);
+        highlightCodeElement(codeElement, code, language);
         cursor = fence.lastIndex;
         scrollToBottom();
       }
