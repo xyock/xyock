@@ -2792,7 +2792,8 @@ int main() {
         pending.parentElement?.classList.remove("thinking");
         const answer = String(data.answer || "AI didn't respond.");
         const parsedPlan = githubCommitReady ? parseGitHubChangePlan(answer) : {visibleText:answer,plan:null,error:null};
-        await typewriterText(pending, parsedPlan.visibleText || "변경 요청을 처리했습니다.");
+        pending.replaceChildren();
+        await renderAIContent(pending, parsedPlan.visibleText || "변경 요청을 처리했습니다.");
         setWorkStage("completed");
         if (githubCommitReady) {
           if (parsedPlan.plan) {
