@@ -1,7 +1,7 @@
 project_id = "lhbdijxjnqbzmrvrvrkr"
 
 [functions.xyock-ai]
-verify_jwt = true
+verify_jwt = false
 
 [functions.github-actions]
 verify_jwt = true
