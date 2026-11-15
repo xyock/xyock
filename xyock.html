@@ -1662,7 +1662,7 @@ header::after{
           const input = document.getElementById("searchInput");
           if (!input) return;
           const current = String(input.value || "");
-          input.value = current ? current.replace(/\\s*$/, "") + "\\n" + code : code;
+          input.value = current ? current.replace(/\s*$/, "") + "\n" + code : code;
           input.dispatchEvent(new Event("input", { bubbles: true }));
           input.focus();
         });
@@ -4760,6 +4760,57 @@ body.xy-light .xy-message-edit-actions .xy-message-edit-save{background:#dce8e0;
 @media(min-width:621px){.xy-message-edit-label{display:none}}
 @media(prefers-reduced-motion:reduce){.xy-message-edit{transition:none}}
 </style>
+
+<style id="xy-code-card-reference-override">
+/* Keep code panels visually close to the supplied light-gray reference in both themes. */
+.code-card,
+body.xy-light .code-card {
+  margin:14px 0 16px!important;
+  overflow:hidden!important;
+  border:1px solid #d5d5d5!important;
+  border-radius:25px!important;
+  background:#e8e8e8!important;
+  color:#171717!important;
+  box-shadow:none!important;
+}
+.code-card-header,
+body.xy-light .code-card-header {
+  min-height:46px!important;
+  padding:8px 15px 0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#171717!important;
+  font-size:.86em!important;
+}
+.code-card-language-wrap { gap:9px!important; }
+.code-card-mark { color:#171717!important; }
+.code-card-language { color:#171717!important; font-size:1em!important; }
+.code-card pre,
+body.xy-light .code-card pre {
+  padding:5px 21px 18px!important;
+  color:#343434!important;
+  font-size:.88em!important;
+  line-height:1.7!important;
+}
+.code-action-btn,.code-copy-btn,
+body.xy-light .code-action-btn,body.xy-light .code-copy-btn {
+  color:#171717!important;
+  background:transparent!important;
+  border:0!important;
+}
+.code-action-btn:hover,.code-copy-btn:hover,
+body.xy-light .code-action-btn:hover,body.xy-light .code-copy-btn:hover {
+  color:#000!important;
+  background:#00000012!important;
+}
+.code-card[data-language="bash"] .code-card-source,
+.code-card[data-language="bash"] .code-token,
+body.xy-light .code-card[data-language="bash"] .code-card-source,
+body.xy-light .code-card[data-language="bash"] .code-token {
+  color:#8352d7!important;
+}
+</style>
+
 </body>
 
 </html>
