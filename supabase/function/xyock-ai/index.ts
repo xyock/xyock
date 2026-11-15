@@ -398,6 +398,22 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  const reasoningLevel = requestBody.reasoning_level === undefined
+    ? "balanced"
+    : requestBody.reasoning_level;
+  if (!["fast", "balanced", "expert"].includes(String(reasoningLevel))) {
+    return jsonResponse({ error: "추론 강도 설정이 올바르지 않습니다." }, 400, allowedOrigin);
+  }
+  if (reasoningLevel === "expert" && !authenticated) {
+    return jsonResponse({ error: "엑스퍼트 추론은 로그인 후 사용할 수 있습니다." }, 401, allowedOrigin);
+  }
+
+  const reasoningInstruction = reasoningLevel === "fast"
+    ? "응답 방식: 빠른 모드. 질문의 핵심을 우선 파악하고 불필요한 배경 설명은 줄여 간결하고 신속하게 답하라. 정확성이나 안전에 필요한 확인은 생략하지 마라."
+    : reasoningLevel === "expert"
+    ? "응답 방식: 심층 검토 모드. 가능한 경우 문제를 단계적으로 점검하고, 대안과 중요한 예외·위험·가정을 확인하라. 복잡한 요청은 결론과 근거를 구조적으로 설명하고 불확실한 부분을 명시하라. 내부 비공개 추론 전문은 공개하지 말고 핵심 근거와 검증 가능한 요약만 제공하라."
+    : "응답 방식: 균형 모드. 충분한 정확성과 설명을 유지하면서 핵심부터 명확하게 답하라. 단순한 질문은 간결하게, 복잡한 질문은 필요한 만큼 자세히 설명하라.";
+
   let remaining: number | null = null;
   if (!authenticated) {
     try {
@@ -439,7 +455,7 @@ Deno.serve(async (req: Request) => {
           {
             role: "system",
             content:
-              "너는 xyock AI야. 정확하고 친절하게 한국어로 답해. 다른 언어를 요청하면 그 언어를 사용해. 확실하지 않은 정보는 단정하지 말고, 비밀번호나 비밀 키를 요청하거나 공개하지 마.",
+              "너는 xyock AI야. 정확하고 친절하게 한국어로 답해. 다른 언어를 요청하면 그 언어를 사용해. 확실하지 않은 정보는 단정하지 말고, 비밀번호나 비밀 키를 요청하거나 공개하지 마. " + reasoningInstruction,
           },
           { role: "user", content: messageContent },
         ],
