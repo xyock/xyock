@@ -269,6 +269,8 @@ Deno.serve(async (req: Request) => {
       if (["create_file", "update_file"].includes(action)) {
         if (typeof payload.content !== "string" || payload.content.length > 100000) return json({ error: "File content must be <= 100 KB" }, 400);
         if (typeof payload.message !== "string" || payload.message.length < 1 || payload.message.length > 200) return json({ error: "Commit message required (max 200 chars)" }, 400);
+        // Always target the repository's configured default branch, not a hard-coded "main".
+        payload.branch = repoEntry.default_branch || "main";
       }
       if (action === "create_pull_request") {
         if (typeof payload.head !== "string" || !/^[A-Za-z0-9._/-]{1,100}$/.test(payload.head) ||
@@ -398,7 +400,7 @@ Deno.serve(async (req: Request) => {
             if (!sha) throw new Error("Existing file SHA not found");
           }
           result = await gh(repoApi + "/contents/" + path, { method: "PUT", body: JSON.stringify({
-            message: row.payload.message, content: b64utf8(row.payload.content), branch: "main", ...(sha ? { sha } : {})
+            message: row.payload.message, content: b64utf8(row.payload.content), branch: row.payload.branch || "main", ...(sha ? { sha } : {})
           }) });
           result = { commit: result.commit?.sha, content: result.content?.path };
         } else if (action === "commit_changes") {
