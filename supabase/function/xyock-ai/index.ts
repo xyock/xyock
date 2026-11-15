@@ -1032,7 +1032,11 @@ Deno.serve(async (req: Request) => {
                 getSources(),
                 adminKey,
               );
-              await sendReadyPush(authenticatedUserId, taskId, adminKey);
+              try {
+                await sendReadyPush(authenticatedUserId, taskId, adminKey);
+              } catch (pushError) {
+                console.warn("Answer saved, but push notification failed:", pushError);
+              }
             } catch (backgroundSaveError) {
               console.error("Background answer persistence/notification failed:", backgroundSaveError);
               await adminRest(
