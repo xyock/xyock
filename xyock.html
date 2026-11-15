@@ -4045,6 +4045,17 @@ int main() {
     document.getElementById("historyCloseBtn")?.addEventListener("click", () => {
       document.getElementById("historyModal")?.classList.remove("show");
     });
+
+    // Public bridge for the sidebar controller in the following script.
+    // These functions live inside this script's closure and must not be called as globals.
+    window.xyockSidebarApi = {
+      updateKiloModelOptions,
+      setSelectedModel,
+      hasCurrentMessages: () => currentMessages().length > 0,
+      saveCurrentConversation: () => queueSaveConversation(),
+      startNewConversation: () => { startNewConversation(); return true; },
+      openLoginModal
+    };
   </script>
 
 <style id="xy-profile-popups">
@@ -4261,13 +4272,12 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  const newChat=document.getElementById("xySidebarNewChat");
  newChat?.addEventListener("click",event=>{
    event.preventDefault();event.stopPropagation();
-   if(typeof queueSaveConversation==="function"&&typeof currentMessages==="function"&&currentMessages().length)queueSaveConversation();
+   if(window.xyockSidebarApi?.hasCurrentMessages?.())window.xyockSidebarApi.saveCurrentConversation?.();
    if(window.__xyockSecretMode)document.getElementById("secretChatExit")?.click();
    const input=document.getElementById("searchInput");
    if(input){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}))}
    window.xyockClearAttachments?.();
-   if(typeof startNewConversation==="function"){
-     startNewConversation();
+   if(window.xyockSidebarApi?.startNewConversation?.()){
      document.getElementById("xyMenu")?.classList.remove("open");
      input?.focus();
      window.xyockToast?.("새 채팅을 시작했습니다.");
@@ -4298,15 +4308,15 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  const aiButton=document.getElementById("xySidebarAI"),aiPopover=document.getElementById("xyAiModelPopover"),aiClose=document.getElementById("xyAiModelClose"),aiList=document.getElementById("xyAiModelList");
  const placeAiPopover=()=>{if(!aiButton||!aiPopover)return;const r=aiButton.getBoundingClientRect();const width=Math.min(292,window.innerWidth-96);aiPopover.style.width=width+"px";aiPopover.style.left=Math.max(76,Math.min(r.left+r.width+12,window.innerWidth-width-10))+"px";aiPopover.style.top=Math.max(8,Math.min(r.top,window.innerHeight-aiPopover.offsetHeight-10))+"px"};
  const closeAiPopover=()=>{if(aiPopover)aiPopover.hidden=true;aiButton?.setAttribute("aria-expanded","false");aiButton?.classList.remove("active")};
- const openAiPopover=()=>{updateKiloModelOptions();if(aiPopover){aiPopover.hidden=false;placeAiPopover()}aiButton?.setAttribute("aria-expanded","true");aiButton?.classList.add("active")};
+ const openAiPopover=()=>{window.xyockSidebarApi?.updateKiloModelOptions?.();if(aiPopover){aiPopover.hidden=false;placeAiPopover()}aiButton?.setAttribute("aria-expanded","true");aiButton?.classList.add("active")};
  aiButton?.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();if(aiPopover?.hidden)openAiPopover();else closeAiPopover()});
  aiClose?.addEventListener("click",closeAiPopover);
- aiList?.addEventListener("click",event=>{const button=event.target.closest("[data-kilo-model]");if(!button)return;const model=button.dataset.kiloModel;if(!setSelectedModel(model))return;showToast("AI 모델: "+button.querySelector("strong")?.textContent);closeAiPopover()});
+ aiList?.addEventListener("click",event=>{const button=event.target.closest("[data-kilo-model]");if(!button)return;const model=button.dataset.kiloModel;if(!window.xyockSidebarApi?.setSelectedModel?.(model))return;window.xyockToast?.("AI 모델: "+button.querySelector("strong")?.textContent);closeAiPopover()});
  document.addEventListener("click",event=>{if(aiPopover&&!aiPopover.hidden&&!event.target.closest("#xyAiModelPopover")&&!event.target.closest("#xySidebarAI"))closeAiPopover()});
  document.addEventListener("keydown",event=>{if(event.key==="Escape")closeAiPopover()});
  window.addEventListener("resize",()=>{if(aiPopover&&!aiPopover.hidden)placeAiPopover()});
  window.addEventListener("scroll",()=>{if(aiPopover&&!aiPopover.hidden)placeAiPopover()},true);
- updateKiloModelOptions();
+ window.xyockSidebarApi?.updateKiloModelOptions?.();
  const reasoningMenuButton=document.getElementById("xyReasoningMenuBtn");
  const reasoningSideButton=document.getElementById("xySidebarReasoning");
  const reasoningPopover=document.getElementById("xyReasoningPopover"),reasoningClose=document.getElementById("xyReasoningClose");
@@ -4319,9 +4329,9 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  const closeReasoning=()=>{if(reasoningPopover)reasoningPopover.hidden=true;reasoningSideButton.setAttribute("aria-expanded","false");reasoningMenuButton?.setAttribute("aria-expanded","false")};
  const openReasoning=anchor=>{paintReasoning();reasoningPopover.hidden=false;placeReasoning(anchor);reasoningSideButton.setAttribute("aria-expanded","true");reasoningMenuButton?.setAttribute("aria-expanded","true")};
  reasoningSideButton.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();reasoningPopover.hidden?openReasoning(reasoningSideButton):closeReasoning()});
- reasoningMenuButton?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();document.getElementById("xyMenu")?.classList.remove("open");reasoningPopover.hidden?openReasoning(reasoningMenuButton):closeReasoning()});
+ reasoningMenuButton?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();reasoningPopover.hidden?openReasoning(reasoningMenuButton):closeReasoning()});
  reasoningClose?.addEventListener("click",closeReasoning);
- reasoningPopover?.addEventListener("click",e=>{const choice=e.target.closest("[data-reasoning-level]");if(!choice)return;const level=choice.dataset.reasoningLevel;if(level==="expert"&&!isReasoningLoggedIn()){closeReasoning();if(typeof window.openLoginModal==="function")window.openLoginModal();else document.getElementById("loginModal")?.classList.add("show");window.xyockToast?.("엑스퍼트는 로그인 후 사용할 수 있습니다.");return}try{localStorage.setItem(reasoningStorageKey(),level)}catch{}paintReasoning();closeReasoning();window.xyockToast?.("추론 강도: "+({fast:"패스트",balanced:"밸런스",expert:"엑스퍼트"}[level]))});
+ reasoningPopover?.addEventListener("click",e=>{const choice=e.target.closest("[data-reasoning-level]");if(!choice)return;const level=choice.dataset.reasoningLevel;if(level==="expert"&&!isReasoningLoggedIn()){closeReasoning();if(typeof window.xyockSidebarApi?.openLoginModal==="function")window.xyockSidebarApi.openLoginModal();else document.getElementById("loginModal")?.classList.add("show");window.xyockToast?.("엑스퍼트는 로그인 후 사용할 수 있습니다.");return}try{localStorage.setItem(reasoningStorageKey(),level)}catch{}paintReasoning();closeReasoning();window.xyockToast?.("추론 강도: "+({fast:"패스트",balanced:"밸런스",expert:"엑스퍼트"}[level]))});
  document.addEventListener("click",e=>{if(reasoningPopover&&!reasoningPopover.hidden&&!e.target.closest("#xyReasoningPopover")&&!e.target.closest("#xySidebarReasoning")&&!e.target.closest("#xyReasoningMenuBtn"))closeReasoning()});
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeReasoning()});
  window.addEventListener("resize",()=>{if(reasoningPopover&&!reasoningPopover.hidden)placeReasoning(reasoningSideButton)});
