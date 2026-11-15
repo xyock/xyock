@@ -4341,7 +4341,29 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  document.getElementById("xySearchClose")?.addEventListener("click",()=>{pop.hidden=true;out.replaceChildren()});
  input?.addEventListener("input",()=>{const q=input.value.trim().toLocaleLowerCase();out.replaceChildren();if(!q){out.textContent="검색어를 입력하세요.";return}let count=0;document.querySelectorAll("#chat .message").forEach(node=>{const t=node.innerText||"",at=t.toLocaleLowerCase().indexOf(q);if(at<0)return;count++;const b=document.createElement("button");b.type="button";b.className="xy-search-result";b.textContent=(node.classList.contains("user")?"You: ":"xyock: ")+t.slice(Math.max(0,at-32),Math.min(t.length,at+q.length+56)).replace(/\s+/g," ");b.addEventListener("click",()=>{node.scrollIntoView({behavior:"smooth",block:"center"});pop.hidden=true});out.append(b)});if(!count)out.textContent="이 대화에서 찾지 못했습니다."});
  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden)pop.hidden=true});
- const profile=document.getElementById("xyProfileTrigger")?.parentElement,slot=document.getElementById("xySideAccountSlot");if(profile&&slot)slot.append(profile);
+ const profile=document.getElementById("xyProfileTrigger")?.parentElement;
+ const slot=document.getElementById("xySideAccountSlot");
+ const menuPanel=document.getElementById("xyMenu");
+ if(profile&&slot&&menuPanel){
+   const syncProfileDock=()=>{
+     const expanded=menuPanel.classList.contains("open");
+     const target=expanded?menuPanel:slot;
+     if(profile.parentElement!==target){
+       if(!expanded){
+         const pop=profile.querySelector("#xyProfilePopover");
+         const trigger=profile.querySelector("#xyProfileTrigger");
+         if(pop)pop.hidden=true;
+         if(trigger)trigger.setAttribute("aria-expanded","false");
+       }
+       target.append(profile);
+     }
+   };
+   syncProfileDock();
+   if(window.MutationObserver){
+     new MutationObserver(syncProfileDock).observe(menuPanel,{attributes:true,attributeFilter:["class"]});
+   }
+   window.addEventListener("resize",syncProfileDock,{passive:true});
+ }
  // Capture controls before other handlers so clicks remain reliable even if legacy listeners fail.
  document.addEventListener("click",event=>{
    const target=event.target instanceof Element?event.target:null;
@@ -5034,6 +5056,48 @@ body.xy-light .code-card[data-language="bash"] .code-token {
       background: #e8e8e8!important;
       color: #171717!important;
       backdrop-filter: none!important;
+    }
+  </style>
+
+  <style id="xy-desktop-profile-dock-and-rail-size">
+    @media (min-width:621px) {
+      :root { --xy-rail:61px!important; }
+      #xySidebar {
+        padding-left:4px!important;
+        padding-right:4px!important;
+      }
+      #xyMenu .xy-menu-footer {
+        left:18px!important;
+        right:18px!important;
+        bottom:16px!important;
+        z-index:40!important;
+      }
+      #xyMenu .xy-profile-trigger {
+        min-height:62px!important;
+        display:flex!important;
+        align-items:center!important;
+        gap:12px!important;
+        padding:10px 13px!important;
+        cursor:pointer!important;
+      }
+      #xyMenu .xy-profile-avatar {
+        width:42px!important;
+        height:42px!important;
+        flex:0 0 42px!important;
+        border-radius:50%!important;
+      }
+      #xyMenu .xy-profile-identity {
+        display:grid!important;
+        flex:1 1 auto!important;
+        min-width:0!important;
+      }
+      #xyMenu .xy-profile-chevron {
+        display:block!important;
+        flex:0 0 auto!important;
+      }
+      #xyMenu .xy-profile-popover {
+        z-index:60!important;
+      }
     }
   </style>
 
