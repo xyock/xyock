@@ -5013,22 +5013,27 @@ body.xy-light .code-card[data-language="bash"] .code-token {
   </style>
 
   <style id="xy-code-card-sticky-toolbar">
-    /* Keep the code toolbar visible while scrolling, but clip it to its own card. */
-    .code-card {
+    /*
+      #chat had overflow-y:auto, which trapped position:sticky even while the
+      document itself was scrolling. Let the page be the scroll container so
+      the toolbar follows viewport scrolling.
+    */
+    #chat {
+      overflow: visible!important;
+    }
+    /* Clip the sticky toolbar to its own code panel, not to the chat viewport. */
+    .code-card,
+    body.xy-light .code-card {
       overflow: clip!important;
     }
     .code-card-header {
       position: sticky!important;
       top: 0!important;
       z-index: 5!important;
+      min-height: 46px!important;
       background: #e8e8e8!important;
+      color: #171717!important;
       backdrop-filter: none!important;
-    }
-    body:not(.xy-light) .code-card-header {
-      background: #e8e8e8!important;
-    }
-    body.xy-light .code-card-header {
-      background: #e8e8e8!important;
     }
   </style>
 
