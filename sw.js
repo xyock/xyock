@@ -1,3 +1,6 @@
+const appScope = new URL(self.registration.scope);
+const defaultChatUrl = new URL("xyock.html", appScope).href;
+
 self.addEventListener("push", event => {
   let payload = {};
   try {
@@ -9,12 +12,12 @@ self.addEventListener("push", event => {
   const title = String(payload.title || "xyock");
   const options = {
     body: String(payload.body || "Your response is ready"),
-    icon: "/xyock/favicon/web-app-manifest-192x192.png",
-    badge: "/xyock/favicon/favicon-96x96.png",
+    icon: new URL("favicon/web-app-manifest-192x192.png", appScope).href,
+    badge: new URL("favicon/favicon-96x96.png", appScope).href,
     tag: payload.taskId ? "xyock-task-" + String(payload.taskId) : "xyock-response-ready",
     renotify: false,
     data: {
-      url: String(payload.url || "https://xyock.github.io/xyock/xyock.html")
+      url: String(payload.url || defaultChatUrl)
     }
   };
 
@@ -24,8 +27,8 @@ self.addEventListener("push", event => {
 self.addEventListener("notificationclick", event => {
   event.notification.close();
   const targetUrl = new URL(
-    String(event.notification.data?.url || "/xyock/xyock.html"),
-    self.location.origin
+    String(event.notification.data?.url || defaultChatUrl),
+    appScope
   ).href;
 
   event.waitUntil((async () => {

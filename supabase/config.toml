@@ -1,0 +1,13 @@
+project_id = "lhbdijxjnqbzmrvrvrkr"
+
+[functions.xyock-ai]
+verify_jwt = true
+
+[functions.github-actions]
+verify_jwt = true
+
+[functions.supabase-connect]
+verify_jwt = false
+
+[functions.decide]
+verify_jwt = false

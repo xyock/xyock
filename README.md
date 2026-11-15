@@ -92,9 +92,40 @@ The default model and available alternatives are configured in the frontend. The
 3. Configure the frontend's Supabase project settings to point to your own project before deploying your own instance.
 4. Publish the frontend using GitHub Pages or another static hosting provider.
 
+
+### Local code editor and runner (macOS)
+
+The repository includes a local editor server and a Piston-backed code runner. It is separate from the hosted chat page and binds only to loopback addresses on your Mac.
+
+1. Install and open Docker Desktop, and make sure Python 3 is available.
+2. From the repository folder, run:
+
+   ```bash
+   chmod +x start-xyock.command
+   ./start-xyock.command
+   ```
+
+3. The launcher starts Piston, installs the available runtimes, starts the local server, waits for its health check, and then opens the editor at `http://127.0.0.1:8000/`.
+
+The first runtime installation can take a while. Keep the terminal window open while using the local runner. Source code is sent to the local Piston container for execution; do not run code you do not trust.
+
 ### Backend
 
-The AI endpoint is expected to be deployed as a Supabase Edge Function named `xyock-ai`.
+The Edge Function sources are under `supabase/functions/`, migrations are under `supabase/migrations/`, and per-function authentication settings are in `supabase/config.toml`.
+
+For the linked project, check the migration list before applying database changes. Deploy the local functions with the Supabase CLI after linking the project:
+
+```bash
+supabase login
+supabase link --project-ref lhbdijxjnqbzmrvrvrkr
+supabase migration list
+supabase db push
+supabase functions deploy
+```
+
+The `supabase-connect` and `decide` functions have platform JWT verification disabled because their callback and approval links do not carry a Supabase user JWT; their handlers validate OAuth state or one-time approval tokens. The `xyock-ai` and `github-actions` functions keep platform verification enabled, with additional checks inside the handlers.
+
+The AI endpoint is deployed as a Supabase Edge Function named `xyock-ai`.
 
 For a separate deployment:
 
@@ -106,7 +137,7 @@ For a separate deployment:
 
 **Never put a private model-gateway API key or Supabase service-role key in frontend JavaScript.** Use server-side secrets and appropriate Row Level Security policies.
 
-> This repository's frontend references a Supabase project. The Edge Function source and deployment configuration should be reviewed separately before creating an independent deployment.
+> This repository is configured for the linked Supabase project. For a separate project, review the OAuth credentials, GitHub App settings, model-gateway secrets, Auth settings, and database schema before deploying.
 
 ## Privacy and security notes
 
