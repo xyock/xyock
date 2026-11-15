@@ -1468,11 +1468,12 @@ header::after{
       if (/(^|\n)\s*(?:public\s+(?:static\s+)?class\s+|public\s+static\s+void\s+main)|System\.out\.print/.test(s)) return "java";
       if (/(^|\n)\s*(?:fun\s+main\s*\(|val\s+\w+\s*=|var\s+\w+\s*=)|println\s*\(/m.test(s) && /fun\s|val\s|println\s*\(/.test(s)) return "kotlin";
       if (/(^|\n)\s*(?:func\s+\w+\s*\(|import\s+Foundation|let\s+\w+\s*=)/m.test(s) && /func\s|import\s+Foundation/.test(s)) return "swift";
-      if (/(^|\n)\s*(?:def\s+\w+\s*\(|class\s+\w+\s*[:(]|print\s*\(|from\s+\w+\s+import\s+)/m.test(s)) return "python";
+
       if (/(^|\n)\s*(?:interface\s+\w+|type\s+\w+\s*=|const\s+\w+\s*:\s*\w+|let\s+\w+\s*:\s*\w+)/m.test(s)) return "typescript";
       if (/(^|\n)\s*(?:const\s+|let\s+|var\s+|function\s+|export\s+|import\s+)|console\.log\s*\(|=>/.test(s)) return "javascript";
       if (/(^|\n)\s*(?:\$[A-Za-z_][\w]*\s*=|echo\s+|function\s+\w+\s*\()/m.test(s) && /\$[A-Za-z_][\w]*|echo\s/.test(s)) return "php";
       if (/(^|\n)\s*(?:def\s+\w+|puts\s+|require\s+['"])/m.test(s) && /\bputs\b|\bend\b/.test(s)) return "ruby";
+      if (/(^|\n)\s*(?:def\s+\w+\s*\(|class\s+\w+\s*[:(]|print\s*\(|from\s+\w+\s+import\s+)/m.test(s)) return "python";
       if (/(^|\n)\s*[A-Za-z_][\w-]*\s*:\s*[^:\n]+\s*$/m.test(s) && !/[{};]/.test(s)) return "yaml";
       if (/(^|\n)\s*(?:[.#][\w-]+|@[\w-]+|[a-z][a-z-]*)\s*\{[^}]*:[^}]+;/is.test(s)) return "css";
       return "text";
