@@ -2701,7 +2701,11 @@ int main() {
               headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token }
             });
             if (!dr.ok) { showToast("삭제 실패: HTTP " + dr.status); return; }
-            if (currentConversationId === row.id) currentConversationId = null;
+            if (currentConversationId === row.id) {
+              currentConversationContext = { id: null, userId: session.user_id };
+              currentConversationId = null;
+              currentConversationUserId = session.user_id;
+            }
             openHistoryModal();
           });
           item.append(open, pin, del); list.append(item);
@@ -2753,7 +2757,11 @@ int main() {
         method: "DELETE", headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token }
       });
       if (!response.ok) throw new Error("삭제 실패 (HTTP " + response.status + ")");
-      if (currentConversationId === id) currentConversationId = null;
+      if (currentConversationId === id) {
+        currentConversationContext = { id: null, userId: session.user_id };
+        currentConversationId = null;
+        currentConversationUserId = session.user_id;
+      }
       window.dispatchEvent(new Event("xyock-chats-refresh"));
     };
 
