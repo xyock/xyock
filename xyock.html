@@ -5012,6 +5012,26 @@ body.xy-light .code-card[data-language="bash"] .code-token {
     }
   </style>
 
+  <style id="xy-code-card-sticky-toolbar">
+    /* Keep the code toolbar visible while scrolling, but clip it to its own card. */
+    .code-card {
+      overflow: clip!important;
+    }
+    .code-card-header {
+      position: sticky!important;
+      top: 0!important;
+      z-index: 5!important;
+      background: #e8e8e8!important;
+      backdrop-filter: none!important;
+    }
+    body:not(.xy-light) .code-card-header {
+      background: #e8e8e8!important;
+    }
+    body.xy-light .code-card-header {
+      background: #e8e8e8!important;
+    }
+  </style>
+
   <script src="https://xyock.github.io/xyock/review/feedback-widget.js?v=1" defer></script>
 </body>
 
