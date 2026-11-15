@@ -2583,11 +2583,12 @@ int main() {
         if (streamedError) throw new Error(streamedError);
         if (!data.answer) throw new Error("AI 응답 스트림이 정상적으로 끝나지 않았습니다.");
         if (Array.isArray(data.sources)) renderWorkSources(data.sources);
-        setWorkStage("completed");
+        setWorkStage("answering");
         pending.parentElement?.classList.remove("thinking");
         const answer = String(data.answer || "AI didn't respond.");
         const parsedPlan = githubCommitReady ? parseGitHubChangePlan(answer) : {visibleText:answer,plan:null,error:null};
         await typewriterText(pending, parsedPlan.visibleText || "변경 요청을 처리했습니다.");
+        setWorkStage("completed");
         if (githubCommitReady) {
           if (parsedPlan.plan) {
             try {
