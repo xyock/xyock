@@ -144,7 +144,7 @@ function getSecretKey(): string | null {
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  return btoa(binary).replaceAll("=", "").replaceAll("+", "-").replaceAll("/", "_");
 }
 
 async function adminRest(
@@ -276,7 +276,7 @@ async function persistBackgroundAnswer(
   const rows = await read.json();
   if (!Array.isArray(rows) || !rows[0]) throw new Error("저장할 대화 기록이 없습니다.");
 
-  const messages = Array.isArray(rows[0].messages) ? rows[0].messages : [];
+  const messages = Array.isArray(rows[0].messages)\n    ? rows[0].messages.filter((item: Record<string, unknown>) => item?.content !== "xyock is responding…")\n    : [];
   if (!messages.some((item: Record<string, unknown>) => item?.task_id === taskId)) {
     messages.push({ role: "assistant", content: answer, task_id: taskId });
     const update = await adminRest(
