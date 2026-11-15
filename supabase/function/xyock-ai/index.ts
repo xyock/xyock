@@ -1,5 +1,6 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { buildPushPayload } from "npm:@block65/webcrypto-web-push@2.0.0";
 
 const ALLOWED_ORIGIN = "https://xyock.github.io";
 const PROVIDER_URL = "https://api.kilo.ai/api/gateway/chat/completions";
@@ -140,6 +141,173 @@ function getSecretKey(): string | null {
   }
 }
 
+function base64UrlEncode(bytes: Uint8Array): string {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+}
+
+async function adminRest(
+  path: string,
+  adminKey: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const projectUrl = Deno.env.get("SUPABASE_URL");
+  if (!projectUrl) throw new Error("Supabase URL is not configured.");
+  const headers = new Headers(init.headers || {});
+  headers.set("apikey", adminKey);
+  headers.set("Authorization", `Bearer ${adminKey}`);
+  headers.set("Accept", "application/json");
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return await fetch(`${projectUrl}/rest/v1/${path}`, { ...init, headers });
+}
+
+async function getVapidConfig(adminKey: string): Promise<{ public_key: string; private_key: string }> {
+  const read = async () => {
+    const response = await adminRest(
+      "xyock_vapid_keys?id=eq.default&select=public_key,private_key",
+      adminKey,
+    );
+    if (!response.ok) throw new Error("VAPID 설정을 불러오지 못했습니다.");
+    const rows = await response.json();
+    return Array.isArray(rows) && rows[0] ? rows[0] as { public_key: string; private_key: string } : null;
+  };
+
+  let config = await read();
+  if (config) return config;
+
+  const pair = await crypto.subtle.generateKey(
+    { name: "ECDSA", namedCurve: "P-256" },
+    true,
+    ["sign", "verify"],
+  ) as CryptoKeyPair;
+  const publicBytes = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
+  const privateJwk = await crypto.subtle.exportKey("jwk", pair.privateKey);
+  if (!privateJwk.d) throw new Error("VAPID 개인 키를 생성하지 못했습니다.");
+
+  const create = await adminRest("xyock_vapid_keys?on_conflict=id", adminKey, {
+    method: "POST",
+    headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
+    body: JSON.stringify({
+      id: "default",
+      public_key: base64UrlEncode(publicBytes),
+      private_key: privateJwk.d,
+    }),
+  });
+  if (!create.ok) throw new Error("VAPID 설정을 저장하지 못했습니다.");
+  config = await read();
+  if (!config) throw new Error("VAPID 설정을 초기화하지 못했습니다.");
+  return config;
+}
+
+async function sendReadyPush(userId: string, taskId: string, adminKey: string): Promise<void> {
+  const config = await getVapidConfig(adminKey);
+  const response = await adminRest(
+    `xyock_push_subscriptions?user_id=eq.${encodeURIComponent(userId)}&select=endpoint,p256dh,auth_secret`,
+    adminKey,
+  );
+  if (!response.ok) throw new Error("푸시 구독을 불러오지 못했습니다.");
+  const subscriptions = await response.json();
+  if (!Array.isArray(subscriptions) || !subscriptions.length) return;
+
+  const vapid = {
+    subject: "https://xyock.github.io/xyock/",
+    publicKey: config.public_key,
+    privateKey: config.private_key,
+  };
+  const expired: string[] = [];
+
+  await Promise.all(subscriptions.map(async (row: Record<string, unknown>) => {
+    const endpoint = typeof row.endpoint === "string" ? row.endpoint : "";
+    const p256dh = typeof row.p256dh === "string" ? row.p256dh : "";
+    const auth = typeof row.auth_secret === "string" ? row.auth_secret : "";
+    if (!endpoint || !p256dh || !auth) return;
+
+    try {
+      const subscription = {
+        endpoint,
+        expirationTime: null,
+        keys: { p256dh, auth },
+      };
+      const payload = await buildPushPayload(
+        {
+          data: JSON.stringify({
+            title: "xyock",
+            body: "Your response is ready",
+            url: "https://xyock.github.io/xyock/xyock.html",
+            taskId,
+          }),
+          options: { ttl: 3600 },
+        },
+        subscription as Parameters<typeof buildPushPayload>[1],
+        vapid as Parameters<typeof buildPushPayload>[2],
+      );
+      const pushed = await fetch(endpoint, payload);
+      if (pushed.status === 404 || pushed.status === 410) expired.push(endpoint);
+      else if (!pushed.ok) console.warn("Web push provider returned", pushed.status);
+    } catch (error) {
+      console.warn("Web push delivery failed:", error);
+    }
+  }));
+
+  for (const endpoint of expired) {
+    await adminRest(
+      `xyock_push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,
+      adminKey,
+      { method: "DELETE" },
+    ).catch(() => undefined);
+  }
+}
+
+async function persistBackgroundAnswer(
+  taskId: string,
+  userId: string,
+  conversationId: string,
+  answer: string,
+  sources: XyockWebSource[],
+  adminKey: string,
+): Promise<void> {
+  const conversationPath =
+    `chat_conversations?id=eq.${encodeURIComponent(conversationId)}&user_id=eq.${encodeURIComponent(userId)}&select=messages`;
+  const read = await adminRest(conversationPath, adminKey);
+  if (!read.ok) throw new Error("대화 기록을 읽지 못했습니다.");
+  const rows = await read.json();
+  if (!Array.isArray(rows) || !rows[0]) throw new Error("저장할 대화 기록이 없습니다.");
+
+  const messages = Array.isArray(rows[0].messages) ? rows[0].messages : [];
+  if (!messages.some((item: Record<string, unknown>) => item?.task_id === taskId)) {
+    messages.push({ role: "assistant", content: answer, task_id: taskId });
+    const update = await adminRest(
+      `chat_conversations?id=eq.${encodeURIComponent(conversationId)}&user_id=eq.${encodeURIComponent(userId)}`,
+      adminKey,
+      {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ messages, updated_at: new Date().toISOString() }),
+      },
+    );
+    if (!update.ok) throw new Error("완성된 답변을 대화 기록에 저장하지 못했습니다.");
+  }
+
+  const taskUpdate = await adminRest(
+    `xyock_ai_tasks?id=eq.${encodeURIComponent(taskId)}&user_id=eq.${encodeURIComponent(userId)}`,
+    adminKey,
+    {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        status: "completed",
+        answer,
+        sources,
+        completed_at: new Date().toISOString(),
+      }),
+    },
+  );
+  if (!taskUpdate.ok) throw new Error("백그라운드 작업 완료 상태를 저장하지 못했습니다.");
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
@@ -197,9 +365,9 @@ async function consumeGuestRequest(
 async function validateUserToken(
   token: string,
   publicApiKey: string,
-): Promise<boolean> {
+): Promise<string | null> {
   const projectUrl = Deno.env.get("SUPABASE_URL");
-  if (!projectUrl || !publicApiKey) return false;
+  if (!projectUrl || !publicApiKey) return null;
 
   try {
     const response = await fetch(`${projectUrl}/auth/v1/user`, {
@@ -209,9 +377,11 @@ async function validateUserToken(
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.ok;
+    if (!response.ok) return null;
+    const user = await response.json();
+    return typeof user.id === "string" ? user.id : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -523,12 +693,72 @@ Deno.serve(async (req: Request) => {
 
   // The public key is only for guest requests; any other bearer token must be a valid Supabase user session.
   const isGuest = bearerToken === publicApiKey;
-  let authenticated = false;
+  let authenticatedUserId: string | null = null;
   if (!isGuest) {
-    authenticated = await validateUserToken(bearerToken, publicApiKey);
-    if (!authenticated) {
+    authenticatedUserId = await validateUserToken(bearerToken, publicApiKey);
+    if (!authenticatedUserId) {
       return jsonResponse({ error: "로그인 세션이 유효하지 않습니다. 다시 로그인해 주세요." }, 401, allowedOrigin);
     }
+  }
+  const authenticated = !!authenticatedUserId;
+
+  if (requestBody.action === "get_push_public_key") {
+    if (!authenticatedUserId) return jsonResponse({ error: "알림을 사용하려면 로그인해 주세요." }, 401, allowedOrigin);
+    try {
+      const config = await getVapidConfig(adminKey);
+      return jsonResponse({ publicKey: config.public_key }, 200, allowedOrigin);
+    } catch (error) {
+      console.error("VAPID key setup failed:", error);
+      return jsonResponse({ error: "푸시 알림 설정을 준비하지 못했습니다." }, 503, allowedOrigin);
+    }
+  }
+
+  if (requestBody.action === "save_push_subscription") {
+    if (!authenticatedUserId) return jsonResponse({ error: "알림을 사용하려면 로그인해 주세요." }, 401, allowedOrigin);
+    const subscription = requestBody.subscription && typeof requestBody.subscription === "object"
+      ? requestBody.subscription as Record<string, unknown>
+      : {};
+    const endpoint = typeof subscription.endpoint === "string" ? subscription.endpoint : "";
+    const keys = subscription.keys && typeof subscription.keys === "object"
+      ? subscription.keys as Record<string, unknown>
+      : {};
+    const p256dh = typeof keys.p256dh === "string" ? keys.p256dh : "";
+    const authSecret = typeof keys.auth === "string" ? keys.auth : "";
+    let parsedEndpoint: URL | null = null;
+    try { parsedEndpoint = new URL(endpoint); } catch { parsedEndpoint = null; }
+    if (!parsedEndpoint || parsedEndpoint.protocol !== "https:" || endpoint.length > 3000 ||
+      p256dh.length < 40 || p256dh.length > 300 || authSecret.length < 16 || authSecret.length > 200) {
+      return jsonResponse({ error: "브라우저 알림 구독 정보가 올바르지 않습니다." }, 400, allowedOrigin);
+    }
+    const saved = await adminRest("xyock_push_subscriptions?on_conflict=endpoint", adminKey, {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({
+        user_id: authenticatedUserId,
+        endpoint,
+        p256dh,
+        auth_secret: authSecret,
+        updated_at: new Date().toISOString(),
+      }),
+    });
+    if (!saved.ok) {
+      console.error("Push subscription save failed:", saved.status, (await saved.text()).slice(0, 300));
+      return jsonResponse({ error: "알림 구독을 저장하지 못했습니다." }, 503, allowedOrigin);
+    }
+    return jsonResponse({ ok: true }, 200, allowedOrigin);
+  }
+
+  if (requestBody.action === "remove_push_subscription") {
+    if (!authenticatedUserId) return jsonResponse({ error: "로그인이 필요합니다." }, 401, allowedOrigin);
+    const endpoint = typeof requestBody.endpoint === "string" ? requestBody.endpoint : "";
+    if (!endpoint || endpoint.length > 3000) return jsonResponse({ error: "알림 구독 주소가 올바르지 않습니다." }, 400, allowedOrigin);
+    const removed = await adminRest(
+      `xyock_push_subscriptions?user_id=eq.${encodeURIComponent(authenticatedUserId)}&endpoint=eq.${encodeURIComponent(endpoint)}`,
+      adminKey,
+      { method: "DELETE" },
+    );
+    if (!removed.ok) return jsonResponse({ error: "알림 구독을 해제하지 못했습니다." }, 503, allowedOrigin);
+    return jsonResponse({ ok: true }, 200, allowedOrigin);
   }
 
   const reasoningLevel = requestBody.reasoning_level === undefined
@@ -575,6 +805,41 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  const requestedConversationId = typeof requestBody.conversation_id === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestBody.conversation_id)
+    ? requestBody.conversation_id
+    : null;
+  let taskId: string | null = null;
+  if (authenticatedUserId && requestedConversationId) {
+    try {
+      const ownedConversation = await adminRest(
+        `chat_conversations?id=eq.${encodeURIComponent(requestedConversationId)}&user_id=eq.${encodeURIComponent(authenticatedUserId)}&select=id`,
+        adminKey,
+      );
+      const ownedRows = ownedConversation.ok ? await ownedConversation.json() : [];
+      if (Array.isArray(ownedRows) && ownedRows.length) {
+        taskId = crypto.randomUUID();
+        const created = await adminRest("xyock_ai_tasks", adminKey, {
+          method: "POST",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify({
+            id: taskId,
+            user_id: authenticatedUserId,
+            conversation_id: requestedConversationId,
+            status: "running",
+          }),
+        });
+        if (!created.ok) {
+          console.warn("Background task record could not be created:", created.status, (await created.text()).slice(0, 300));
+          taskId = null;
+        }
+      }
+    } catch (error) {
+      console.warn("Background task setup failed:", error);
+      taskId = null;
+    }
+  }
+
   const eventStream = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
@@ -586,7 +851,7 @@ Deno.serve(async (req: Request) => {
         }
       };
 
-      void (async () => {
+      const backgroundWork = (async () => {
         const messages: Array<Record<string, unknown>> = [
           {
             role: "system",
@@ -757,6 +1022,33 @@ Deno.serve(async (req: Request) => {
           if (!answer) throw new Error("AI가 빈 답변을 반환했어요. 다시 시도해 주세요.");
 
           emit({ type: "status", stage: "answering" });
+          if (taskId && authenticatedUserId && requestedConversationId) {
+            try {
+              await persistBackgroundAnswer(
+                taskId,
+                authenticatedUserId,
+                requestedConversationId,
+                answer,
+                getSources(),
+                adminKey,
+              );
+              await sendReadyPush(authenticatedUserId, taskId, adminKey);
+            } catch (backgroundSaveError) {
+              console.error("Background answer persistence/notification failed:", backgroundSaveError);
+              await adminRest(
+                `xyock_ai_tasks?id=eq.${encodeURIComponent(taskId)}&user_id=eq.${encodeURIComponent(authenticatedUserId)}`,
+                adminKey,
+                {
+                  method: "PATCH",
+                  headers: { Prefer: "return=minimal" },
+                  body: JSON.stringify({
+                    status: "failed",
+                    error: "답변 저장 또는 알림 전송 준비 중 문제가 발생했습니다.",
+                  }),
+                },
+              ).catch(() => undefined);
+            }
+          }
           emit({
             type: "done",
             answer,
@@ -765,6 +1057,20 @@ Deno.serve(async (req: Request) => {
           });
         } catch (error) {
           console.error("Kilo request failed:", error);
+          if (taskId && authenticatedUserId) {
+            await adminRest(
+              `xyock_ai_tasks?id=eq.${encodeURIComponent(taskId)}&user_id=eq.${encodeURIComponent(authenticatedUserId)}`,
+              adminKey,
+              {
+                method: "PATCH",
+                headers: { Prefer: "return=minimal" },
+                body: JSON.stringify({
+                  status: "failed",
+                  error: error instanceof Error ? error.message.slice(0, 500) : "AI 작업을 완료하지 못했습니다.",
+                }),
+              },
+            ).catch(() => undefined);
+          }
           emit({
             type: "error",
             error: error instanceof Error
@@ -779,6 +1085,13 @@ Deno.serve(async (req: Request) => {
           }
         }
       })();
+
+      try {
+        EdgeRuntime.waitUntil(backgroundWork);
+      } catch (waitUntilError) {
+        console.warn("Background task registration failed; SSE remains active:", waitUntilError);
+        backgroundWork.catch((error) => console.error("Background AI task failed:", error));
+      }
     },
   });
 
