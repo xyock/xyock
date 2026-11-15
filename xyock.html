@@ -2106,13 +2106,13 @@ header::after{
         if(status)status.textContent="Kilo 무료 모델 목록 확인 중…";
         try{
           const token=typeof isLoggedIn==="function"&&isLoggedIn()&&session?.access_token
-            ?session.access_token:SUPABASE_ANON_KEY;
+            ?session.access_token:"";
           const response=await fetch(FN_URL+"/xyock-ai",{
             method:"POST",
             headers:{
               "Content-Type":"application/json",
               "apikey":SUPABASE_ANON_KEY,
-              "Authorization":"Bearer "+token
+              ...(token?{"Authorization":"Bearer "+token}:{})
             },
             body:JSON.stringify({action:"list_free_models"})
           });
@@ -2163,13 +2163,13 @@ header::after{
     });
 
     async function apiRaw(url, options = {}) {
-      const token = isLoggedIn() ? session.access_token : SUPABASE_ANON_KEY;
+      const token = isLoggedIn() ? session.access_token : "";
 
       const res = await fetch(url, {
         ...options,
         headers: {
           apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           "Content-Type": "application/json",
           ...(options.headers || {})
         }
@@ -2795,7 +2795,9 @@ int main() {
           headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_ANON_KEY,
-            "Authorization": "Bearer " + (isLoggedIn() ? session.access_token : SUPABASE_ANON_KEY)
+            ...(isLoggedIn() && session?.access_token
+              ? { "Authorization": "Bearer " + session.access_token }
+              : {})
           },
           body: JSON.stringify({ q: aiQuestion, model: getSelectedModel(), reasoning_level: window.xyockGetReasoningLevel?.() || "balanced", conversation_id: durableConversationId, attachments: requestAttachments })
         });
@@ -2817,7 +2819,9 @@ int main() {
             pending.parentElement?.remove();
             return;
           }
-          if (response.status === 401 || response.status === 403) throw new Error("Supabase error.");
+          if (response.status === 401 || response.status === 403) {
+            throw new Error(details || "Supabase 요청 권한을 확인해 주세요.");
+          }
           throw new Error(details);
         }
 
