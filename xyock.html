@@ -1971,6 +1971,37 @@ console.log(arr.sort((a, b) => a - b));`,
   update();
 })();
 </script>
+
+<style id="xy-ai-work-tracker-style">
+.xy-work-tracker{width:min(900px,96%);box-sizing:border-box;margin:0 0 10px;padding:12px 14px;border:1px solid rgba(130,160,143,.22);border-radius:15px;background:rgba(16,23,19,.82);color:#dce9e0}
+.xy-work-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.xy-work-title{font-size:9px;letter-spacing:1.25px;font-weight:800;color:#91a99a}
+.xy-work-indicator{font-size:9px;letter-spacing:.7px;font-weight:800;color:#8fe1b2}
+.xy-work-current{display:flex;align-items:center;gap:9px;min-height:20px;color:#d8e6dc;font-size:12px;line-height:1.5}
+.xy-work-spinner{width:12px;height:12px;flex:0 0 12px;border:2px solid rgba(131,211,164,.22);border-top-color:#83d6a4;border-radius:50%;animation:xyWorkSpin .8s linear infinite}
+.xy-work-spinner[hidden]{display:none}
+@keyframes xyWorkSpin{to{transform:rotate(360deg)}}
+.xy-work-tracker[data-stage="completed"] .xy-work-indicator{color:#8fe1b2}
+.xy-work-tracker[data-stage="error"] .xy-work-indicator{color:#ff9a9a}
+.xy-work-sites{margin-top:12px;padding-top:10px;border-top:1px solid rgba(130,160,143,.15)}
+.xy-work-sites[hidden]{display:none}
+.xy-work-sites-heading{margin-bottom:8px;color:#9bafa2;font-size:10px;font-weight:700}
+.xy-work-sites-list{display:flex;flex-wrap:wrap;gap:7px}
+.xy-work-site{display:flex;align-items:center;gap:8px;min-width:0;max-width:260px;padding:7px 9px;border:1px solid rgba(130,160,143,.17);border-radius:11px;background:rgba(255,255,255,.035);color:inherit;text-decoration:none}
+.xy-work-site:hover{border-color:rgba(130,211,164,.55);background:rgba(130,211,164,.08)}
+.xy-work-site-icon{position:relative;display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:7px;background:#27362d;overflow:hidden}
+.xy-work-site-icon img{width:18px;height:18px;object-fit:contain}
+.xy-work-site-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:800;color:#9dddb4}
+.xy-work-site-copy{display:flex;flex-direction:column;min-width:0;gap:2px}
+.xy-work-site-title{font-size:10px;line-height:1.35;color:#dfeae3;max-width:205px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xy-work-site-domain{font-size:9px;color:#87988d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.xy-light .xy-work-tracker{background:rgba(241,247,243,.96);border-color:#d7e3db;color:#26372d}
+body.xy-light .xy-work-current,body.xy-light .xy-work-site-title{color:#26372d}
+body.xy-light .xy-work-sites-heading,body.xy-light .xy-work-site-domain,body.xy-light .xy-work-title{color:#60776a}
+body.xy-light .xy-work-site{background:#fff;border-color:#dce7df}
+@media(max-width:620px){.xy-work-tracker{width:100%;padding:11px 12px;margin-bottom:8px;border-radius:13px}.xy-work-sites-list{gap:6px}.xy-work-site{max-width:calc(50% - 3px);flex:1 1 calc(50% - 3px);padding:6px 7px}.xy-work-site-title{max-width:calc(100% - 2px)}}
+</style>
+
 </body></html>";
     System.out.println(html);
   }
@@ -2314,6 +2345,82 @@ int main() {
       const pending = appendMessage("ai", "xyock is responding…");
       pending.parentElement?.classList.add("thinking");
 
+      const workTracker = document.createElement("section");
+      workTracker.className = "xy-work-tracker";
+      workTracker.setAttribute("aria-live", "polite");
+      workTracker.innerHTML = '<div class="xy-work-top"><span class="xy-work-title">XYOCK WORK STATUS</span><span class="xy-work-indicator">LIVE</span></div><div class="xy-work-current"><span class="xy-work-spinner"></span><span class="xy-work-current-label">요청과 대화 문맥을 확인하고 있어요</span></div><div class="xy-work-sites" hidden><div class="xy-work-sites-heading">검색한 사이트</div><div class="xy-work-sites-list"></div></div>';
+      pending.parentElement?.insertBefore(workTracker, pending);
+
+      const workStatusLabel = workTracker.querySelector(".xy-work-current-label");
+      const workSpinner = workTracker.querySelector(".xy-work-spinner");
+      const workSites = workTracker.querySelector(".xy-work-sites");
+      const workSitesList = workTracker.querySelector(".xy-work-sites-list");
+      const workStageLabels = {
+        analyzing: "질문과 대화 문맥을 분석하고 있어요",
+        searching: "관련 웹사이트를 검색하고 있어요",
+        reviewing: "검색 결과를 비교하고 검토하고 있어요",
+        search_unavailable: "웹 검색에 연결할 수 없어 확인 가능한 정보로 답변을 준비해요",
+        answering: "답변을 정리하고 있어요",
+        completed: "답변을 완료했어요",
+        error: "요청을 완료하지 못했어요"
+      };
+      function setWorkStage(stage) {
+        const label = workStageLabels[stage] || workStageLabels.analyzing;
+        if (workStatusLabel) workStatusLabel.textContent = label;
+        workTracker.dataset.stage = stage;
+        if (workSpinner) workSpinner.hidden = stage === "completed" || stage === "error";
+        const indicator = workTracker.querySelector(".xy-work-indicator");
+        if (indicator) indicator.textContent = stage === "completed" ? "DONE" : stage === "error" ? "ERROR" : "LIVE";
+      }
+      function renderWorkSources(sources) {
+        if (!workSitesList || !workSites || !Array.isArray(sources)) return;
+        workSitesList.replaceChildren();
+        const validSources = sources.slice(0, 8).filter(source => {
+          try {
+            const url = new URL(String(source.url || ""));
+            return (url.protocol === "https:" || url.protocol === "http:") && url.hostname;
+          } catch { return false; }
+        });
+        if (!validSources.length) {
+          workSites.hidden = true;
+          return;
+        }
+        workSites.hidden = false;
+        validSources.forEach(source => {
+          const url = new URL(String(source.url));
+          const domain = String(source.domain || url.hostname).replace(/^www\./i, "").slice(0, 180);
+          const card = document.createElement("a");
+          card.className = "xy-work-site";
+          card.href = url.toString();
+          card.target = "_blank";
+          card.rel = "noopener noreferrer";
+          card.title = String(source.title || domain);
+          const iconBox = document.createElement("span");
+          iconBox.className = "xy-work-site-icon";
+          const fallback = document.createElement("span");
+          fallback.className = "xy-work-site-fallback";
+          fallback.textContent = (domain.charAt(0) || "W").toUpperCase();
+          const icon = document.createElement("img");
+          icon.alt = "";
+          icon.loading = "lazy";
+          icon.referrerPolicy = "no-referrer";
+          icon.src = "https://www.google.com/s2/favicons?domain_url=" + encodeURIComponent(url.origin) + "&sz=64";
+          icon.onerror = () => icon.remove();
+          iconBox.append(icon, fallback);
+          const copy = document.createElement("span");
+          copy.className = "xy-work-site-copy";
+          const title = document.createElement("span");
+          title.className = "xy-work-site-title";
+          title.textContent = String(source.title || domain).slice(0, 150);
+          const host = document.createElement("span");
+          host.className = "xy-work-site-domain";
+          host.textContent = domain;
+          copy.append(title, host);
+          card.append(iconBox, copy);
+          workSitesList.appendChild(card);
+        });
+      }
+
       try {
         const recentHistory = currentMessages()
           .filter(message => message.content !== "xyock is responding…")
@@ -2408,19 +2515,30 @@ int main() {
           "\\nApply this style while following the current request.\\n\\n" + aiQuestion;
 
         const serializedAttachments = await Promise.all(attachments.map(serializeAttachment));
-        const response = await fetch(`${FN_URL}/xyock-ai`, {
+        setWorkStage("analyzing");
+        const response = await fetch(FN_URL + "/xyock-ai", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${isLoggedIn() ? session.access_token : SUPABASE_ANON_KEY}`
+            "Authorization": "Bearer " + (isLoggedIn() ? session.access_token : SUPABASE_ANON_KEY)
           },
           body: JSON.stringify({ q: aiQuestion, model: getSelectedModel(), reasoning_level: window.xyockGetReasoningLevel?.() || "balanced", attachments: [...serializedAttachments, ...repoAttachments].slice(0, 4) })
         });
 
-        const data = await response.json().catch(() => ({}));
+        let data = {};
+        let streamedError = "";
+        const handleAIEvent = event => {
+          if (!event || typeof event !== "object") return;
+          if (event.type === "status") setWorkStage(event.stage);
+          if (event.type === "sources") renderWorkSources(event.sources);
+          if (event.type === "done") data = event;
+          if (event.type === "error") streamedError = String(event.error || "AI 요청에 실패했습니다.");
+        };
+
         if (!response.ok) {
-          const details = data.error || `서버 오류 (${response.status})`;
+          data = await response.json().catch(() => ({}));
+          const details = data.error || ("서버 오류 (" + response.status + ")");
           if (response.status === 429) {
             showToast("Limit reached");
             pending.parentElement?.remove();
@@ -2430,6 +2548,42 @@ int main() {
           throw new Error(details);
         }
 
+        if ((response.headers.get("content-type") || "").includes("text/event-stream") && response.body?.getReader) {
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          const consumeEventBlock = block => {
+            const payload = block.split(/\r?\n/)
+              .filter(line => line.startsWith("data:"))
+              .map(line => line.slice(5).trimStart())
+              .join("\n");
+            if (!payload) return;
+            try { handleAIEvent(JSON.parse(payload)); }
+            catch (eventError) { console.warn("xyock progress event parse failed", eventError); }
+          };
+          try {
+            while (true) {
+              const chunk = await reader.read();
+              if (chunk.done) break;
+              buffer += decoder.decode(chunk.value, { stream: true });
+              const blocks = buffer.split(/\r?\n\r?\n/);
+              buffer = blocks.pop() || "";
+              blocks.forEach(consumeEventBlock);
+              if (streamedError) break;
+            }
+            buffer += decoder.decode();
+            if (buffer.trim()) consumeEventBlock(buffer);
+          } finally {
+            reader.releaseLock();
+          }
+        } else {
+          data = await response.json().catch(() => ({}));
+        }
+
+        if (streamedError) throw new Error(streamedError);
+        if (!data.answer) throw new Error("AI 응답 스트림이 정상적으로 끝나지 않았습니다.");
+        if (Array.isArray(data.sources)) renderWorkSources(data.sources);
+        setWorkStage("completed");
         pending.parentElement?.classList.remove("thinking");
         const answer = String(data.answer || "AI didn't respond.");
         const parsedPlan = githubCommitReady ? parseGitHubChangePlan(answer) : {visibleText:answer,plan:null,error:null};
@@ -2460,8 +2614,9 @@ int main() {
           }
         }
       } catch (error) {
+        setWorkStage("error");
         pending.parentElement?.classList.remove("thinking");
-        pending.textContent = `xyock에 연결하지 못했습니다. ${error.message || "Supabase Edge Function error."}`;
+        pending.textContent = "xyock에 연결하지 못했습니다. " + (error.message || "Supabase Edge Function error.");
         pending.parentElement?.classList.add("error");
       }
 
