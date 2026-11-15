@@ -4786,28 +4786,23 @@ body.xy-light .xy-drop-overlay-card>span:last-child{color:#586c60}
 </script>
 
 <style id="xy-desktop-sidebar-push-layout">
-/* Desktop only: move the complete chat workspace with the expanded sidebar. */
+/* Push the page's normal-flow content as one layout when the desktop menu opens. */
 @media (min-width: 621px) {
-  body.xy-desktop-menu-open {
-    --xy-open-sidebar-width: min(260px, calc(100vw - var(--xy-rail, 61px)));
+  body {
+    box-sizing: border-box;
+    padding-left: 0;
+    transition: padding-left .28s cubic-bezier(.2,.8,.2,1);
   }
 
-  body > header,
-  body > #chat,
-  body > .input-section {
-    position: relative;
-    left: 0;
-    transition: transform .28s cubic-bezier(.2,.8,.2,1);
-    will-change: transform;
+  /* The menu is 340px wide in the desktop layout. :has() reacts immediately
+     to the real panel state; the body class remains as a compatibility fallback. */
+  body.xy-desktop-menu-open,
+  body:has(#xyMenu.xy-screen.open) {
+    padding-left: min(340px, 88vw) !important;
   }
 
-  body.xy-desktop-menu-open > header,
-  body.xy-desktop-menu-open > #chat,
-  body.xy-desktop-menu-open > .input-section {
-    transform: translateX(var(--xy-open-sidebar-width)) !important;
-  }
-
-  body.xy-desktop-menu-open #xyMenu.xy-screen {
+  body.xy-desktop-menu-open #xyMenu.xy-screen,
+  body:has(#xyMenu.xy-screen.open) #xyMenu.xy-screen {
     box-shadow: 24px 0 70px #0008 !important;
   }
 
