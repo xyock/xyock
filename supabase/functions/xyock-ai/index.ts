@@ -141,6 +141,25 @@ function getSecretKey(): string | null {
   }
 }
 
+function getAllowedPublicApiKeys(): Set<string> {
+  const keys = new Set<string>();
+  const legacy = Deno.env.get("SUPABASE_ANON_KEY");
+  const single = Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  if (legacy) keys.add(legacy);
+  if (single) keys.add(single);
+  try {
+    const configured = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
+    if (configured && typeof configured === "object" && !Array.isArray(configured)) {
+      for (const value of Object.values(configured)) {
+        if (typeof value === "string" && value.startsWith("sb_publishable_")) keys.add(value);
+      }
+    }
+  } catch {
+    // Keep the legacy and singular-key fallbacks.
+  }
+  return keys;
+}
+
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -686,14 +705,18 @@ Deno.serve(async (req: Request) => {
 
   const authorization = req.headers.get("authorization") ?? "";
   const bearerToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1] ?? "";
-  if (!bearerToken) {
-    return jsonResponse({ error: "로그인 토큰이 없습니다." }, 401, allowedOrigin);
-  }
+  const requestApiKey = req.headers.get("apikey") ?? "";
+  const allowedPublicKeys = getAllowedPublicApiKeys();
 
-  // The public key is only for guest requests; any other bearer token must be a valid Supabase user session.
-  const isGuest = bearerToken === publicApiKey;
+  // Publishable API keys identify the app, not a user. Accept them via apikey
+  // for guest traffic; only a Supabase Auth JWT can identify a signed-in user.
+  const isGuest = allowedPublicKeys.has(requestApiKey) &&
+    (!bearerToken || bearerToken === requestApiKey);
   let authenticatedUserId: string | null = null;
   if (!isGuest) {
+    if (!bearerToken) {
+      return jsonResponse({ error: "로그인 토큰이 없습니다." }, 401, allowedOrigin);
+    }
     authenticatedUserId = await validateUserToken(bearerToken, publicApiKey);
     if (!authenticatedUserId) {
       return jsonResponse({ error: "로그인 세션이 유효하지 않습니다. 다시 로그인해 주세요." }, 401, allowedOrigin);
