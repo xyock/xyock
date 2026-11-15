@@ -2402,7 +2402,7 @@ int main() {
         workSites.hidden = false;
         validSources.forEach(source => {
           const url = new URL(String(source.url));
-          const domain = String(source.domain || url.hostname).replace(/^www\\./i, "").slice(0, 180);
+          const domain = String(source.domain || url.hostname).replace(/^www\./i, "").slice(0, 180);
           const siteName = String(source.siteName || domain).slice(0, 100);
           const card = document.createElement("a");
           card.className = "xy-work-site";
