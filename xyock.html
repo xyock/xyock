@@ -1693,6 +1693,8 @@ header::after{
         copy.title = "코드 복사";
         copy.setAttribute("aria-label", "코드 복사");
         copy.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>';
+        const defaultCopyIcon = copy.innerHTML;
+        const copiedCheckIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
         copy.addEventListener("click", async () => {
           let copied = false;
           try {
@@ -1711,9 +1713,11 @@ header::after{
           copy.title = copied ? "복사됨" : "복사 실패";
           copy.setAttribute("aria-label", copy.title);
           copy.dataset.copied = copied ? "true" : "false";
+          if (copied) copy.innerHTML = copiedCheckIcon;
           setTimeout(() => {
             copy.title = "코드 복사";
             copy.setAttribute("aria-label", "코드 복사");
+            copy.innerHTML = defaultCopyIcon;
             delete copy.dataset.copied;
           }, 1600);
         });
@@ -4997,6 +5001,16 @@ body.xy-light .code-card[data-language="bash"] .code-token {
   color:#8352d7!important;
 }
 </style>
+
+  <style id="xy-code-copy-success">
+    .code-copy-btn[data-copied="true"],
+    .code-copy-btn[data-copied="true"]:hover,
+    body.xy-light .code-copy-btn[data-copied="true"],
+    body.xy-light .code-copy-btn[data-copied="true"]:hover {
+      color:#22c55e!important;
+      background:rgba(34,197,94,.12)!important;
+    }
+  </style>
 
   <script src="https://xyock.github.io/xyock/review/feedback-widget.js?v=1" defer></script>
 </body>
