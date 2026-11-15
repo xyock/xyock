@@ -3625,7 +3625,10 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
    return {replies,words:text.reduce((n,s)=>n+words(s),0),details,codeBlocks:Math.round(code),userMessages:messages.filter(m=>m.role==="user").length};
  }
  async function openReview(){
-   closeScreens();showModal("reviewModal");await loadReview();
+   closeScreens();
+   if(typeof window.xyockShowModal==="function")window.xyockShowModal("reviewModal");
+   else $("reviewModal")?.classList.add("show");
+   await loadReview();
  }
  window.xyockOpenReview = openReview;
  async function loadReview(){
