@@ -2168,6 +2168,7 @@ int main() {
       addUserMessage([query || "첨부 파일을 확인해 줘.", ...attachments.map(f => `[첨부: ${f.name}]`)].join("\n"));
 
       input.value = "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
       selectedAttachments = [];
       renderAttachments();
       document.getElementById("sendBtn").disabled = true;
@@ -3528,15 +3529,18 @@ int main() {
           }
           if (selectedAttachments.some(f => f.name === file.name && f.size === file.size)) continue;
           const type = file.type || "";
-          const isImage = type.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name);
+          const extension = (file.name.split(".").pop() || "").toLowerCase();
+          const imageTypes = { png:"image/png", jpg:"image/jpeg", jpeg:"image/jpeg", gif:"image/gif", webp:"image/webp", bmp:"image/bmp", avif:"image/avif" };
+          const isImage = type.startsWith("image/") || Object.prototype.hasOwnProperty.call(imageTypes, extension);
           const isText = /^(text\/|application\/(json|xml))/.test(type) || /\.(txt|md|csv|json|js|ts|jsx|tsx|html|css|py|java|c|cpp|h|sql|xml|ya?ml|log)$/i.test(file.name);
+          const attachmentType = isImage ? (type.startsWith("image/") ? type : (imageTypes[extension] || "image/jpeg")) : (type || "text/plain");
           if (!isImage && !isText) {
             showToast(file.name + ": 이미지 또는 텍스트/코드 파일만 지원해요.");
             continue;
           }
           selectedAttachments.push({
             file, name: file.name, size: file.size,
-            type: type || (isText ? "text/plain" : "image/*"), isImage
+            type: attachmentType, isImage
           });
           added = true;
         }
@@ -3661,7 +3665,7 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
    window.__xyockClearAttachments?.();
    const chat=$("chat"),notice=$("secretChatNotice");
    if(chat&&notice){chat.replaceChildren(notice);notice.hidden=false}
-   if($("searchInput"))$("searchInput").value="";
+   if($("searchInput")){$("searchInput").value="";$("searchInput").dispatchEvent(new Event("input",{bubbles:true}))}
    if($("sendBtn"))$("sendBtn").disabled=true;
    $("modeIndicator")?.replaceChildren(document.createTextNode("Secret Chat"));
    $("searchInput")?.focus();
@@ -3838,7 +3842,7 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
    if(typeof queueSaveConversation==="function"&&typeof currentMessages==="function"&&currentMessages().length)queueSaveConversation();
    if(window.__xyockSecretMode)document.getElementById("secretChatExit")?.click();
    const input=document.getElementById("searchInput");
-   if(input)input.value="";
+   if(input){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}))}
    window.xyockClearAttachments?.();
    if(typeof startNewConversation==="function"){
      startNewConversation();
