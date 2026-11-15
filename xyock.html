@@ -1191,6 +1191,9 @@ header::after{
     let currentConversationId = null;
     window.xyockGetCurrentConversationId = () => currentConversationId;
     let currentConversationUserId = null;
+    // Each conversation keeps its own save target so queued writes cannot attach
+    // an older chat to a newly opened conversation.
+    let currentConversationContext = { id: null, userId: null };
     let restoringConversation = false;
     let saveQueue = Promise.resolve();
     const AUTH_URL = `${SUPABASE_URL}/auth/v1`;
@@ -2589,40 +2592,49 @@ int main() {
       if (window.__xyockSecretMode || restoringConversation || !session?.user_id) return;
       const messages = currentMessages();
       if (!messages.length) return;
-      saveQueue = saveQueue.then(() => persistConversation(messages)).then(() => window.dispatchEvent(new Event("xyock-chats-refresh"))).catch(err => {
+      if (currentConversationContext.userId !== session.user_id) {
+        currentConversationContext = { id: null, userId: session.user_id };
+        currentConversationId = null;
+        currentConversationUserId = session.user_id;
+      }
+      const context = currentConversationContext;
+      saveQueue = saveQueue.then(() => persistConversation(messages, context)).then(() => window.dispatchEvent(new Event("xyock-chats-refresh"))).catch(err => {
         console.error("conversation save failed", err);
         showToast("대화 저장 실패: " + err.message);
       });
     }
 
-    async function persistConversation(messages) {
-      if (!session?.user_id || !await ensureSession()) return;
-      if (currentConversationUserId && currentConversationUserId !== session.user_id) currentConversationId = null;
-      currentConversationUserId = session.user_id;
+    async function persistConversation(messages, context) {
+      if (!context?.userId || !session?.user_id || session.user_id !== context.userId || !await ensureSession()) return;
+      if (!session?.user_id || session.user_id !== context.userId) return;
+      const targetId = context.id;
       const payload = {
-        user_id: session.user_id,
+        user_id: context.userId,
         title: (messages.find(m => m.role === "user")?.content || "새 대화").replace(/\s+/g, " ").slice(0, 80),
         messages,
         updated_at: new Date().toISOString()
       };
-      const url = currentConversationId
-        ? CONVERSATIONS_URL + "?id=eq." + encodeURIComponent(currentConversationId) + "&user_id=eq." + encodeURIComponent(session.user_id)
+      const url = targetId
+        ? CONVERSATIONS_URL + "?id=eq." + encodeURIComponent(targetId) + "&user_id=eq." + encodeURIComponent(context.userId)
         : CONVERSATIONS_URL;
       const res = await fetch(url, {
-        method: currentConversationId ? "PATCH" : "POST",
+        method: targetId ? "PATCH" : "POST",
         headers: {
           apikey: SUPABASE_ANON_KEY,
           Authorization: "Bearer " + session.access_token,
           "Content-Type": "application/json",
-          Prefer: currentConversationId ? "return=minimal" : "return=representation"
+          Prefer: targetId ? "return=minimal" : "return=representation"
         },
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error("HTTP " + res.status + ": " + (await res.text()).slice(0, 160));
-      if (!currentConversationId) {
+      if (!targetId) {
         const rows = await res.json();
-        currentConversationId = rows?.[0]?.id || null;
-        currentConversationUserId = session.user_id;
+        context.id = rows?.[0]?.id || null;
+      }
+      if (currentConversationContext === context) {
+        currentConversationId = context.id;
+        currentConversationUserId = context.userId;
       }
     }
 
@@ -2636,7 +2648,8 @@ int main() {
     window.xyockEnsureCurrentConversationSaved = async () => {
       if (!session?.user_id || !await ensureSession()) throw new Error("핀 기능을 사용하려면 로그인해 주세요.");
       await saveQueue;
-      if (currentConversationUserId && currentConversationUserId !== session.user_id) {
+      if (currentConversationContext.userId !== session.user_id) {
+        currentConversationContext = { id: null, userId: session.user_id };
         currentConversationId = null;
         currentConversationUserId = session.user_id;
       }
@@ -2711,6 +2724,7 @@ int main() {
         restoringConversation = true;
         const chat = document.getElementById("chat");
         chat.replaceChildren();
+        currentConversationContext = { id: rows[0].id, userId: session.user_id };
         currentConversationId = rows[0].id;
         currentConversationUserId = session.user_id;
         (Array.isArray(rows[0].messages) ? rows[0].messages : []).forEach(m =>
@@ -2795,6 +2809,7 @@ int main() {
     }
 
     function startNewConversation() {
+      currentConversationContext = { id: null, userId: session?.user_id || null };
       currentConversationId = null;
       const chat = document.getElementById("chat");
       chat.replaceChildren();
