@@ -2373,6 +2373,7 @@ int main() {
         if (stage === "completed" || stage === "error") return;
         pending.textContent = workStageLabels[stage] || workStageLabels.analyzing;
       }
+      setWorkStage("analyzing");
       try {
         const recentHistory = currentMessages()
           .filter(message => message.content !== "xyock is responding…")
