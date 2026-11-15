@@ -222,6 +222,7 @@ type XyockWebSource = {
   url: string;
   snippet: string;
   domain: string;
+  siteName: string;
 };
 
 function decodeXmlText(value: string): string {
@@ -324,6 +325,7 @@ async function searchPublicWeb(query: string, maxResults = 5): Promise<XyockWebS
       url: canonical,
       snippet: snippet.slice(0, 700),
       domain: domain.slice(0, 180),
+      siteName: domain.slice(0, 100),
     });
   }
   return results;
@@ -606,6 +608,11 @@ Deno.serve(async (req: Request) => {
 
           for (let turn = 0; turn < 4; turn++) {
             const includeTools = toolsEnabled && turn < 3;
+            emit({
+              type: "status",
+              stage: "thinking",
+              turn: turn + 1,
+            });
             const requestPayload: Record<string, unknown> = {
               model,
               messages,
@@ -693,7 +700,12 @@ Deno.serve(async (req: Request) => {
                   if (!searchQuery) {
                     toolResult = { error: "A non-empty search query is required." };
                   } else {
-                    emit({ type: "status", stage: "searching" });
+                    emit({
+                      type: "status",
+                      stage: "searching",
+                      engine: "Bing",
+                      query: searchQuery,
+                    });
                     try {
                       const found = await searchPublicWeb(searchQuery, maxResults);
                       for (const source of found) {
