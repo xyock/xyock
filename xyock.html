@@ -3762,8 +3762,17 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
    }else window.xyockToast?.("새 채팅 기능을 불러오지 못했습니다.");
  });
  const menuPanel=document.getElementById("xyMenu");
+ const profileFooter=document.querySelector(".xy-menu-footer");
+ const profileSlot=document.getElementById("xySideAccountSlot");
+ const syncProfilePlacement=()=>{
+   if(!menuPanel||!profileFooter||!profileSlot)return;
+   const showInsideMobileMenu=window.matchMedia("(max-width: 620px)").matches&&menuPanel.classList.contains("open");
+   const target=showInsideMobileMenu?menuPanel:profileSlot;
+   if(profileFooter.parentElement!==target)target.append(profileFooter);
+ };
  const syncMenuState=()=>{
    const opened=!!menuPanel?.classList.contains("open");
+   syncProfilePlacement();
    menuToggle?.setAttribute("aria-expanded",String(opened));
    menuToggle?.setAttribute("aria-label",opened?"메뉴 닫기":"메뉴 열기");
    if(menuToggle)menuToggle.title=opened?"메뉴 닫기":"메뉴 열기";
