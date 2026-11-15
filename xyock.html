@@ -1991,7 +1991,7 @@ console.log(arr.sort((a, b) => a - b));`,
 .xy-work-site:hover{border-color:rgba(130,211,164,.55);background:rgba(130,211,164,.08)}
 .xy-work-site-icon{position:relative;display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:7px;background:#27362d;overflow:hidden}
 .xy-work-site-icon img{width:18px;height:18px;object-fit:contain}
-.xy-work-site-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:800;color:#9dddb4}
+.xy-work-site-fallback{position:absolute;inset:0;display:none;place-items:center;font-size:11px;font-weight:800;color:#9dddb4}
 .xy-work-site-copy{display:flex;flex-direction:column;min-width:0;gap:2px}
 .xy-work-site-title{font-size:10px;line-height:1.35;color:#dfeae3;max-width:205px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .xy-work-site-domain{font-size:9px;color:#87988d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2399,13 +2399,14 @@ int main() {
           iconBox.className = "xy-work-site-icon";
           const fallback = document.createElement("span");
           fallback.className = "xy-work-site-fallback";
+          fallback.style.display = "none";
           fallback.textContent = (domain.charAt(0) || "W").toUpperCase();
           const icon = document.createElement("img");
           icon.alt = "";
           icon.loading = "lazy";
           icon.referrerPolicy = "no-referrer";
           icon.src = "https://www.google.com/s2/favicons?domain_url=" + encodeURIComponent(url.origin) + "&sz=64";
-          icon.onerror = () => icon.remove();
+          icon.onerror = () => { icon.remove(); fallback.style.display = "grid"; };
           iconBox.append(icon, fallback);
           const copy = document.createElement("span");
           copy.className = "xy-work-site-copy";
