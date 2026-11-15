@@ -1073,6 +1073,7 @@ header::after{
         placeholder="xyock에게 질문하거나 코드 요청하기..."
         autocomplete="off"
       />
+      <button class="round-btn mic-btn" id="voiceBtn" type="button" title="음성 입력 시작" aria-label="음성 입력 시작" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19 11a7 7 0 0 1-14 0M12 18v4M8 22h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button class="round-btn send-btn" id="sendBtn" type="button" title="보내기" disabled>↑</button>
     </div>
   </div>
@@ -1206,6 +1207,7 @@ header::after{
     const MAX_FILE_BYTES = 5 * 1024 * 1024;
     const MAX_ATTACHMENTS = 4;
     let selectedAttachments = [];
+    let xyockSendPending = false;
     const MODEL_STORAGE_KEY = "xyock_selected_model";
     const DEFAULT_MODEL = "kilo-auto/free";
     const MODEL_CATALOG_STORAGE_KEY = "xyock_kilo_free_models_v1";
@@ -1907,277 +1909,7 @@ console.log(arr.sort((a, b) => a - b));`,
 }`,
           html: `public class HTMLTest {
   public static void main(String[] args) {
-    String html = "<html><body><h1>Hello from Java</h1>
-<style id="xy-mobile-keyboard-composer">
-@media (max-width: 620px) {
-  .input-section {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: var(--xy-mobile-keyboard-inset, 0px) !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
-    z-index: 1000 !important;
-    transition: none !important;
-  }
-  body.xy-mobile-keyboard-open .input-section {
-    background: rgba(5, 7, 6, .98) !important;
-  }
-  #chat {
-    scroll-padding-bottom: calc(100px + var(--xy-mobile-keyboard-inset, 0px));
-  }
-}
-</style>
-<script id="xy-mobile-keyboard-controller">
-(() => {
-  const input = document.getElementById("searchInput");
-  const composer = document.querySelector(".input-section");
-  if (!input || !composer || window.__xyMobileKeyboardControllerInstalled) return;
-  window.__xyMobileKeyboardControllerInstalled = true;
-  const mobile = () => window.matchMedia("(max-width: 620px)").matches;
-  let focused = false, raf = 0;
-  const update = () => {
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => {
-      if (!mobile()) {
-        document.documentElement.style.setProperty("--xy-mobile-keyboard-inset", "0px");
-        document.body.classList.remove("xy-mobile-keyboard-open");
-        return;
-      }
-      const viewport = window.visualViewport;
-      const layoutHeight = window.innerHeight;
-      const visibleHeight = viewport ? viewport.height : layoutHeight;
-      const offsetTop = viewport ? viewport.offsetTop : 0;
-      const inset = Math.max(0, Math.round(layoutHeight - visibleHeight - offsetTop));
-      const keyboardOpen = focused && inset > 100;
-      document.documentElement.style.setProperty("--xy-mobile-keyboard-inset", (keyboardOpen ? inset : 0) + "px");
-      document.body.classList.toggle("xy-mobile-keyboard-open", keyboardOpen);
-    });
-  };
-  input.addEventListener("focus", () => {
-    focused = true;
-    update();
-    setTimeout(update, 80);
-    setTimeout(update, 250);
-    setTimeout(update, 450);
-  });
-  input.addEventListener("blur", () => { focused = false; update(); });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", update, { passive: true });
-    window.visualViewport.addEventListener("scroll", update, { passive: true });
-  }
-  window.addEventListener("resize", update, { passive: true });
-  window.addEventListener("orientationchange", () => setTimeout(update, 180), { passive: true });
-  update();
-})();
-</script>
-
-<style id="xy-ai-work-tracker-style">
-.xy-work-tracker{width:min(900px,96%);box-sizing:border-box;margin:0 0 10px;padding:12px 14px;border:1px solid rgba(130,160,143,.22);border-radius:15px;background:rgba(16,23,19,.82);color:#dce9e0}
-.xy-work-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
-.xy-work-title{font-size:9px;letter-spacing:1.25px;font-weight:800;color:#91a99a}
-.xy-work-indicator{font-size:9px;letter-spacing:.7px;font-weight:800;color:#8fe1b2}
-.xy-work-current{display:flex;align-items:center;gap:9px;min-height:20px;color:#d8e6dc;font-size:12px;line-height:1.5}
-.xy-work-spinner{width:12px;height:12px;flex:0 0 12px;border:2px solid rgba(131,211,164,.22);border-top-color:#83d6a4;border-radius:50%;animation:xyWorkSpin .8s linear infinite}
-.xy-work-spinner[hidden]{display:none}
-@keyframes xyWorkSpin{to{transform:rotate(360deg)}}
-.xy-work-tracker[data-stage="completed"] .xy-work-indicator{color:#8fe1b2}
-.xy-work-tracker[data-stage="error"] .xy-work-indicator{color:#ff9a9a}
-.xy-work-search-meta{display:flex;align-items:center;gap:7px;margin-top:9px;padding:7px 9px;border:1px solid rgba(130,160,143,.14);border-radius:10px;background:rgba(255,255,255,.035);color:#aebfb4;font-size:10px;line-height:1.4;overflow-wrap:anywhere}\n.xy-work-search-meta[hidden]{display:none}\n.xy-work-search-icon{width:16px;height:16px;flex:0 0 16px;object-fit:contain;border-radius:4px}\n.xy-work-sites{margin-top:12px;padding-top:10px;border-top:1px solid rgba(130,160,143,.15)}
-.xy-work-sites[hidden]{display:none}
-.xy-work-sites-heading{margin-bottom:8px;color:#9bafa2;font-size:10px;font-weight:700}
-.xy-work-sites-list{display:flex;flex-wrap:wrap;gap:7px}
-.xy-work-site{display:flex;align-items:center;gap:8px;min-width:0;max-width:260px;padding:7px 9px;border:1px solid rgba(130,160,143,.17);border-radius:11px;background:rgba(255,255,255,.035);color:inherit;text-decoration:none}
-.xy-work-site:hover{border-color:rgba(130,211,164,.55);background:rgba(130,211,164,.08)}
-.xy-work-site-icon{position:relative;display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:7px;background:#27362d;overflow:hidden}
-.xy-work-site-icon img{width:18px;height:18px;object-fit:contain}
-.xy-work-site-fallback{position:absolute;inset:0;display:none;place-items:center;font-size:11px;font-weight:800;color:#9dddb4}
-.xy-work-site-copy{display:flex;flex-direction:column;min-width:0;gap:2px}
-.xy-work-site-title{font-size:10px;line-height:1.35;font-weight:750;color:#dfeae3;max-width:205px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.xy-work-site-domain{font-size:9px;line-height:1.35;color:#87988d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-body.xy-light .xy-work-tracker{background:rgba(241,247,243,.96);border-color:#d7e3db;color:#26372d}
-body.xy-light .xy-work-current,body.xy-light .xy-work-site-title{color:#26372d}\nbody.xy-light .xy-work-search-meta{background:#fff;border-color:#dce7df;color:#60776a}
-body.xy-light .xy-work-sites-heading,body.xy-light .xy-work-site-domain,body.xy-light .xy-work-title{color:#60776a}
-body.xy-light .xy-work-site{background:#fff;border-color:#dce7df}
-@media(max-width:620px){.xy-work-tracker{width:100%;padding:11px 12px;margin-bottom:8px;border-radius:13px}.xy-work-sites-list{gap:6px}.xy-work-site{max-width:calc(50% - 3px);flex:1 1 calc(50% - 3px);padding:6px 7px}.xy-work-site-title{max-width:calc(100% - 2px)}}
-</style>
-
-<script id="xyock-background-notifications">
-(() => {
-  const enableButton = document.getElementById("xyEnableNotifications");
-  const disableButton = document.getElementById("xyDisableNotifications");
-  const status = document.getElementById("xyNotificationStatus");
-  if (!enableButton || !disableButton || !status || window.__xyockPushControllerInstalled) return;
-  window.__xyockPushControllerInstalled = true;
-
-  const say = message => {
-    status.textContent = message;
-    if (typeof window.xyockToast === "function") window.xyockToast(message);
-  };
-  const base64UrlToBytes = value => {
-    const padded = String(value).replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
-    const binary = atob(padded);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes;
-  };
-  const apiAction = async body => {
-    if (!session?.user_id || typeof ensureSession !== "function" || !await ensureSession()) {
-      throw new Error("알림은 로그인한 계정에서 사용할 수 있습니다.");
-    }
-    const response = await fetch(FN_URL + "/xyock-ai", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": "Bearer " + session.access_token
-      },
-      body: JSON.stringify(body)
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "알림 설정을 저장하지 못했습니다.");
-    return data;
-  };
-
-  async function currentRegistration() {
-    if (!("serviceWorker" in navigator)) return null;
-    return await navigator.serviceWorker.getRegistration("/xyock/").catch(() => null);
-  }
-  async function refreshState() {
-    if (!("Notification" in window)) {
-      status.textContent = "이 브라우저는 알림을 지원하지 않습니다.";
-      enableButton.disabled = true;
-      return;
-    }
-    if (Notification.permission === "denied") {
-      status.textContent = "브라우저 설정에서 xyock 알림을 허용해야 합니다.";
-      return;
-    }
-    const registration = await currentRegistration();
-    const subscription = registration?.pushManager ? await registration.pushManager.getSubscription() : null;
-    const active = !!subscription && Notification.permission === "granted";
-    enableButton.hidden = active;
-    disableButton.hidden = !active;
-    if (active) status.textContent = "이 기기에서 xyock 답변 완료 알림을 받고 있습니다.";
-    else if (!session?.user_id) status.textContent = "로그인 후 이 기기의 알림을 설정할 수 있습니다.";
-    else status.textContent = "알림이 꺼져 있습니다.";
-  }
-
-  enableButton.addEventListener("click", async () => {
-    if (!session?.user_id) {
-      say("알림을 켜려면 먼저 로그인해 주세요.");
-      if (typeof openLoginModal === "function") openLoginModal();
-      return;
-    }
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-      say("이 브라우저에서는 백그라운드 푸시 알림을 지원하지 않습니다.");
-      return;
-    }
-
-    try {
-      // Call the permission prompt directly from this click gesture.
-      const permissionPromise = Notification.permission === "default"
-        ? Notification.requestPermission()
-        : Promise.resolve(Notification.permission);
-      const permission = await permissionPromise;
-      if (permission !== "granted") {
-        say("알림 권한이 허용되지 않았습니다. 브라우저 설정에서 xyock 알림을 켜 주세요.");
-        await refreshState();
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.register("/xyock/sw.js", { scope: "/xyock/" });
-      await navigator.serviceWorker.ready;
-      const config = await apiAction({ action: "get_push_public_key" });
-      if (!config.publicKey) throw new Error("푸시 공개 키를 불러오지 못했습니다.");
-
-      let subscription = await registration.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: base64UrlToBytes(config.publicKey)
-        });
-      }
-      await apiAction({ action: "save_push_subscription", subscription: subscription.toJSON() });
-      say("알림이 켜졌습니다. 답변이 완료되면 Your response is ready 알림을 보냅니다.");
-      await refreshState();
-    } catch (error) {
-      console.error("xyock push setup failed:", error);
-      say(error?.message || "알림 설정 중 오류가 발생했습니다.");
-    }
-  });
-
-  disableButton.addEventListener("click", async () => {
-    try {
-      const registration = await currentRegistration();
-      const subscription = registration?.pushManager ? await registration.pushManager.getSubscription() : null;
-      if (subscription) {
-        await apiAction({ action: "remove_push_subscription", endpoint: subscription.endpoint });
-        await subscription.unsubscribe();
-      }
-      say("이 기기의 xyock 알림을 껐습니다.");
-    } catch (error) {
-      console.error("xyock push unsubscribe failed:", error);
-      say(error?.message || "알림을 해제하지 못했습니다.");
-    }
-    await refreshState();
-  });
-
-  window.addEventListener("focus", refreshState);
-  refreshState();
-})();
-</script>
-<style id="xy-desktop-sidebar-push-layout">
-@media (min-width: 621px) {
-  body.xy-desktop-menu-open {
-    --xy-open-sidebar-width: min(260px, calc(100vw - var(--xy-rail, 68px)));
-  }
-
-  body:not(.xy-desktop-menu-open) header,
-  body:not(.xy-desktop-menu-open) #chat,
-  body:not(.xy-desktop-menu-open) .input-section,
-  body.xy-desktop-menu-open header,
-  body.xy-desktop-menu-open #chat,
-  body.xy-desktop-menu-open .input-section {
-    transition:
-      width .26s cubic-bezier(.2,.8,.2,1),
-      margin-left .26s cubic-bezier(.2,.8,.2,1),
-      transform .26s cubic-bezier(.2,.8,.2,1);
-  }
-
-  body.xy-desktop-menu-open header {
-    box-sizing: border-box;
-    width: calc(100% - var(--xy-open-sidebar-width)) !important;
-    margin-left: var(--xy-open-sidebar-width) !important;
-  }
-
-  body.xy-desktop-menu-open #chat {
-    box-sizing: border-box;
-    width: min(calc(100% - var(--xy-open-sidebar-width)), 1100px) !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    transform: translateX(calc(var(--xy-open-sidebar-width) / 2));
-  }
-
-  body.xy-desktop-menu-open .input-section {
-    box-sizing: border-box;
-    width: calc(100% - var(--xy-open-sidebar-width)) !important;
-    margin-left: var(--xy-open-sidebar-width) !important;
-    margin-right: 0 !important;
-  }
-
-  /* The expanded menu is a working side panel, not a dimming overlay. */
-  body.xy-desktop-menu-open #xyMenu.xy-screen {
-    box-shadow: 24px 0 70px #0008 !important;
-  }
-
-  body:has(#xyMenu.open).xy-desktop-menu-open #xyMenu.xy-screen::after {
-    display: none !important;
-  }
-}
-</style>
-</body></html>";
+    String html = "<html><body><h1>Hello from Java</h1></body></html>";
     System.out.println(html);
   }
 }`
@@ -2291,11 +2023,14 @@ int main() {
     }
 
     async function sendMessage() {
+      if (xyockSendPending) return;
       const input = document.getElementById("searchInput");
       const query = sanitize(input.value).trim().slice(0, MAX_INPUT_LEN);
       const attachments = selectedAttachments.slice();
 
       if (!query && attachments.length === 0) return;
+      xyockSendPending = true;
+      try {
 
       lastActivity = Date.now();
       if (query && !window.__xyockSecretMode) rememberUserPreference(query);
@@ -2365,6 +2100,10 @@ int main() {
       }
 
       await askLocalxyock(query || "첨부한 파일을 분석해 줘.", attachments);
+      } finally {
+        xyockSendPending = false;
+        updateSendButton();
+      }
     }
 
     function findTerm(query) {
@@ -2837,7 +2576,7 @@ int main() {
 
     function updateSendButton() {
       document.getElementById("sendBtn").disabled =
-        document.getElementById("searchInput").value.trim() === "" && selectedAttachments.length === 0;
+        xyockSendPending || (document.getElementById("searchInput").value.trim() === "" && selectedAttachments.length === 0);
     }
 
     function renderAttachments() {
@@ -4234,4 +3973,392 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
 @media(max-width:620px){#xySidebar .xy-side-reasoning-btn{display:none!important}.xy-reasoning-popover{left:12px!important;right:12px!important;width:auto!important;top:calc(env(safe-area-inset-top,0px) + 58px)!important}}
 </style>
 </body>
+</html>
+
+<style id="xy-mobile-keyboard-composer">
+@media (max-width: 620px) {
+  .input-section {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: var(--xy-mobile-keyboard-inset, 0px) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 1000 !important;
+    transition: none !important;
+  }
+  body.xy-mobile-keyboard-open .input-section {
+    background: rgba(5, 7, 6, .98) !important;
+  }
+  #chat {
+    scroll-padding-bottom: calc(100px + var(--xy-mobile-keyboard-inset, 0px));
+  }
+}
+</style>
+
+<script id="xy-mobile-keyboard-controller">
+(() => {
+  const input = document.getElementById("searchInput");
+  const composer = document.querySelector(".input-section");
+  if (!input || !composer || window.__xyMobileKeyboardControllerInstalled) return;
+  window.__xyMobileKeyboardControllerInstalled = true;
+  const mobile = () => window.matchMedia("(max-width: 620px)").matches;
+  let focused = false, raf = 0;
+  const update = () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      if (!mobile()) {
+        document.documentElement.style.setProperty("--xy-mobile-keyboard-inset", "0px");
+        document.body.classList.remove("xy-mobile-keyboard-open");
+        return;
+      }
+      const viewport = window.visualViewport;
+      const layoutHeight = window.innerHeight;
+      const visibleHeight = viewport ? viewport.height : layoutHeight;
+      const offsetTop = viewport ? viewport.offsetTop : 0;
+      const inset = Math.max(0, Math.round(layoutHeight - visibleHeight - offsetTop));
+      const keyboardOpen = focused && inset > 100;
+      document.documentElement.style.setProperty("--xy-mobile-keyboard-inset", (keyboardOpen ? inset : 0) + "px");
+      document.body.classList.toggle("xy-mobile-keyboard-open", keyboardOpen);
+    });
+  };
+  input.addEventListener("focus", () => {
+    focused = true;
+    update();
+    setTimeout(update, 80);
+    setTimeout(update, 250);
+    setTimeout(update, 450);
+  });
+  input.addEventListener("blur", () => { focused = false; update(); });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", update, { passive: true });
+    window.visualViewport.addEventListener("scroll", update, { passive: true });
+  }
+  window.addEventListener("resize", update, { passive: true });
+  window.addEventListener("orientationchange", () => setTimeout(update, 180), { passive: true });
+  update();
+})();
+</script>
+
+<style id="xy-ai-work-tracker-style">
+.xy-work-tracker{width:min(900px,96%);box-sizing:border-box;margin:0 0 10px;padding:12px 14px;border:1px solid rgba(130,160,143,.22);border-radius:15px;background:rgba(16,23,19,.82);color:#dce9e0}
+.xy-work-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.xy-work-title{font-size:9px;letter-spacing:1.25px;font-weight:800;color:#91a99a}
+.xy-work-indicator{font-size:9px;letter-spacing:.7px;font-weight:800;color:#8fe1b2}
+.xy-work-current{display:flex;align-items:center;gap:9px;min-height:20px;color:#d8e6dc;font-size:12px;line-height:1.5}
+.xy-work-spinner{width:12px;height:12px;flex:0 0 12px;border:2px solid rgba(131,211,164,.22);border-top-color:#83d6a4;border-radius:50%;animation:xyWorkSpin .8s linear infinite}
+.xy-work-spinner[hidden]{display:none}
+@keyframes xyWorkSpin{to{transform:rotate(360deg)}}
+.xy-work-tracker[data-stage="completed"] .xy-work-indicator{color:#8fe1b2}
+.xy-work-tracker[data-stage="error"] .xy-work-indicator{color:#ff9a9a}
+.xy-work-search-meta{display:flex;align-items:center;gap:7px;margin-top:9px;padding:7px 9px;border:1px solid rgba(130,160,143,.14);border-radius:10px;background:rgba(255,255,255,.035);color:#aebfb4;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.xy-work-search-meta[hidden]{display:none}
+.xy-work-search-icon{width:16px;height:16px;flex:0 0 16px;object-fit:contain;border-radius:4px}
+.xy-work-sites{margin-top:12px;padding-top:10px;border-top:1px solid rgba(130,160,143,.15)}
+.xy-work-sites[hidden]{display:none}
+.xy-work-sites-heading{margin-bottom:8px;color:#9bafa2;font-size:10px;font-weight:700}
+.xy-work-sites-list{display:flex;flex-wrap:wrap;gap:7px}
+.xy-work-site{display:flex;align-items:center;gap:8px;min-width:0;max-width:260px;padding:7px 9px;border:1px solid rgba(130,160,143,.17);border-radius:11px;background:rgba(255,255,255,.035);color:inherit;text-decoration:none}
+.xy-work-site:hover{border-color:rgba(130,211,164,.55);background:rgba(130,211,164,.08)}
+.xy-work-site-icon{position:relative;display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:7px;background:#27362d;overflow:hidden}
+.xy-work-site-icon img{width:18px;height:18px;object-fit:contain}
+.xy-work-site-fallback{position:absolute;inset:0;display:none;place-items:center;font-size:11px;font-weight:800;color:#9dddb4}
+.xy-work-site-copy{display:flex;flex-direction:column;min-width:0;gap:2px}
+.xy-work-site-title{font-size:10px;line-height:1.35;font-weight:750;color:#dfeae3;max-width:205px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xy-work-site-domain{font-size:9px;line-height:1.35;color:#87988d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.xy-light .xy-work-tracker{background:rgba(241,247,243,.96);border-color:#d7e3db;color:#26372d}
+body.xy-light .xy-work-current,body.xy-light .xy-work-site-title{color:#26372d}
+body.xy-light .xy-work-search-meta{background:#fff;border-color:#dce7df;color:#60776a}
+body.xy-light .xy-work-sites-heading,body.xy-light .xy-work-site-domain,body.xy-light .xy-work-title{color:#60776a}
+body.xy-light .xy-work-site{background:#fff;border-color:#dce7df}
+@media(max-width:620px){.xy-work-tracker{width:100%;padding:11px 12px;margin-bottom:8px;border-radius:13px}.xy-work-sites-list{gap:6px}.xy-work-site{max-width:calc(50% - 3px);flex:1 1 calc(50% - 3px);padding:6px 7px}.xy-work-site-title{max-width:calc(100% - 2px)}}
+</style>
+
+<script id="xyock-background-notifications">
+(() => {
+  const enableButton = document.getElementById("xyEnableNotifications");
+  const disableButton = document.getElementById("xyDisableNotifications");
+  const status = document.getElementById("xyNotificationStatus");
+  if (!enableButton || !disableButton || !status || window.__xyockPushControllerInstalled) return;
+  window.__xyockPushControllerInstalled = true;
+
+  const say = message => {
+    status.textContent = message;
+    if (typeof window.xyockToast === "function") window.xyockToast(message);
+  };
+  const base64UrlToBytes = value => {
+    const padded = String(value).replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  };
+  const apiAction = async body => {
+    if (!session?.user_id || typeof ensureSession !== "function" || !await ensureSession()) {
+      throw new Error("알림은 로그인한 계정에서 사용할 수 있습니다.");
+    }
+    const response = await fetch(FN_URL + "/xyock-ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + session.access_token
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "알림 설정을 저장하지 못했습니다.");
+    return data;
+  };
+
+  async function currentRegistration() {
+    if (!("serviceWorker" in navigator)) return null;
+    return await navigator.serviceWorker.getRegistration("/xyock/").catch(() => null);
+  }
+  async function refreshState() {
+    if (!("Notification" in window)) {
+      status.textContent = "이 브라우저는 알림을 지원하지 않습니다.";
+      enableButton.disabled = true;
+      return;
+    }
+    if (Notification.permission === "denied") {
+      status.textContent = "브라우저 설정에서 xyock 알림을 허용해야 합니다.";
+      return;
+    }
+    const registration = await currentRegistration();
+    const subscription = registration?.pushManager ? await registration.pushManager.getSubscription() : null;
+    const active = !!subscription && Notification.permission === "granted";
+    enableButton.hidden = active;
+    disableButton.hidden = !active;
+    if (active) status.textContent = "이 기기에서 xyock 답변 완료 알림을 받고 있습니다.";
+    else if (!session?.user_id) status.textContent = "로그인 후 이 기기의 알림을 설정할 수 있습니다.";
+    else status.textContent = "알림이 꺼져 있습니다.";
+  }
+
+  enableButton.addEventListener("click", async () => {
+    if (!session?.user_id) {
+      say("알림을 켜려면 먼저 로그인해 주세요.");
+      if (typeof openLoginModal === "function") openLoginModal();
+      return;
+    }
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      say("이 브라우저에서는 백그라운드 푸시 알림을 지원하지 않습니다.");
+      return;
+    }
+
+    try {
+      // Call the permission prompt directly from this click gesture.
+      const permissionPromise = Notification.permission === "default"
+        ? Notification.requestPermission()
+        : Promise.resolve(Notification.permission);
+      const permission = await permissionPromise;
+      if (permission !== "granted") {
+        say("알림 권한이 허용되지 않았습니다. 브라우저 설정에서 xyock 알림을 켜 주세요.");
+        await refreshState();
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.register("/xyock/sw.js", { scope: "/xyock/" });
+      await navigator.serviceWorker.ready;
+      const config = await apiAction({ action: "get_push_public_key" });
+      if (!config.publicKey) throw new Error("푸시 공개 키를 불러오지 못했습니다.");
+
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64UrlToBytes(config.publicKey)
+        });
+      }
+      await apiAction({ action: "save_push_subscription", subscription: subscription.toJSON() });
+      say("알림이 켜졌습니다. 답변이 완료되면 Your response is ready 알림을 보냅니다.");
+      await refreshState();
+    } catch (error) {
+      console.error("xyock push setup failed:", error);
+      say(error?.message || "알림 설정 중 오류가 발생했습니다.");
+    }
+  });
+
+  disableButton.addEventListener("click", async () => {
+    try {
+      const registration = await currentRegistration();
+      const subscription = registration?.pushManager ? await registration.pushManager.getSubscription() : null;
+      if (subscription) {
+        await apiAction({ action: "remove_push_subscription", endpoint: subscription.endpoint });
+        await subscription.unsubscribe();
+      }
+      say("이 기기의 xyock 알림을 껐습니다.");
+    } catch (error) {
+      console.error("xyock push unsubscribe failed:", error);
+      say(error?.message || "알림을 해제하지 못했습니다.");
+    }
+    await refreshState();
+  });
+
+  window.addEventListener("focus", refreshState);
+  refreshState();
+})();
+</script>
+
+<style id="xy-desktop-sidebar-push-layout">
+@media (min-width: 621px) {
+  body.xy-desktop-menu-open {
+    --xy-open-sidebar-width: min(260px, calc(100vw - var(--xy-rail, 68px)));
+  }
+
+  body:not(.xy-desktop-menu-open) header,
+  body:not(.xy-desktop-menu-open) #chat,
+  body:not(.xy-desktop-menu-open) .input-section,
+  body.xy-desktop-menu-open header,
+  body.xy-desktop-menu-open #chat,
+  body.xy-desktop-menu-open .input-section {
+    transition:
+      width .26s cubic-bezier(.2,.8,.2,1),
+      margin-left .26s cubic-bezier(.2,.8,.2,1),
+      transform .26s cubic-bezier(.2,.8,.2,1);
+  }
+
+  body.xy-desktop-menu-open header {
+    box-sizing: border-box;
+    width: calc(100% - var(--xy-open-sidebar-width)) !important;
+    margin-left: var(--xy-open-sidebar-width) !important;
+  }
+
+  body.xy-desktop-menu-open #chat {
+    box-sizing: border-box;
+    width: min(calc(100% - var(--xy-open-sidebar-width)), 1100px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: translateX(calc(var(--xy-open-sidebar-width) / 2));
+  }
+
+  body.xy-desktop-menu-open .input-section {
+    box-sizing: border-box;
+    width: calc(100% - var(--xy-open-sidebar-width)) !important;
+    margin-left: var(--xy-open-sidebar-width) !important;
+    margin-right: 0 !important;
+  }
+
+  /* The expanded menu is a working side panel, not a dimming overlay. */
+  body.xy-desktop-menu-open #xyMenu.xy-screen {
+    box-shadow: 24px 0 70px #0008 !important;
+  }
+
+  body:has(#xyMenu.open).xy-desktop-menu-open #xyMenu.xy-screen::after {
+    display: none !important;
+  }
+}
+</style>
+
+<style id="xyock-voice-input-style">
+.mic-btn{width:42px;height:42px;flex:0 0 42px;padding:10px;border:0;background:transparent;color:#d8d8d8}
+.mic-btn svg{width:21px;height:21px;display:block}
+.mic-btn:hover{background:#454545;color:#fff}
+.mic-btn[data-recording="true"]{background:rgba(255,75,75,.14);color:#ff7777;animation:xyVoicePulse 1.15s ease-in-out infinite}
+.mic-btn[data-recording="true"]:hover{background:rgba(255,75,75,.22)}
+@keyframes xyVoicePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,75,75,0)}50%{box-shadow:0 0 0 5px rgba(255,75,75,.10)}}
+@media(prefers-reduced-motion:reduce){.mic-btn[data-recording="true"]{animation:none}}
+</style>
+
+<script id="xyock-voice-input-controller">
+(() => {
+  const button = document.getElementById("voiceBtn");
+  const input = document.getElementById("searchInput");
+  if (!button || !input || window.__xyockVoiceInputInstalled) return;
+  window.__xyockVoiceInputInstalled = true;
+
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let active = false;
+  let baseText = "";
+  let finalText = "";
+  let interimText = "";
+
+  const notify = message => {
+    button.title = message;
+    if (typeof window.xyockToast === "function") window.xyockToast(message);
+    else console.info("[xyock voice]", message);
+  };
+  const renderText = () => {
+    input.value = [baseText, finalText, interimText].map(value => value.trim()).filter(Boolean).join(" ");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const setActive = value => {
+    active = value;
+    button.dataset.recording = value ? "true" : "false";
+    button.setAttribute("aria-pressed", String(value));
+    button.setAttribute("aria-label", value ? "음성 입력 중지" : "음성 입력 시작");
+    button.title = value ? "녹음 중 · 눌러서 종료" : "음성 입력 시작";
+  };
+
+  if (!Recognition) {
+    button.addEventListener("click", () => {
+      notify("이 브라우저는 음성 인식을 지원하지 않습니다. 최신 Safari 또는 Chrome에서 이용해 주세요.");
+    });
+    return;
+  }
+
+  button.addEventListener("click", () => {
+    if (active && recognition) {
+      try { recognition.stop(); } catch (error) { console.warn("음성 입력 종료 실패:", error); }
+      return;
+    }
+
+    try {
+      recognition = new Recognition();
+      recognition.lang = (document.documentElement.lang || "ko").toLowerCase().startsWith("en") ? "en-US" : "ko-KR";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      baseText = input.value.trim();
+      finalText = "";
+      interimText = "";
+
+      recognition.onstart = () => setActive(true);
+      recognition.onresult = event => {
+        let nextFinal = "";
+        let nextInterim = "";
+        const firstChanged = Number.isInteger(event.resultIndex) ? event.resultIndex : 0;
+        for (let i = firstChanged; i < event.results.length; i++) {
+          const result = event.results[i];
+          const phrase = result && result[0] ? String(result[0].transcript || "") : "";
+          if (result && result.isFinal) nextFinal += phrase;
+          else nextInterim += phrase;
+        }
+        if (nextFinal) finalText += nextFinal;
+        interimText = nextInterim;
+        renderText();
+      };
+      recognition.onerror = event => {
+        const messages = {
+          "not-allowed": "마이크 권한을 허용해 주세요.",
+          "service-not-allowed": "브라우저의 음성 인식 서비스를 사용할 수 없습니다.",
+          "network": "음성 인식 서비스 연결을 확인해 주세요.",
+          "no-speech": "음성이 감지되지 않았습니다. 다시 눌러 시도해 주세요.",
+          "audio-capture": "사용할 수 있는 마이크를 찾지 못했습니다."
+        };
+        notify(messages[event.error] || "음성을 인식하지 못했습니다. 다시 시도해 주세요.");
+      };
+      recognition.onend = () => {
+        renderText();
+        setActive(false);
+        recognition = null;
+        if (!finalText && !interimText) button.title = "음성 입력 시작";
+      };
+
+      setActive(true);
+      recognition.start();
+    } catch (error) {
+      setActive(false);
+      recognition = null;
+      notify("음성 입력을 시작하지 못했습니다. 마이크 권한과 브라우저 설정을 확인해 주세요.");
+      console.warn("xyock voice recognition start failed:", error);
+    }
+  });
+})();
+</script>
+
+</body>
+
 </html>
