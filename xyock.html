@@ -1047,6 +1047,20 @@ header::after{
 #xy-free-login-prompt button:hover{background:#29372f;color:#fff}
 @keyframes xyFreePromptIn{from{opacity:0;transform:translate(-50%,-7px)}to{opacity:1;transform:translate(-50%,0)}}
 </style>
+<style id="xy-desktop-menu-content-shift">
+@media (min-width:621px){
+ body.xy-desktop-menu-open>header,
+ body.xy-desktop-menu-open>.chat-container,
+ body.xy-desktop-menu-open>.input-section{
+  transform:translateX(260px);
+ }
+ body>header,
+ body>.chat-container,
+ body>.input-section{
+  transition:transform .26s cubic-bezier(.2,.8,.2,1);
+ }
+}
+</style>
 </head>
 
 <body><aside id="xySidebar" aria-label="xyock sidebar"><button class="xy-side-logo" id="xyMenuOpen" type="button" title="메뉴" aria-label="메뉴 열기" aria-expanded="false"><img src="logo.png" alt="xyock"><span class="xy-side-menu-glyph" aria-hidden="true">☰</span></button><div class="xy-side-tools"><button class="xy-side-btn" id="xySidebarPlugins" type="button" title="플러그인" aria-label="플러그인"><svg viewBox="0 0 24 24"><path d="M8 7V4a2 2 0 0 1 4 0v3m4 0V4a2 2 0 0 1 4 0v3M5 7h14v4a3 3 0 0 1-3 3h-2v6H9v-6H8a3 3 0 0 1-3-3V7Z"/></svg></button><button class="xy-side-btn" id="xySidebarSearch" type="button" title="대화에서 검색" aria-label="대화에서 검색"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button><button class="xy-side-btn xy-side-ai-btn" id="xySidebarAI" type="button" title="AI 모델 선택" aria-label="AI 모델 선택" aria-expanded="false"><span>AI</span></button><button class="xy-side-btn xy-side-newchat-btn" id="xySidebarNewChat" type="button" title="새 채팅" aria-label="새 채팅"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><div id="xySideAccountSlot" class="xy-side-account"></div></aside><div id="xyReasoningPopover" class="xy-reasoning-popover" hidden role="dialog" aria-label="추론 강도 선택"><div class="xy-reasoning-head"><strong>추론 강도</strong><button type="button" id="xyReasoningClose" aria-label="닫기">×</button></div><p>답변의 속도와 설명 깊이를 선택합니다.</p><div class="xy-reasoning-options"><button type="button" data-reasoning-level="fast"><strong>패스트</strong><small>빠른 응답 · 핵심 위주</small></button><button type="button" data-reasoning-level="balanced"><strong>밸런스</strong><small>속도와 설명의 균형 · 기본값</small></button><button type="button" data-reasoning-level="expert"><strong>엑스퍼트 <span class="xy-reasoning-login-mark" aria-label="로그인 필요">↪</span></strong><small>더 깊은 검토와 자세한 설명 · 로그인 필요</small></button></div><small class="xy-reasoning-note">모델이 지원하는 범위에서 답변의 검토 수준과 설명 깊이를 조정합니다.</small></div><div id="xyAiModelPopover" class="xy-ai-model-popover" hidden role="dialog" aria-label="Kilo AI model selection"><div class="xy-ai-model-head"><div><strong>Kilo Free Models</strong><small>선택한 모델로 대화합니다.</small></div><button type="button" id="xyAiModelClose" aria-label="닫기">×</button></div><div id="xyAiModelList" class="xy-ai-model-list"><button type="button" data-kilo-model="kilo-auto/free"><strong>Auto Free</strong><span>Kilo · 자동 라우팅 · 무료</span></button></div><p class="xy-ai-model-foot" id="xyAiModelStatus" aria-live="polite">Kilo 실시간 무료 모델 목록을 불러오는 중…</p></div><div id="xyConversationSearch" class="xy-search-pop" hidden role="dialog" aria-label="현재 대화 검색"><div class="xy-search-pop-head"><strong>대화 검색</strong><button id="xySearchClose" type="button" aria-label="닫기">×</button></div><input id="xyConversationSearchInput" type="search" placeholder="이 대화에서 찾기…" autocomplete="off"><div id="xyConversationSearchResults" aria-live="polite"></div></div>
