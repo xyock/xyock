@@ -2128,6 +2128,51 @@ body.xy-light .xy-work-site{background:#fff;border-color:#dce7df}
   refreshState();
 })();
 </script>
+<style id="xy-desktop-sidebar-push-layout">
+@media (min-width: 621px) {
+  body.xy-desktop-menu-open {
+    --xy-open-sidebar-width: min(260px, calc(100vw - var(--xy-rail, 68px)));
+  }
+
+  body:not(.xy-desktop-menu-open) header,
+  body:not(.xy-desktop-menu-open) #chat,
+  body:not(.xy-desktop-menu-open) .input-section,
+  body.xy-desktop-menu-open header,
+  body.xy-desktop-menu-open #chat,
+  body.xy-desktop-menu-open .input-section {
+    transition:
+      width .26s cubic-bezier(.2,.8,.2,1),
+      margin-left .26s cubic-bezier(.2,.8,.2,1),
+      transform .26s cubic-bezier(.2,.8,.2,1);
+  }
+
+  body.xy-desktop-menu-open header {
+    box-sizing: border-box;
+    width: calc(100% - var(--xy-open-sidebar-width)) !important;
+    margin-left: var(--xy-open-sidebar-width) !important;
+  }
+
+  body.xy-desktop-menu-open #chat {
+    box-sizing: border-box;
+    width: min(calc(100% - var(--xy-open-sidebar-width)), 1100px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: translateX(calc(var(--xy-open-sidebar-width) / 2));
+  }
+
+  body.xy-desktop-menu-open .input-section {
+    box-sizing: border-box;
+    width: calc(100% - var(--xy-open-sidebar-width)) !important;
+    margin-left: var(--xy-open-sidebar-width) !important;
+    margin-right: 0 !important;
+  }
+
+  /* The expanded menu is a working side panel, not a dimming overlay. */
+  body.xy-desktop-menu-open #xyMenu.xy-screen::after {
+    display: none !important;
+  }
+}
+</style>
 </body></html>";
     System.out.println(html);
   }
@@ -3960,8 +4005,18 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
    }else window.xyockToast?.("새 채팅 기능을 불러오지 못했습니다.");
  });
  const menuPanel=document.getElementById("xyMenu");
- const syncMenuState=()=>{const opened=!!menuPanel?.classList.contains("open");menuToggle?.setAttribute("aria-expanded",String(opened));menuToggle?.setAttribute("aria-label",opened?"메뉴 닫기":"메뉴 열기");if(menuToggle)menuToggle.title=opened?"메뉴 닫기":"메뉴 열기"};
- if(menuPanel&&menuToggle){new MutationObserver(syncMenuState).observe(menuPanel,{attributes:true,attributeFilter:["class"]});syncMenuState()}
+ const syncMenuState=()=>{
+   const opened=!!menuPanel?.classList.contains("open");
+   menuToggle?.setAttribute("aria-expanded",String(opened));
+   menuToggle?.setAttribute("aria-label",opened?"메뉴 닫기":"메뉴 열기");
+   if(menuToggle)menuToggle.title=opened?"메뉴 닫기":"메뉴 열기";
+   document.body.classList.toggle("xy-desktop-menu-open",opened&&window.matchMedia("(min-width: 621px)").matches);
+ };
+ if(menuPanel&&menuToggle){
+   new MutationObserver(syncMenuState).observe(menuPanel,{attributes:true,attributeFilter:["class"]});
+   window.addEventListener("resize",syncMenuState,{passive:true});
+   syncMenuState();
+ }
  const aiButton=document.getElementById("xySidebarAI"),aiPopover=document.getElementById("xyAiModelPopover"),aiClose=document.getElementById("xyAiModelClose"),aiList=document.getElementById("xyAiModelList");
  const placeAiPopover=()=>{if(!aiButton||!aiPopover)return;const r=aiButton.getBoundingClientRect();const width=Math.min(292,window.innerWidth-96);aiPopover.style.width=width+"px";aiPopover.style.left=Math.max(76,Math.min(r.left+r.width+12,window.innerWidth-width-10))+"px";aiPopover.style.top=Math.max(8,Math.min(r.top,window.innerHeight-aiPopover.offsetHeight-10))+"px"};
  const closeAiPopover=()=>{if(aiPopover)aiPopover.hidden=true;aiButton?.setAttribute("aria-expanded","false");aiButton?.classList.remove("active")};
