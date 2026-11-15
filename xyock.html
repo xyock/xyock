@@ -4336,6 +4336,66 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeReasoning()});
  window.addEventListener("resize",()=>{if(reasoningPopover&&!reasoningPopover.hidden)placeReasoning(reasoningSideButton)});
  window.addEventListener("xyock-profile-updated",paintReasoning);paintReasoning();
+ // One capture-phase router owns the sidebar controls. It runs before legacy
+ // target/bubble handlers so duplicate listeners cannot cancel or reopen panels.
+ document.addEventListener("click",event=>{
+   const raw=event.target;
+   const target=raw instanceof Element?raw.closest("#xySidebar button, #xyReasoningMenuBtn"):null;
+   if(!target)return;
+
+   const id=target.id;
+   if(id==="xyMenuOpen"){
+     event.preventDefault();event.stopImmediatePropagation();
+     const opened=!!menuPanel&&!menuPanel.classList.contains("open");
+     if(menuPanel)menuPanel.classList.toggle("open",opened);
+     menuToggle?.setAttribute("aria-expanded",String(opened));
+     menuToggle?.setAttribute("aria-label",opened?"메뉴 닫기":"메뉴 열기");
+     if(menuToggle)menuToggle.title=opened?"메뉴 닫기":"메뉴 열기";
+     return;
+   }
+
+   if(id==="xySidebarPlugins"){
+     event.preventDefault();event.stopImmediatePropagation();
+     if(typeof window.xyockShowModal==="function")window.xyockShowModal("pluginModal");
+     else window.xyockToast?.("플러그인 창을 불러오지 못했습니다.");
+     return;
+   }
+
+   if(id==="xySidebarSearch"){
+     event.preventDefault();event.stopImmediatePropagation();
+     if(pop){pop.hidden=false;input?.focus()}
+     return;
+   }
+
+   if(id==="xySidebarAI"){
+     event.preventDefault();event.stopImmediatePropagation();
+     if(aiPopover?.hidden)openAiPopover();else closeAiPopover();
+     return;
+   }
+
+   if(id==="xySidebarReasoning"||id==="xyReasoningMenuBtn"){
+     event.preventDefault();event.stopImmediatePropagation();
+     if(!reasoningPopover)return;
+     if(reasoningPopover.hidden)openReasoning(target);else closeReasoning();
+     return;
+   }
+
+   if(id==="xySidebarNewChat"){
+     event.preventDefault();event.stopImmediatePropagation();
+     if(window.xyockSidebarApi?.hasCurrentMessages?.())window.xyockSidebarApi.saveCurrentConversation?.();
+     if(window.__xyockSecretMode)document.getElementById("secretChatExit")?.click();
+     const composer=document.getElementById("searchInput");
+     if(composer){composer.value="";composer.dispatchEvent(new Event("input",{bubbles:true}))}
+     window.xyockClearAttachments?.();
+     if(window.xyockSidebarApi?.startNewConversation?.()){
+       menuPanel?.classList.remove("open");
+       composer?.focus();
+       window.xyockToast?.("새 채팅을 시작했습니다.");
+     }else window.xyockToast?.("새 채팅 기능을 불러오지 못했습니다.");
+     return;
+   }
+ },true);
+
 
  const pins=()=>window.xyockReadPinnedConversations?.()||[],id=()=>window.xyockGetCurrentConversationId?.()||null,pin=document.getElementById("xyPinCurrent");
  const paint=()=>{const on=!!id()&&pins().includes(id());pin?.classList.toggle("active",on);pin?.setAttribute("aria-pressed",String(on));pin?.setAttribute("title",on?"대화 고정 해제":"현재 대화 고정")};
