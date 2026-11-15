@@ -1458,10 +1458,24 @@ header::after{
       message.append(footer);
     }
 
+    function appendAnswerFeedback(bubble) {
+      const message = bubble?.closest(".message.ai");
+      if (!message || message.querySelector("answer-feedback")) return;
+      const feedback = document.createElement("answer-feedback");
+      let answerId = "";
+      try { answerId = crypto.randomUUID(); } catch (_) { answerId = "answer-" + Date.now() + "-" + Math.random().toString(36).slice(2); }
+      feedback.setAttribute("answer-id", answerId);
+      feedback.setAttribute("source-site", location.hostname);
+      feedback.setAttribute("api-endpoint", SUPABASE_URL + "/functions/v1/xyock-review");
+      feedback.setAttribute("answer-text", String(bubble.dataset.rawContent || bubble.textContent || "").slice(0, 4000));
+      message.appendChild(feedback);
+    }
+
     function addAIMessage(text, type = "normal") {
       const bubble = appendMessage("ai", "", type);
       bubble.dataset.rawContent = String(text ?? "");
       renderAIContent(bubble, text).then(() => {
+        appendAnswerFeedback(bubble);
         appendGuestLoginFooter(bubble);
         if (!restoringConversation && !window.__xyockSecretMode) queueSaveConversation();
       }).catch(error => console.error("AI response rendering failed:", error));
@@ -2848,6 +2862,7 @@ int main() {
         pending.replaceChildren();
         pending.dataset.rawContent = parsedPlan.visibleText || "변경 요청을 처리했습니다.";
         await renderAIContent(pending, pending.dataset.rawContent);
+        appendAnswerFeedback(pending);
         setWorkStage("completed");
         if (githubCommitReady) {
           if (parsedPlan.plan) {
@@ -3331,6 +3346,7 @@ int main() {
             const restoredBubble = appendMessage("ai", "");
             restoredBubble.dataset.rawContent = String(m.content || "");
             await renderAIContent(restoredBubble, restoredBubble.dataset.rawContent);
+            appendAnswerFeedback(restoredBubble);
           }
         }
         restoringConversation = false;
@@ -4978,6 +4994,7 @@ body.xy-light .code-card[data-language="bash"] .code-token {
 }
 </style>
 
+  <script src="https://xyock.github.io/xyock/review/feedback-widget.js?v=1" defer></script>
 </body>
 
 </html>
