@@ -1010,7 +1010,7 @@ header::after{
 </style>
 </head>
 
-<body><aside id="xySidebar" aria-label="xyock sidebar"><button class="xy-side-logo" id="xyMenuOpen" type="button" title="메뉴" aria-label="메뉴 열기" aria-expanded="false"><img src="logo.png" alt="xyock"><span class="xy-side-menu-glyph" aria-hidden="true">☰</span></button><div class="xy-side-tools"><button class="xy-side-btn" id="xySidebarPlugins" type="button" title="플러그인" aria-label="플러그인"><svg viewBox="0 0 24 24"><path d="M8 7V4a2 2 0 0 1 4 0v3m4 0V4a2 2 0 0 1 4 0v3M5 7h14v4a3 3 0 0 1-3 3h-2v6H9v-6H8a3 3 0 0 1-3-3V7Z"/></svg></button><button class="xy-side-btn" id="xySidebarSearch" type="button" title="대화에서 검색" aria-label="대화에서 검색"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button><button class="xy-side-btn xy-side-ai-btn" id="xySidebarAI" type="button" title="AI 모델 선택" aria-label="AI 모델 선택" aria-expanded="false"><span>AI</span></button><button class="xy-side-btn xy-side-newchat-btn" id="xySidebarNewChat" type="button" title="새 채팅" aria-label="새 채팅"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><div id="xySideAccountSlot" class="xy-side-account"></div></aside><div id="xyAiModelPopover" class="xy-ai-model-popover" hidden role="dialog" aria-label="Kilo AI model selection"><div class="xy-ai-model-head"><div><strong>Kilo Free Models</strong><small>선택한 모델로 대화합니다.</small></div><button type="button" id="xyAiModelClose" aria-label="닫기">×</button></div><div id="xyAiModelList" class="xy-ai-model-list"><button type="button" data-kilo-model="kilo-auto/free"><strong>Auto Free</strong><span>무료 모델 자동 선택 · 추천</span></button><button type="button" data-kilo-model="nvidia/nemotron-3.5-super-vl:free"><strong>Nemotron 3.5 Super VL</strong><span>NVIDIA · 무료</span></button><button type="button" data-kilo-model="nvidia/nemotron-3-ultra-550b-a55b:free"><strong>Nemotron 3 Ultra</strong><span>NVIDIA · 무료</span></button><button type="button" data-kilo-model="dots-studio/dots-3-note-preview:free"><strong>Dots3-Note Preview</strong><span>Dots · 무료</span></button></div><p class="xy-ai-model-foot">무료 제공 모델은 제공사의 사용량 제한에 따라 일시적으로 이용할 수 없을 수 있습니다.</p></div><div id="xyConversationSearch" class="xy-search-pop" hidden role="dialog" aria-label="현재 대화 검색"><div class="xy-search-pop-head"><strong>대화 검색</strong><button id="xySearchClose" type="button" aria-label="닫기">×</button></div><input id="xyConversationSearchInput" type="search" placeholder="이 대화에서 찾기…" autocomplete="off"><div id="xyConversationSearchResults" aria-live="polite"></div></div>
+<body><aside id="xySidebar" aria-label="xyock sidebar"><button class="xy-side-logo" id="xyMenuOpen" type="button" title="메뉴" aria-label="메뉴 열기" aria-expanded="false"><img src="logo.png" alt="xyock"><span class="xy-side-menu-glyph" aria-hidden="true">☰</span></button><div class="xy-side-tools"><button class="xy-side-btn" id="xySidebarPlugins" type="button" title="플러그인" aria-label="플러그인"><svg viewBox="0 0 24 24"><path d="M8 7V4a2 2 0 0 1 4 0v3m4 0V4a2 2 0 0 1 4 0v3M5 7h14v4a3 3 0 0 1-3 3h-2v6H9v-6H8a3 3 0 0 1-3-3V7Z"/></svg></button><button class="xy-side-btn" id="xySidebarSearch" type="button" title="대화에서 검색" aria-label="대화에서 검색"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button><button class="xy-side-btn xy-side-ai-btn" id="xySidebarAI" type="button" title="AI 모델 선택" aria-label="AI 모델 선택" aria-expanded="false"><span>AI</span></button><button class="xy-side-btn xy-side-newchat-btn" id="xySidebarNewChat" type="button" title="새 채팅" aria-label="새 채팅"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><div id="xySideAccountSlot" class="xy-side-account"></div></aside><div id="xyAiModelPopover" class="xy-ai-model-popover" hidden role="dialog" aria-label="Kilo AI model selection"><div class="xy-ai-model-head"><div><strong>Kilo Free Models</strong><small>선택한 모델로 대화합니다.</small></div><button type="button" id="xyAiModelClose" aria-label="닫기">×</button></div><div id="xyAiModelList" class="xy-ai-model-list"><button type="button" data-kilo-model="kilo-auto/free"><strong>Auto Free</strong><span>Kilo · 자동 라우팅 · 무료</span></button></div><p class="xy-ai-model-foot" id="xyAiModelStatus" aria-live="polite">Kilo 실시간 무료 모델 목록을 불러오는 중…</p></div><div id="xyConversationSearch" class="xy-search-pop" hidden role="dialog" aria-label="현재 대화 검색"><div class="xy-search-pop-head"><strong>대화 검색</strong><button id="xySearchClose" type="button" aria-label="닫기">×</button></div><input id="xyConversationSearchInput" type="search" placeholder="이 대화에서 찾기…" autocomplete="off"><div id="xyConversationSearchResults" aria-live="polite"></div></div>
   <header><div class="header-icons"><span class="mode-indicator" id="modeIndicator">xyock</span><div class="auth-col"><button class="login-btn" id="loginBtn" type="button" hidden onclick="if(typeof openLoginModal==='function')openLoginModal();else document.getElementById('loginModal')?.classList.add('show')">login</button><button class="xy-header-secret" id="xyHeaderSecretChat" type="button" data-xy-go="secret" title="Secret Chat" aria-label="Secret Chat 시작"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10.5c1.7-3.1 4.7-5 9-5s7.3 1.9 9 5M5 10.5h14l-1.2 5.2a2 2 0 0 1-2 1.5h-1.2a2 2 0 0 1-1.9-1.4L12 14l-.7 1.8a2 2 0 0 1-1.9 1.4H8.2a2 2 0 0 1-2-1.5L5 10.5Z"/><path d="M8 10.5v1m8-1v1"/></svg></button></div></div></header>
 
 <section class="xy-screen" id="xyMenu"><div class="xy-screen-head"><div class="xy-screen-title" data-i18n="menu">메뉴</div><button class="xy-close" data-xy-close="xyMenu">닫기 ✕</button></div><nav class="xy-menu-list"><div class="xy-chats-section"><div class="xy-chats-heading">Chats</div><div id="xyChatsList" class="xy-chats-list" aria-live="polite"><div class="xy-chats-empty">로그인하면 대화가 여기에 표시됩니다.</div></div></div><button class="xy-menu-link xy-menu-newchat" data-xy-go="newchat"><span class="xy-menu-link-label"><svg class="xy-menu-newchat-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M11.8 3.2H4.7A1.7 1.7 0 0 0 3 4.9v10.4A1.7 1.7 0 0 0 4.7 17h10.4a1.7 1.7 0 0 0 1.7-1.7V8.2M8 12l.5-2.5 7.7-7.7a1.8 1.8 0 0 1 2.5 2.5L11 11.9 8 12Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="newchat">새 대화</span></span><span>›</span></button><div class="xy-nav-label">WORKSPACE</div><button class="xy-menu-link" data-xy-go="project"><span>⌂　Project</span><span>›</span></button><button class="xy-menu-link" data-xy-go="codes"><span>⌘　Code</span><span>›</span></button><button class="xy-menu-link" data-xy-go="plugins"><span>⌘　Plugins</span><span>›</span></button><button class="xy-menu-link" data-xy-go="review"><span>✓　Review</span><span>›</span></button><div class="xy-nav-label">PERSONAL</div><button class="xy-menu-link" data-xy-go="secret"><span>◉　Secret Chat</span><span class="xy-secret-tag">PRIVATE SESSION</span></button><button class="xy-menu-link" data-xy-go="readme"><span>Documentation</span><span>↗</span></button></nav><div class="xy-menu-footer"><button type="button" id="xyProfileTrigger" class="xy-profile-trigger" aria-haspopup="true" aria-expanded="false"><span class="xy-profile-avatar" id="xyProfileAvatar">◉</span><span class="xy-profile-identity"><strong id="xyProfileName">로그인</strong><small id="xyProfileProvider">계정 프로필</small></span><span class="xy-profile-chevron">⌃</span></button><div class="xy-profile-popover" id="xyProfilePopover" hidden><button type="button" data-profile-open="account">Account settings</button><button type="button" data-profile-open="personalize">Personalize</button><button type="button" id="xyProfileLoginAction">Log in</button></div></div></section>
@@ -1204,12 +1204,12 @@ header::after{
     let selectedAttachments = [];
     const MODEL_STORAGE_KEY = "xyock_selected_model";
     const DEFAULT_MODEL = "kilo-auto/free";
-    const FREE_MODELS = [
-      "kilo-auto/free",
-      "nvidia/nemotron-3.5-super-vl:free",
-      "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "dots-studio/dots-3-note-preview:free"
-    ];
+    const MODEL_CATALOG_STORAGE_KEY = "xyock_kilo_free_models_v1";
+    const MODEL_CATALOG_REFRESH_MS = 60_000;
+    let FREE_MODELS = [DEFAULT_MODEL];
+    let kiloFreeModelOptions = [{id:DEFAULT_MODEL,name:"Auto Free",provider:"Kilo",recommended:true}];
+    let kiloFreeModelCatalogAt = 0;
+    let kiloFreeModelRefreshPromise = null;
     const SESSION_KEY = "lockai_session";
     const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
     const LOGIN_POLL_MS = 3000;
@@ -1680,6 +1680,119 @@ header::after{
         button.setAttribute("aria-pressed",String(active));
       });
     }
+    function normalizeKiloFreeModels(value) {
+      const source=Array.isArray(value)?value:[];
+      const result=[{id:DEFAULT_MODEL,name:"Auto Free",provider:"Kilo",recommended:true}];
+      const seen=new Set([DEFAULT_MODEL]);
+      for(const item of source){
+        if(!item||typeof item!=="object")continue;
+        const id=typeof item.id==="string"?item.id.trim():"";
+        if(!id||id.length>180||!/^[a-z0-9][a-z0-9._:/-]*$/i.test(id)||seen.has(id))continue;
+        seen.add(id);
+        result.push({
+          id,
+          name:String(item.name||id).slice(0,120),
+          provider:String(item.provider||id.split("/")[0]||"Kilo").slice(0,80),
+          recommended:item.recommended===true
+        });
+      }
+      return result;
+    }
+    function renderKiloModelOptions() {
+      const root=document.getElementById("xyAiModelList");
+      if(!root)return;
+      root.replaceChildren();
+      for(const model of kiloFreeModelOptions){
+        const button=document.createElement("button");
+        button.type="button";
+        button.dataset.kiloModel=model.id;
+        const strong=document.createElement("strong");
+        strong.textContent=model.name;
+        const detail=document.createElement("span");
+        detail.textContent=model.id===DEFAULT_MODEL
+          ?"Kilo · 자동 라우팅 · 무료"
+          :String(model.provider||"Kilo")+" · 무료";
+        button.append(strong,detail);
+        root.append(button);
+      }
+      updateKiloModelOptions();
+    }
+    function restoreKiloModelCache() {
+      try{
+        const cached=JSON.parse(localStorage.getItem(MODEL_CATALOG_STORAGE_KEY)||"null");
+        if(!cached||!Array.isArray(cached.models))return;
+        const options=normalizeKiloFreeModels(cached.models);
+        if(options.length>1){
+          kiloFreeModelOptions=options;
+          FREE_MODELS=options.map(item=>item.id);
+          kiloFreeModelCatalogAt=Number(cached.fetchedAt)||0;
+          renderKiloModelOptions();
+        }
+      }catch(error){console.warn("Kilo model cache unavailable",error)}
+    }
+    async function refreshKiloFreeModels(force=false) {
+      if(!force&&kiloFreeModelCatalogAt&&Date.now()-kiloFreeModelCatalogAt<MODEL_CATALOG_REFRESH_MS)return kiloFreeModelOptions;
+      if(kiloFreeModelRefreshPromise)return kiloFreeModelRefreshPromise;
+      kiloFreeModelRefreshPromise=(async()=>{
+        const status=document.getElementById("xyAiModelStatus");
+        if(status)status.textContent="Kilo 무료 모델 목록 확인 중…";
+        try{
+          const token=typeof isLoggedIn==="function"&&isLoggedIn()&&session?.access_token
+            ?session.access_token:SUPABASE_ANON_KEY;
+          const response=await fetch(FN_URL+"/xyock-ai",{
+            method:"POST",
+            headers:{
+              "Content-Type":"application/json",
+              "apikey":SUPABASE_ANON_KEY,
+              "Authorization":"Bearer "+token
+            },
+            body:JSON.stringify({action:"list_free_models"})
+          });
+          const data=await response.json().catch(()=>({}));
+          if(!response.ok||!Array.isArray(data.models))throw new Error(data.error||"모델 목록을 불러오지 못했습니다.");
+          const options=normalizeKiloFreeModels(data.models);
+          kiloFreeModelOptions=options;
+          FREE_MODELS=options.map(item=>item.id);
+          kiloFreeModelCatalogAt=data.refreshedAt?Date.parse(data.refreshedAt)||Date.now():Date.now();
+          try{
+            localStorage.setItem(MODEL_CATALOG_STORAGE_KEY,JSON.stringify({
+              models:options.filter(item=>item.id!==DEFAULT_MODEL),
+              fetchedAt:kiloFreeModelCatalogAt
+            }));
+          }catch{}
+          const key=window.xyockAccountStorageKey?window.xyockAccountStorageKey(MODEL_STORAGE_KEY):MODEL_STORAGE_KEY;
+          const saved=localStorage.getItem(key)||localStorage.getItem(MODEL_STORAGE_KEY);
+          if(saved&&!FREE_MODELS.includes(saved)){
+            localStorage.setItem(key,DEFAULT_MODEL);
+            window.xyockScheduleSettingsSync?.();
+          }
+          renderKiloModelOptions();
+          if(status)status.textContent=data.stale
+            ?"Kilo 연결이 불안정해 저장된 무료 모델 목록을 표시합니다 · Auto Free 사용 가능"
+            :"Kilo 실시간 무료 모델 목록 · 60초마다 자동 갱신";
+          return options;
+        }catch(error){
+          console.warn("Kilo free model refresh failed",error);
+          if(!kiloFreeModelOptions.length)kiloFreeModelOptions=[{id:DEFAULT_MODEL,name:"Auto Free",provider:"Kilo",recommended:true}];
+          FREE_MODELS=kiloFreeModelOptions.map(item=>item.id);
+          renderKiloModelOptions();
+          if(status)status.textContent="최신 목록을 확인하지 못했습니다 · Auto Free는 계속 표시됩니다";
+          return kiloFreeModelOptions;
+        }finally{
+          kiloFreeModelRefreshPromise=null;
+        }
+      })();
+      return kiloFreeModelRefreshPromise;
+    }
+    restoreKiloModelCache();
+    renderKiloModelOptions();
+    refreshKiloFreeModels();
+    window.setInterval(()=>{
+      if(document.visibilityState==="visible")refreshKiloFreeModels(true);
+    },MODEL_CATALOG_REFRESH_MS);
+    document.addEventListener("visibilitychange",()=>{
+      if(document.visibilityState==="visible"&&Date.now()-kiloFreeModelCatalogAt>=MODEL_CATALOG_REFRESH_MS)refreshKiloFreeModels(true);
+    });
 
     async function apiRaw(url, options = {}) {
       const token = isLoggedIn() ? session.access_token : SUPABASE_ANON_KEY;
