@@ -902,19 +902,20 @@ header .xy-menu-logo-trigger:active{transform:scale(.95)!important}
 @media(max-width:640px){header .xy-menu-logo-trigger{margin-right:12px!important;width:44px!important;height:44px!important;flex-basis:44px!important}header .xy-menu-logo-image{width:42px!important;height:42px!important}}
 </style>
 <style id="xy-chat-github-commit">
-.xy-chat-commit-card{display:grid;gap:10px;margin-top:14px;padding:13px;border:1px solid #355b49;border-radius:13px;background:#101b15;color:#e4eee7;white-space:normal}
-.xy-chat-commit-card .xy-commit-title{font-size:13px;font-weight:750;color:#a7f3d0}
-.xy-chat-commit-card .xy-commit-meta{font-size:11px;color:#a8b9ae;overflow-wrap:anywhere}
+.xy-chat-commit-card{display:grid;gap:10px;margin-top:14px;padding:13px;border:1px solid #505050;border-radius:13px;background:#292929;color:#eeeeee;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.xy-chat-commit-card .xy-commit-title{font-size:13px;font-weight:750;color:#f0f0f0}
+.xy-chat-commit-card .xy-commit-meta{font-size:11px;color:#c2c2c2;overflow-wrap:anywhere}
 .xy-chat-commit-card .xy-commit-files{display:grid;gap:6px}
-.xy-chat-commit-card details{border:1px solid #283b30;border-radius:8px;padding:7px 9px;background:#0d1511}
-.xy-chat-commit-card summary{cursor:pointer;color:#d9e8df;font-size:12px;font-weight:650}
-.xy-chat-commit-card pre{max-height:240px;overflow:auto;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:#cbd8cf;font-size:10px;line-height:1.45}
+.xy-chat-commit-card details{border:1px solid #484848;border-radius:8px;padding:7px 9px;background:#202020}
+.xy-chat-commit-card summary{cursor:pointer;color:#ededed;font-size:12px;font-weight:650}
+.xy-chat-commit-card pre{max-height:240px;overflow:auto;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:#d0d0d0;font-size:10px;line-height:1.45}
 .xy-chat-commit-card .xy-commit-actions{display:flex;gap:8px;flex-wrap:wrap}
-.xy-chat-commit-card button{padding:8px 12px;border:1px solid #3c6a52;border-radius:8px;background:#173225;color:#baf5d3;font-size:12px;font-weight:700;cursor:pointer}
-.xy-chat-commit-card button.secondary{border-color:#39443e;background:#1b211d;color:#c6d0c9}
+.xy-chat-commit-card button{padding:8px 12px;border:1px solid #686868;border-radius:8px;background:#414141;color:#f0f0f0;font-size:12px;font-weight:700;cursor:pointer}
+.xy-chat-commit-card button:hover{background:#505050;border-color:#828282}
+.xy-chat-commit-card button.secondary{border-color:#555;background:#333;color:#dedede}
 .xy-chat-commit-card button:disabled{opacity:.55;cursor:wait}
-.xy-chat-commit-card .xy-commit-status{font-size:12px;line-height:1.5;color:#b7c8bd}
-.xy-chat-commit-card a{color:#8de8bd;font-size:12px;text-decoration:underline}
+.xy-chat-commit-card .xy-commit-status{font-size:12px;line-height:1.5;color:#d0d0d0}
+.xy-chat-commit-card a{color:#e0e0e0;font-size:12px;text-decoration:underline}
 </style>
 <style id="xy-ai-model-selector">
 .xy-ai-model-popover[hidden]{display:none!important}
@@ -1309,11 +1310,28 @@ header::after{
       appendMessage("user", text);
     }
 
+    function appendGuestLoginFooter(bubble) {
+      if (isLoggedIn() || window.__xyockSessionProfile?.user_id) return;
+      const message = bubble?.closest(".message.ai");
+      if (!message || message.querySelector(".xy-guest-login-footer")) return;
+      const footer = document.createElement("div");
+      footer.className = "xy-guest-login-footer";
+      const label = document.createElement("span");
+      label.textContent = "Log in to unlock more xyock features.";
+      const loginButton = document.createElement("button");
+      loginButton.type = "button";
+      loginButton.textContent = "Log in";
+      loginButton.addEventListener("click", () => openLoginModal());
+      footer.append(label, loginButton);
+      message.append(footer);
+    }
+
     function addAIMessage(text, type = "normal") {
       const bubble = appendMessage("ai", "", type);
       renderAIContent(bubble, text).then(() => {
+        appendGuestLoginFooter(bubble);
         if (!restoringConversation && !window.__xyockSecretMode) queueSaveConversation();
-      });
+      }).catch(error => console.error("AI response rendering failed:", error));
     }
 
     async function renderAIContent(container, value) {
@@ -2117,7 +2135,7 @@ int main() {
     }
 
     function showTerm(key) {
-      appendMessage("ai", `[${key}]\n${allTerms[key]}`, "success");
+      addAIMessage(`[${key}]\\n${allTerms[key]}`, "success");
     }
 
     async function typewriterText(element, value) {
@@ -2561,6 +2579,7 @@ int main() {
             pending.append(note);
           }
         }
+        appendGuestLoginFooter(pending);
       } catch (error) {
         setWorkStage("error");
         pending.parentElement?.classList.remove("thinking");
@@ -3881,36 +3900,77 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
 })();
 </script>
 
-<div id="xyock-free-login-prompt" hidden role="status" aria-live="polite"><button type="button" id="xyock-free-prompt-close" aria-label="Close">×</button><strong>Login for more features</strong><span>Sign in to unlock more xyock features.</span></div>
+<style id="xyock-free-login-prompt-style">
+#xyock-free-login-prompt[hidden]{display:none!important}
+#xyock-free-login-prompt{position:fixed;z-index:9999;left:50%;top:8px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;box-sizing:border-box;padding:13px 44px 13px 15px;border:1px solid #46554b;border-radius:15px;background:linear-gradient(145deg,#202923,#151b17);color:#edf4ef;box-shadow:0 14px 42px rgba(0,0,0,.55);font-family:inherit}
+#xyock-free-login-prompt .xyock-free-prompt-copy{display:grid;gap:4px;min-width:0;flex:1}
+#xyock-free-login-prompt strong{font-size:13px;font-weight:750;color:#f2f6f3}
+#xyock-free-login-prompt span{font-size:11px;line-height:1.45;color:#b7c4bb}
+#xyock-free-prompt-login{flex:0 0 auto;padding:8px 12px;border:1px solid #65736a;border-radius:9px;background:#3a443d;color:#fff;font:600 11px inherit;cursor:pointer}
+#xyock-free-prompt-login:hover{background:#4a564d}
+#xyock-free-prompt-close{position:absolute;right:8px;top:7px;width:25px;height:25px;border:0;border-radius:7px;background:transparent;color:#aeb9b1;font-size:19px;line-height:1;cursor:pointer}
+#xyock-free-prompt-close:hover{background:#ffffff12;color:#fff}
+@media(max-width:620px){#xyock-free-login-prompt{gap:8px;padding:11px 39px 11px 12px;border-radius:13px}#xyock-free-login-prompt strong{font-size:12px}#xyock-free-login-prompt span{font-size:10px}#xyock-free-prompt-login{padding:7px 9px}}
+</style>
+<div id="xyock-free-login-prompt" hidden role="status" aria-live="polite">
+  <div class="xyock-free-prompt-copy"><strong>Login for more features</strong><span>Sign in to unlock more xyock features.</span></div>
+  <button type="button" id="xyock-free-prompt-login">Log in</button>
+  <button type="button" id="xyock-free-prompt-close" aria-label="Close">×</button>
+</div>
 <script id="xyock-free-tier-prompt-controller">
 (()=>{
- const prompt=document.getElementById("xyock-free-login-prompt");
- const close=document.getElementById("xyock-free-prompt-close");
- const chat=document.getElementById("chat");
- const place=()=>{
-   if(!prompt||!chat)return;
-   const rect=chat.getBoundingClientRect();
-   const width=Math.max(0,Math.min(440,rect.width-32));
-   prompt.style.left=(rect.left+rect.width/2)+"px";
-   prompt.style.top=Math.max(8,rect.top+12)+"px";
-   prompt.style.width=width+"px";
- };
- const hide=()=>{if(prompt)prompt.hidden=true};
- const show=()=>{
-   if(!prompt||!chat||window.__xyockSessionProfile?.user_id||window.__xyockSecretMode)return;
-   place();
-   prompt.hidden=false;
- };
- close?.addEventListener("click",hide);
- window.addEventListener("resize",()=>{if(prompt&&!prompt.hidden)place()});
- window.addEventListener("scroll",()=>{if(prompt&&!prompt.hidden)place()},true);
- window.addEventListener("xyock-profile-updated",()=>{
-   if(window.__xyockSessionProfile?.user_id)hide();
- });
- window.xyockShowGuestLoginPrompt=show;
- if(window.__xyockSessionProfile?.user_id)hide();
+  const prompt=document.getElementById("xyock-free-login-prompt");
+  const close=document.getElementById("xyock-free-prompt-close");
+  const login=document.getElementById("xyock-free-prompt-login");
+  const chat=document.getElementById("chat");
+  const composer=document.querySelector(".input-section");
+  const isLoggedIn=()=>!!window.__xyockSessionProfile?.user_id;
+  const place=()=>{
+    if(!prompt||!chat||prompt.hidden)return;
+    const rect=chat.getBoundingClientRect();
+    const composerRect=composer?.getBoundingClientRect();
+    const width=Math.max(0,Math.min(440,window.innerWidth-24,rect.width-24));
+    prompt.style.width=width+"px";
+    const center=rect.left+rect.width/2;
+    const left=Math.max(width/2+12,Math.min(center,window.innerWidth-width/2-12));
+    prompt.style.left=left+"px";
+    const height=prompt.getBoundingClientRect().height;
+    const targetTop=(composerRect?composerRect.top:window.innerHeight-90)-height-12;
+    prompt.style.top=Math.max(8,Math.min(targetTop,window.innerHeight-height-8))+"px";
+  };
+  const hide=()=>{if(prompt)prompt.hidden=true};
+  const show=()=>{
+    if(!prompt||!chat||isLoggedIn()||window.__xyockSecretMode)return;
+    prompt.hidden=false;
+    requestAnimationFrame(place);
+  };
+  close?.addEventListener("click",hide);
+  login?.addEventListener("click",()=>{
+    hide();
+    if(typeof window.openLoginModal==="function")window.openLoginModal();
+    else document.getElementById("loginModal")?.classList.add("show");
+  });
+  window.addEventListener("resize",()=>{if(prompt&&!prompt.hidden)place()});
+  window.addEventListener("scroll",()=>{if(prompt&&!prompt.hidden)place()},true);
+  window.addEventListener("xyock-profile-updated",()=>{
+    if(isLoggedIn()){
+      hide();
+      document.querySelectorAll(".xy-guest-login-footer").forEach(item=>item.remove());
+    }
+  });
+  window.xyockShowGuestLoginPrompt=show;
+  if(isLoggedIn())hide();
 })();
 </script>
+<style id="xy-guest-login-footer-style">
+.message.ai:has(.xy-guest-login-footer){flex-direction:column;align-items:flex-start}
+.xy-guest-login-footer{display:flex;align-items:center;gap:9px;flex-wrap:wrap;width:min(900px,92%);box-sizing:border-box;margin:-5px 0 5px 18px;padding:8px 0 0;border-top:1px solid #2b332e;color:#89968d;font-size:10px;line-height:1.45}
+.xy-guest-login-footer button{border:0;padding:0;background:transparent;color:#b8c4bb;font:600 10px inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.xy-guest-login-footer button:hover{color:#fff}
+body.xy-light .xy-guest-login-footer{border-color:#dbe3dd;color:#68776d}
+body.xy-light .xy-guest-login-footer button{color:#435349}
+@media(max-width:620px){.xy-guest-login-footer{width:calc(100% - 26px);margin-left:13px;font-size:10px}}
+</style>
 <style id="xy-mobile-sidebar-hidden-until-open">
 @media(max-width:620px){
   :root{--xy-rail:0px!important}
