@@ -1906,7 +1906,72 @@ console.log(arr.sort((a, b) => a - b));`,
 }`,
           html: `public class HTMLTest {
   public static void main(String[] args) {
-    String html = "<html><body><h1>Hello from Java</h1></body></html>";
+    String html = "<html><body><h1>Hello from Java</h1>
+<style id="xy-mobile-keyboard-composer">
+@media (max-width: 620px) {
+  .input-section {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: var(--xy-mobile-keyboard-inset, 0px) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 1000 !important;
+    transition: none !important;
+  }
+  body.xy-mobile-keyboard-open .input-section {
+    background: rgba(5, 7, 6, .98) !important;
+  }
+  #chat {
+    scroll-padding-bottom: calc(100px + var(--xy-mobile-keyboard-inset, 0px));
+  }
+}
+</style>
+<script id="xy-mobile-keyboard-controller">
+(() => {
+  const input = document.getElementById("searchInput");
+  const composer = document.querySelector(".input-section");
+  if (!input || !composer || window.__xyMobileKeyboardControllerInstalled) return;
+  window.__xyMobileKeyboardControllerInstalled = true;
+  const mobile = () => window.matchMedia("(max-width: 620px)").matches;
+  let focused = false, raf = 0;
+  const update = () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      if (!mobile()) {
+        document.documentElement.style.setProperty("--xy-mobile-keyboard-inset", "0px");
+        document.body.classList.remove("xy-mobile-keyboard-open");
+        return;
+      }
+      const viewport = window.visualViewport;
+      const layoutHeight = window.innerHeight;
+      const visibleHeight = viewport ? viewport.height : layoutHeight;
+      const offsetTop = viewport ? viewport.offsetTop : 0;
+      const inset = Math.max(0, Math.round(layoutHeight - visibleHeight - offsetTop));
+      const keyboardOpen = focused && inset > 100;
+      document.documentElement.style.setProperty("--xy-mobile-keyboard-inset", (keyboardOpen ? inset : 0) + "px");
+      document.body.classList.toggle("xy-mobile-keyboard-open", keyboardOpen);
+    });
+  };
+  input.addEventListener("focus", () => {
+    focused = true;
+    update();
+    setTimeout(update, 80);
+    setTimeout(update, 250);
+    setTimeout(update, 450);
+  });
+  input.addEventListener("blur", () => { focused = false; update(); });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", update, { passive: true });
+    window.visualViewport.addEventListener("scroll", update, { passive: true });
+  }
+  window.addEventListener("resize", update, { passive: true });
+  window.addEventListener("orientationchange", () => setTimeout(update, 180), { passive: true });
+  update();
+})();
+</script>
+</body></html>";
     System.out.println(html);
   }
 }`
