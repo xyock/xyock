@@ -2555,7 +2555,7 @@ int main() {
         let streamedError = "";
         const handleAIEvent = event => {
           if (!event || typeof event !== "object") return;
-          if (event.type === "status") setWorkStage(event.stage);
+          if (event.type === "status") { setWorkStage(event.stage); if (event.stage === "searching") renderWorkSearchInfo(event); }
           if (event.type === "sources") renderWorkSources(event.sources);
           if (event.type === "done") data = event;
           if (event.type === "error") streamedError = String(event.error || "AI 요청에 실패했습니다.");
