@@ -276,7 +276,7 @@ function safeSearchUrl(rawUrl: string): URL | null {
   }
 }
 
-const RESTRICTED_WEB_SEARCH = /(?:총기|총알|탄약|폭발물|폭탄\s*제조|무기\s*(?:구매|제작)|칼\s*(?:구매|제작)|전기충격기|테이저|후추\s*스프레이|마약|필로폰|코카인|펜타닐|대마초\s*(?:구매|구하는|사용)|전자담배\s*(?:구매|추천)|담배\s*(?:구매|사는)|술\s*(?:구매|사는)|성인물|포르노|음란물|도박\s*(?:사이트|방법|하는)|카지노\s*(?:사이트|가입)|스포츠\s*베팅|자해\s*(?:방법|도구)|자살\s*(?:방법|도구)|위험한\s*챌린지|dangerous\s+challenge|how\s+to\s+(?:make|build|buy|get)\s+(?:a\s+)?(?:gun|weapon|explosive|drug)|(?:buy|purchase|obtain)\s+(?:guns?|firearms?|ammunition|explosives?|illegal\s+drugs?|vapes?|cigarettes?|alcohol)|(?:porn|pornography|gambling|sports\s+betting|self[- ]harm\s+methods))/i;
+const RESTRICTED_WEB_SEARCH = /(?:총기|총알|탄약|폭발물|폭탄|무기|흉기|칼|전기충격기|테이저|후추\s*스프레이|마약|필로폰|코카인|펜타닐|헤로인|대마|전자담배|니코틴|담배|주류|술|맥주|소주|와인|성인물|포르노|음란물|도박|카지노|베팅|자해|자살\s*방법|위험한\s*챌린지|스턴트|\b(?:guns?|firearms?|weapons?|ammunition|explosives?|knives?|switchblades?|tasers?|pepper\s*spray|mace|illegal\s+drugs?|cocaine|meth(?:amphetamine)?|fentanyl|heroin|marijuana|cannabis|weed|vapes?|nicotine|cigarettes?|tobacco|alcohol|beer|wine|liquor|porn(?:ography)?|gambling|casino|sports\s+betting|betting|self[- ]harm|suicide\s+methods?|dangerous\s+challenges?|extreme\s+stunts?)\b)/i;
 
 async function searchPublicWeb(query: string, maxResults = 5): Promise<XyockWebSource[]> {
   const cleanQuery = query.trim().slice(0, 240);
