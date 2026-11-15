@@ -2006,7 +2006,18 @@ console.log(arr.sort((a, b) => a - b));`,
 }`,
           html: `public class HTMLTest {
   public static void main(String[] args) {
-    String html = "<html><body><h1>Hello from Java</h1></body></html>";
+    String html = "<html><body><h1>Hello from Java</h1>
+<style id="xy-compact-responding-status">
+.message.ai{flex-direction:column;align-items:flex-start}
+.xy-work-tracker{display:flex;align-items:center;gap:7px;width:auto;max-width:min(70%,680px);margin:-7px 0 0 18px;padding:0;border:0;border-radius:0;background:transparent;color:#858d88;font-size:10px;font-weight:400;line-height:1.35;letter-spacing:.01em}
+.xy-work-spinner{width:9px;height:9px;flex:0 0 9px;border-width:1.5px;border-color:rgba(150,160,153,.2);border-top-color:#91a99a}
+.xy-work-tracker[data-stage="completed"] .xy-work-current-label{color:#8fa99a}
+.xy-work-tracker[data-stage="error"] .xy-work-current-label{color:#d68b8b}
+body.xy-light .xy-work-tracker{background:transparent;border:0;color:#78847b}
+@media(max-width:620px){.xy-work-tracker{max-width:calc(100% - 24px);margin:-7px 0 0 12px;font-size:10px}}
+</style>
+
+</body></html>";
     System.out.println(html);
   }
 }`
@@ -2356,11 +2367,11 @@ int main() {
       const pending = appendMessage("ai", "xyock is responding…");
       pending.parentElement?.classList.add("thinking");
 
-      const workTracker = document.createElement("section");
+      const workTracker = document.createElement("div");
       workTracker.className = "xy-work-tracker";
       workTracker.setAttribute("aria-live", "polite");
-      workTracker.innerHTML = '<div class="xy-work-top"><span class="xy-work-title">XYOCK WORK STATUS</span><span class="xy-work-indicator">LIVE</span></div><div class="xy-work-current"><span class="xy-work-spinner"></span><span class="xy-work-current-label">요청과 대화 문맥을 확인하고 있어요</span></div><div class="xy-work-search-meta" hidden><img class="xy-work-search-icon" alt="" /><span class="xy-work-search-text"></span></div><div class="xy-work-sites" hidden><div class="xy-work-sites-heading">검색 결과에 포함된 사이트</div><div class="xy-work-sites-list"></div></div>';
-      pending.parentElement?.insertBefore(workTracker, pending);
+      workTracker.innerHTML = '<span class="xy-work-spinner" aria-hidden="true"></span><span class="xy-work-current-label">checking the request</span>';
+      pending.parentElement?.appendChild(workTracker);
 
       const workStatusLabel = workTracker.querySelector(".xy-work-current-label");
       const workSpinner = workTracker.querySelector(".xy-work-spinner");
@@ -2370,22 +2381,22 @@ int main() {
       const workSearchIcon = workTracker.querySelector(".xy-work-search-icon");
       const workSearchText = workTracker.querySelector(".xy-work-search-text");
       const workStageLabels = {
-        analyzing: "질문, 대화 문맥과 첨부 파일을 확인하고 있어요",
-        thinking: "AI 모델이 질문을 분석하고 필요한 작업을 판단하고 있어요",
-        searching: "웹 검색을 진행하고 있어요",
-        reviewing: "검색 결과를 비교하고 신뢰할 수 있는 정보를 검토하고 있어요",
-        search_unavailable: "웹 검색에 연결할 수 없어 확인 가능한 정보로 답변을 준비해요",
-        answering: "확인한 내용을 바탕으로 답변을 작성하고 있어요",
-        completed: "답변을 완료했어요",
-        error: "요청을 완료하지 못했어요"
+        analyzing: "checking the request",
+        thinking: "thinking through the request",
+        inspecting_repo: "inspecting GitHub repo",
+        searching: "searching the web",
+        reviewing: "reviewing search results",
+        search_unavailable: "preparing without web search",
+        answering: "writing a response",
+        completed: "completed",
+        error: "couldn't complete the request"
       };
       function setWorkStage(stage) {
         const label = workStageLabels[stage] || workStageLabels.analyzing;
         if (workStatusLabel) workStatusLabel.textContent = label;
         workTracker.dataset.stage = stage;
         if (workSpinner) workSpinner.hidden = stage === "completed" || stage === "error";
-        const indicator = workTracker.querySelector(".xy-work-indicator");
-        if (indicator) indicator.textContent = stage === "completed" ? "DONE" : stage === "error" ? "ERROR" : "LIVE";
+        workTracker.dataset.stage = stage;
       }
       function renderWorkSearchInfo(event) {
         if (!workSearchMeta || !workSearchText || !workSearchIcon) return;
@@ -2482,6 +2493,7 @@ int main() {
         let githubBlockedReason = "";
 
         if (!window.__xyockSecretMode && wantsRepoContext && session && await ensureSession()) {
+          setWorkStage("inspecting_repo");
           if (!isGitHubAccountConnected()) {
             githubBlockedReason = "GitHub 플러그인에서 GitHub 계정을 먼저 연결해 주세요.";
           } else {
