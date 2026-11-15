@@ -276,8 +276,7 @@ async function persistBackgroundAnswer(
   const rows = await read.json();
   if (!Array.isArray(rows) || !rows[0]) throw new Error("저장할 대화 기록이 없습니다.");
 
-  const messages = Array.isArray(rows[0].messages)\n    ? rows[0].messages.filter((item: Record<string, unknown>) => item?.content !== "xyock is responding…")\n    : [];
-  if (!messages.some((item: Record<string, unknown>) => item?.task_id === taskId)) {
+  const messages = Array.isArray(rows[0].messages) ? rows[0].messages.filter((item: Record<string, unknown>) => item?.content !== "xyock is responding…") : [];  if (!messages.some((item: Record<string, unknown>) => item?.task_id === taskId)) {
     messages.push({ role: "assistant", content: answer, task_id: taskId });
     const update = await adminRest(
       `chat_conversations?id=eq.${encodeURIComponent(conversationId)}&user_id=eq.${encodeURIComponent(userId)}`,
