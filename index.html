@@ -936,8 +936,19 @@ AI 기반 코딩 웹 애플리케이션입니다. Supabase와 Kilo AI Gateway를
       const menuWrap = document.querySelector(".menu-wrap");
       const canHoverMenu = window.matchMedia("(min-width: 769px) and (hover: hover) and (pointer: fine)").matches;
       if (canHoverMenu) {
+        const menuDropdown = document.getElementById("menuDropdown");
         menuWrap.addEventListener("pointerenter", () => toggleMenu(true));
-        menuWrap.addEventListener("pointerleave", () => toggleMenu(false));
+        menuWrap.addEventListener("pointerleave", (event) => {
+          // The dropdown is positioned outside the small trigger's box but remains
+          // inside .menu-wrap in the DOM. Keep it open while the pointer enters it.
+          if (event.relatedTarget instanceof Node && menuWrap.contains(event.relatedTarget)) return;
+          toggleMenu(false);
+        });
+        menuDropdown.addEventListener("pointerenter", () => toggleMenu(true));
+        menuDropdown.addEventListener("pointerleave", (event) => {
+          if (event.relatedTarget instanceof Node && menuWrap.contains(event.relatedTarget)) return;
+          toggleMenu(false);
+        });
         menuWrap.addEventListener("focusin", () => toggleMenu(true));
         menuWrap.addEventListener("focusout", (event) => {
           if (!menuWrap.contains(event.relatedTarget) && !menuWrap.matches(":hover")) toggleMenu(false);
