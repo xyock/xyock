@@ -1540,7 +1540,7 @@ header::after{
       appendInlineFormatted(container, value);
     }
 
-    async function renderInlineAIText(container, value) {
+    async function renderInlineAIText(container, value, instant = false) {
       const source = String(value ?? "");
       const tokenPattern = /`([^`\n]+)`|\b([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)\b|\b((?:Ctrl|Control|Shift|Alt|Option|Cmd|Command)\s*\+\s*(?:Enter|Tab|Space|Escape|Esc|Backspace|Delete|[A-Z0-9]))\b/g;
       let cursor = 0, match;
@@ -1549,19 +1549,19 @@ header::after{
           const plain = document.createElement("span");
           plain.className = "ai-text-run";
           container.appendChild(plain);
-          await typewriterText(plain, source.slice(cursor, match.index));
+          await typewriterText(plain, source.slice(cursor, match.index), instant);
         }
         const code = document.createElement("code");
         code.className = "xy-inline-code";
         container.appendChild(code);
-        await typewriterText(code, match[1] || match[2] || match[3]);
+        await typewriterText(code, match[1] || match[2] || match[3], instant);
         cursor = tokenPattern.lastIndex;
       }
       if (cursor < source.length) {
         const plain = document.createElement("span");
         plain.className = "ai-text-run";
         container.appendChild(plain);
-        await typewriterText(plain, source.slice(cursor));
+        await typewriterText(plain, source.slice(cursor), instant);
       }
     }
 
@@ -1631,7 +1631,7 @@ header::after{
       element.replaceChildren(fragment);
     }
 
-    async function renderAIContent(container, value) {
+    async function renderAIContent(container, value, instant = false) {
       const source = String(value ?? "");
       const fence = /```([^\n`]*)\n([\s\S]*?)```/g;
       let cursor = 0;
@@ -1641,7 +1641,7 @@ header::after{
           const paragraph = document.createElement("div");
           paragraph.className = "ai-text";
           container.appendChild(paragraph);
-          await renderInlineAIText(paragraph, source.slice(cursor, match.index));
+          await renderInlineAIText(paragraph, source.slice(cursor, match.index), instant);
         }
 
         const code = match[2].replace(/\n$/, "");
@@ -1729,7 +1729,7 @@ header::after{
         pre.appendChild(codeElement);
         card.append(header, pre);
         container.appendChild(card);
-        await typewriterText(codeElement, code);
+        await typewriterText(codeElement, code, instant);
         highlightCodeElement(codeElement, code, language);
         cursor = fence.lastIndex;
         scrollToBottom();
@@ -2489,10 +2489,14 @@ int main() {
       addAIMessage(`[${key}]\n${allTerms[key]}`, "success");
     }
 
-    async function typewriterText(element, value) {
+    async function typewriterText(element, value, instant = false) {
       const text = String(value ?? "");
       element.textContent = "";
       if (!text) return;
+      if (instant) {
+        element.textContent = text;
+        return;
+      }
 
       // 일정한 속도로 조금씩 출력해 짧은 답변과 긴 코드 모두에서 효과가 보이게 합니다.
       const step = text.length > 20000 ? 3 : text.length > 8000 ? 2 : 1;
@@ -3352,10 +3356,11 @@ int main() {
           else {
             const restoredBubble = appendMessage("ai", "");
             restoredBubble.dataset.rawContent = String(m.content || "");
-            await renderAIContent(restoredBubble, restoredBubble.dataset.rawContent);
+            await renderAIContent(restoredBubble, restoredBubble.dataset.rawContent, true);
             appendAnswerFeedback(restoredBubble);
           }
         }
+        scrollToBottom();
         restoringConversation = false;
         document.getElementById("historyModal").classList.remove("show");
         showToast("대화를 불러왔습니다.");
