@@ -132,10 +132,13 @@
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
-        width: min(880px, calc(100vw - 48px));
-        min-width: min(680px, calc(100vw - 48px));
-        top: 100%;
-        right: clamp(24px, 4vw, 50px);
+        position: fixed;
+        top: var(--hdr);
+        left: 0;
+        right: 0;
+        width: 100vw;
+        min-width: 100vw;
+        box-sizing: border-box;
         padding: 11px;
         border: 1px solid #383838;
         border-radius: 16px;
@@ -1136,15 +1139,12 @@ AI 기반 코딩 웹 애플리케이션입니다. Supabase와 Kilo AI Gateway를
       if (canHoverMenu) {
         const menuDropdown = document.getElementById("menuDropdown");
         menuWrap.addEventListener("pointerenter", () => toggleMenu(true));
-        menuWrap.addEventListener("pointerleave", (event) => {
-          // The dropdown is positioned outside the small trigger's box but remains
-          // inside .menu-wrap in the DOM. Keep it open while the pointer enters it.
-          if (event.relatedTarget instanceof Node && menuWrap.contains(event.relatedTarget)) return;
-          toggleMenu(false);
-        });
-        menuDropdown.addEventListener("pointerenter", () => toggleMenu(true));
-        menuDropdown.addEventListener("pointerleave", (event) => {
-          if (event.relatedTarget instanceof Node && menuWrap.contains(event.relatedTarget)) return;
+        const header = document.querySelector("header");
+        // Keep the menu open while the pointer moves from the trigger onto the
+        // fixed, full-width dropdown. Only close after it leaves the whole header
+        // and its dropdown descendants.
+        header.addEventListener("pointerleave", (event) => {
+          if (event.relatedTarget instanceof Node && header.contains(event.relatedTarget)) return;
           toggleMenu(false);
         });
         menuWrap.addEventListener("focusin", () => toggleMenu(true));
