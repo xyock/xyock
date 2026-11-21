@@ -567,6 +567,180 @@ AI 기반 코딩 웹 애플리케이션입니다. Supabase와 Kilo AI Gateway를
       ["haskell","Hs","Haskell","hs"],["assembly","ASM","Assembly","asm"],["json","{}","JSON","json"],
       ["yaml","YML","YAML","yml"],["xml","XML","XML","xml"],["markdown","MD","Markdown","md"],["plaintext","TXT","Plain Text","txt"]
     ];
+    // Language settings below are scoped to this index.html page only.
+    const INDEX_LANGUAGE_KEY = "xyock_index_page_language";
+    const INDEX_I18N = {
+      ko: {
+        pageLanguage:"페이지 언어 선택", menu:"메뉴", termSub:"용어 사전 열기",
+        editorMenu:"다중 언어 코드 편집기", editorSub:"여러 프로그래밍 언어 작성",
+        login:"로그인", logout:"로그아웃", loginSub:"이메일 또는 GitHub", loggedIn:"로그인됨",
+        description:"Description", notice:"Notice", noticeText:"xyock is for making code not for advanced projects.",
+        descriptionHtml:'<strong>xyock</strong><br>AI 기반 코딩 웹 애플리케이션입니다. Supabase와 Kilo AI Gateway를 연동하여 웹에서 AI 코딩 기능을 제공합니다.<br><br><strong>Features</strong><ul><li>브라우저 기반 코드 편집</li><li>AI 코드 작성 및 수정 지원</li><li>Supabase 인증 및 Edge Functions 연동</li><li>Kilo AI Gateway를 통한 모델 호출</li></ul><strong>Tech Stack</strong><ul><li>HTML, CSS, JavaScript</li><li>Supabase</li><li>Kilo AI Gateway</li><li>NVIDIA Nemotron 3.5 Super VL (Free)</li></ul>',
+        home:"홈으로", editorTitle:"코드 편집기", chooseLanguage:"언어를 선택하고 코드를 작성하세요.",
+        clearOutput:"출력 지우기", copyCode:"코드 복사", download:"다운로드", run:"▶ 실행",
+        languageTitle:"프로그래밍 언어 선택", codePlaceholder:"{name} 코드를 작성하세요", codeInput:"코드 입력",
+        output:"실행 결과", preview:"미리보기", editorHintRunnable:"실행 버튼을 누르면 로컬 격리 실행 엔진에서 실행됩니다.",
+        editorHintOther:"HTML/CSS는 미리보기, JSON/XML은 유효성 검사를 지원합니다.",
+        selected:"{name} 선택됨 · .{ext}", loginTitle:"로그인", email:"이메일", password:"비밀번호",
+        loginEmail:"이메일로 로그인", or:"또는", loginGithub:"GitHub로 로그인", cancel:"취소",
+        emailRequired:"이메일과 비밀번호를 입력해 주세요.", emailInvalid:"올바른 이메일 주소를 입력해 주세요.",
+        waiting:"메일에서 승인을 기다리는 중...", invalid:"이메일 또는 비밀번호가 올바르지 않습니다.",
+        rejected:"로그인이 거절되었습니다.", expired:"승인 시간이 지났습니다. 다시 시도해 주세요.",
+        loginError:"로그인 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        logoutConfirm:"{who} 계정에서 로그아웃할까요?", loggedOut:"로그아웃했습니다.",
+        loggedInToast:"{who}님, 로그인되었습니다.", githubError:"GitHub 로그인에 실패했습니다. 다시 시도해 주세요.",
+        copyDone:"코드를 복사했습니다.", clipboardError:"클립보드 권한을 확인해 주세요.",
+        enterCode:"코드를 입력해 주세요.", validJson:"✓ 올바른 JSON입니다.", validXml:"✓ 올바른 XML입니다.",
+        markdown:"Markdown은 문서 형식입니다. 미리보기 기능은 다음 업데이트에서 제공됩니다.",
+        yaml:"YAML은 데이터 형식이며 이 실행 엔진의 실행 대상 언어가 아닙니다.",
+        plainText:"일반 텍스트 파일은 실행 대상이 아닙니다.", noExecutor:"이 언어의 실행 연결을 찾을 수 없습니다.",
+        running:"실행 중…", runningEnv:"격리된 실행 환경에서 실행 중…", serverError:"실행 서버 오류",
+        noOutput:"(출력 없음)", runDone:"{language} 실행 완료", runFailed:"실행 실패"
+      },
+      en: {
+        pageLanguage:"Page language", menu:"Menu", termSub:"Open the glossary",
+        editorMenu:"Multilanguage code editor", editorSub:"Write code in multiple languages",
+        login:"Log in", logout:"Log out", loginSub:"Email or GitHub", loggedIn:"Signed in",
+        description:"Description", notice:"Notice", noticeText:"xyock is for making code, not for advanced projects.",
+        descriptionHtml:'<strong>xyock</strong><br>An AI-powered coding web application connected to Supabase and the Kilo AI Gateway.<br><br><strong>Features</strong><ul><li>Browser-based code editor</li><li>AI-assisted code generation and editing</li><li>Supabase authentication and Edge Functions</li><li>Model access through the Kilo AI Gateway</li></ul><strong>Tech Stack</strong><ul><li>HTML, CSS, JavaScript</li><li>Supabase</li><li>Kilo AI Gateway</li><li>NVIDIA Nemotron 3.5 Super VL (Free)</li></ul>',
+        home:"Home", editorTitle:"Code Editor", chooseLanguage:"Choose a language and start coding.",
+        clearOutput:"Clear output", copyCode:"Copy code", download:"Download", run:"▶ Run",
+        languageTitle:"Choose a programming language", codePlaceholder:"Write {name} code here", codeInput:"Code input",
+        output:"Output", preview:"Preview", editorHintRunnable:"Press Run to execute in the local sandbox.",
+        editorHintOther:"HTML/CSS preview and JSON/XML validation are supported.",
+        selected:"{name} selected · .{ext}", loginTitle:"Log in", email:"Email", password:"Password",
+        loginEmail:"Log in with email", or:"or", loginGithub:"Continue with GitHub", cancel:"Cancel",
+        emailRequired:"Enter your email and password.", emailInvalid:"Enter a valid email address.",
+        waiting:"Waiting for email approval...", invalid:"Incorrect email or password.",
+        rejected:"Your login request was declined.", expired:"The approval timed out. Please try again.",
+        loginError:"Login server error. Please try again.",
+        logoutConfirm:"Log out of the {who} account?", loggedOut:"You have been logged out.",
+        loggedInToast:"{who}, you are now signed in.", githubError:"GitHub login failed. Please try again.",
+        copyDone:"Code copied.", clipboardError:"Please check clipboard permissions.",
+        enterCode:"Enter some code first.", validJson:"✓ Valid JSON.", validXml:"✓ Valid XML.",
+        markdown:"Markdown is a document format. Preview support is coming in a future update.",
+        yaml:"YAML is a data format and cannot be executed by this runtime.",
+        plainText:"Plain text files cannot be executed.", noExecutor:"No execution runtime is configured for this language.",
+        running:"Running…", runningEnv:"Running in the isolated environment…", serverError:"Execution server error",
+        noOutput:"(No output)", runDone:"{language} execution complete", runFailed:"Execution failed"
+      },
+      ja: {
+        pageLanguage:"ページの言語", menu:"メニュー", termSub:"用語集を開く",
+        editorMenu:"多言語コードエディター", editorSub:"さまざまな言語でコードを作成",
+        login:"ログイン", logout:"ログアウト", loginSub:"メールまたはGitHub", loggedIn:"ログイン中",
+        description:"説明", notice:"お知らせ", noticeText:"xyockは高度なプロジェクトではなく、コード作成のためのツールです。",
+        descriptionHtml:'<strong>xyock</strong><br>SupabaseとKilo AI Gatewayを連携したAIコーディングWebアプリです。<br><br><strong>機能</strong><ul><li>ブラウザー上のコードエディター</li><li>AIによるコード作成と編集</li><li>Supabase認証とEdge Functions</li><li>Kilo AI Gateway経由のモデル利用</li></ul><strong>技術スタック</strong><ul><li>HTML、CSS、JavaScript</li><li>Supabase</li><li>Kilo AI Gateway</li><li>NVIDIA Nemotron 3.5 Super VL (Free)</li></ul>',
+        home:"ホーム", editorTitle:"コードエディター", chooseLanguage:"言語を選択してコードを書いてください。",
+        clearOutput:"出力を消去", copyCode:"コードをコピー", download:"ダウンロード", run:"▶ 実行",
+        languageTitle:"プログラミング言語を選択", codePlaceholder:"{name}のコードを入力", codeInput:"コード入力",
+        output:"実行結果", preview:"プレビュー", editorHintRunnable:"実行を押すとローカルの隔離環境で実行します。",
+        editorHintOther:"HTML/CSSのプレビューとJSON/XMLの検証に対応しています。",
+        selected:"{name}を選択中 · .{ext}", loginTitle:"ログイン", email:"メールアドレス", password:"パスワード",
+        loginEmail:"メールでログイン", or:"または", loginGithub:"GitHubでログイン", cancel:"キャンセル",
+        emailRequired:"メールアドレスとパスワードを入力してください。", emailInvalid:"有効なメールアドレスを入力してください。",
+        waiting:"メールでの承認を待っています...", invalid:"メールアドレスまたはパスワードが正しくありません。",
+        rejected:"ログインが拒否されました。", expired:"承認の有効期限が切れました。もう一度お試しください。",
+        loginError:"ログインサーバーエラーです。もう一度お試しください。",
+        logoutConfirm:"{who}アカウントからログアウトしますか？", loggedOut:"ログアウトしました。",
+        loggedInToast:"{who}さん、ログインしました。", githubError:"GitHubログインに失敗しました。もう一度お試しください。",
+        copyDone:"コードをコピーしました。", clipboardError:"クリップボードの権限を確認してください。",
+        enterCode:"コードを入力してください。", validJson:"✓ 正しいJSONです。", validXml:"✓ 正しいXMLです。",
+        markdown:"Markdownは文書形式です。プレビュー機能は今後のアップデートで対応予定です。",
+        yaml:"YAMLはデータ形式のため、この実行環境では実行できません。",
+        plainText:"プレーンテキストファイルは実行できません。", noExecutor:"この言語の実行環境が設定されていません。",
+        running:"実行中…", runningEnv:"隔離された実行環境で実行中…", serverError:"実行サーバーエラー",
+        noOutput:"（出力なし）", runDone:"{language}の実行が完了しました", runFailed:"実行に失敗しました"
+      },
+      "zh-CN": {
+        pageLanguage:"页面语言", menu:"菜单", termSub:"打开术语词典",
+        editorMenu:"多语言代码编辑器", editorSub:"使用多种编程语言编写代码",
+        login:"登录", logout:"退出登录", loginSub:"邮箱或 GitHub", loggedIn:"已登录",
+        description:"简介", notice:"公告", noticeText:"xyock 用于编写代码，不适合高级项目。",
+        descriptionHtml:'<strong>xyock</strong><br>一款连接 Supabase 和 Kilo AI Gateway 的 AI 编程 Web 应用。<br><br><strong>功能</strong><ul><li>基于浏览器的代码编辑器</li><li>AI 辅助生成和修改代码</li><li>Supabase 身份验证和 Edge Functions</li><li>通过 Kilo AI Gateway 调用模型</li></ul><strong>技术栈</strong><ul><li>HTML、CSS、JavaScript</li><li>Supabase</li><li>Kilo AI Gateway</li><li>NVIDIA Nemotron 3.5 Super VL (Free)</li></ul>',
+        home:"主页", editorTitle:"代码编辑器", chooseLanguage:"选择语言并开始编写代码。",
+        clearOutput:"清空输出", copyCode:"复制代码", download:"下载", run:"▶ 运行",
+        languageTitle:"选择编程语言", codePlaceholder:"在此编写 {name} 代码", codeInput:"代码输入",
+        output:"运行结果", preview:"预览", editorHintRunnable:"点击运行，在本地隔离环境中执行代码。",
+        editorHintOther:"支持 HTML/CSS 预览以及 JSON/XML 验证。",
+        selected:"已选择 {name} · .{ext}", loginTitle:"登录", email:"邮箱", password:"密码",
+        loginEmail:"使用邮箱登录", or:"或", loginGithub:"使用 GitHub 登录", cancel:"取消",
+        emailRequired:"请输入邮箱和密码。", emailInvalid:"请输入有效的邮箱地址。",
+        waiting:"正在等待邮件审批...", invalid:"邮箱或密码不正确。",
+        rejected:"登录请求已被拒绝。", expired:"审批已超时，请重试。",
+        loginError:"登录服务器错误，请稍后重试。",
+        logoutConfirm:"确定退出 {who} 账户吗？", loggedOut:"已退出登录。",
+        loggedInToast:"{who}，登录成功。", githubError:"GitHub 登录失败，请重试。",
+        copyDone:"代码已复制。", clipboardError:"请检查剪贴板权限。",
+        enterCode:"请先输入代码。", validJson:"✓ JSON 有效。", validXml:"✓ XML 有效。",
+        markdown:"Markdown 是文档格式。预览功能将在后续更新中提供。",
+        yaml:"YAML 是数据格式，无法通过此运行环境执行。",
+        plainText:"纯文本文件无法执行。", noExecutor:"未配置此语言的运行环境。",
+        running:"运行中…", runningEnv:"正在隔离环境中运行…", serverError:"运行服务器错误",
+        noOutput:"（无输出）", runDone:"{language}运行完成", runFailed:"运行失败"
+      }
+    };
+    let indexUiLanguage = (() => {
+      try {
+        const saved = localStorage.getItem(INDEX_LANGUAGE_KEY);
+        return Object.prototype.hasOwnProperty.call(INDEX_I18N, saved) ? saved : "ko";
+      } catch { return "ko"; }
+    })();
+
+    function tr(key, values = {}) {
+      let value = INDEX_I18N[indexUiLanguage]?.[key] ?? INDEX_I18N.ko[key] ?? key;
+      for (const [name, replacement] of Object.entries(values)) {
+        value = value.replaceAll("{" + name + "}", String(replacement));
+      }
+      return value;
+    }
+
+    function refreshEditorLabels() {
+      const lang = LANGUAGES.find(item => item[0] === selectedLanguage);
+      if (!lang) return;
+      document.getElementById("editorTitle").textContent = tr("editorTitle") + " · " + lang[2];
+      document.getElementById("pyStatus").textContent = tr("selected", { name: lang[2], ext: lang[3] });
+      document.getElementById("clearBtn").textContent = tr("clearOutput");
+      document.getElementById("copyBtn").textContent = tr("copyCode");
+      document.getElementById("downloadBtn").textContent = tr("download");
+      document.getElementById("runBtn").textContent = tr("run");
+      document.getElementById("languageTitle").textContent = tr("languageTitle");
+      document.getElementById("languageGrid").setAttribute("aria-label", tr("languageTitle"));
+      document.getElementById("editorHint").textContent = PISTON_LANGUAGE[selectedLanguage]
+        ? tr("editorHintRunnable") : tr("editorHintOther");
+      document.getElementById("codeArea").placeholder = tr("codePlaceholder", { name: lang[2] });
+      document.getElementById("codeArea").setAttribute("aria-label", tr("codeInput"));
+      document.getElementById("outputLabel").textContent =
+        (selectedLanguage === "html" || selectedLanguage === "css") ? tr("preview") : tr("output");
+    }
+
+    function applyIndexLanguage(language) {
+      if (!Object.prototype.hasOwnProperty.call(INDEX_I18N, language)) language = "ko";
+      indexUiLanguage = language;
+      try { localStorage.setItem(INDEX_LANGUAGE_KEY, language); } catch { /* Storage may be unavailable. */ }
+      document.documentElement.lang = language;
+      const selector = document.getElementById("siteLanguageSelect");
+      if (selector) selector.value = language;
+      document.getElementById("menuBtn").setAttribute("aria-label", tr("menu"));
+      document.getElementById("siteLanguageSelect").setAttribute("aria-label", tr("pageLanguage"));
+      document.getElementById("menuTermSub").textContent = tr("termSub");
+      document.getElementById("menuPythonTitle").textContent = tr("editorMenu");
+      document.getElementById("menuPythonSub").textContent = tr("editorSub");
+      document.getElementById("descriptionTitle").textContent = tr("description");
+      document.getElementById("descriptionText").innerHTML = INDEX_I18N[language].descriptionHtml;
+      document.getElementById("noticeTitle").textContent = tr("notice");
+      document.getElementById("noticeText").textContent = tr("noticeText");
+      document.querySelectorAll('.home-link[aria-label="홈으로"]').forEach(el => el.setAttribute("aria-label", tr("home")));
+      document.getElementById("loginTitle").textContent = tr("loginTitle");
+      document.getElementById("loginEmail").placeholder = tr("email");
+      document.getElementById("loginPassword").placeholder = tr("password");
+      document.getElementById("loginSubmit").textContent = tr("loginEmail");
+      document.getElementById("loginDivider").textContent = tr("or");
+      document.getElementById("githubLoginLabel").textContent = tr("loginGithub");
+      document.getElementById("loginCancel").textContent = tr("cancel");
+      updateMenu();
+      refreshEditorLabels();
+    }
+
     const STARTERS = {
       python:'print("Hello, world!")', javascript:'console.log("Hello, world!");',
       typescript:'const message: string = "Hello, world!";\nconsole.log(message);',
