@@ -113,6 +113,69 @@
     .menu-item .sub { display: block; font-size: 0.8em; color: var(--muted); margin-top: 2px; }
     .menu-item.logged-in { color: var(--accent); }
 
+    /* Desktop: reveal a wide mega menu when the hamburger area is hovered. */
+    @media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+      .menu-wrap { position: static; }
+      .menu-dropdown {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        width: min(880px, calc(100vw - 48px));
+        min-width: min(680px, calc(100vw - 48px));
+        top: calc(100% + 12px);
+        right: clamp(24px, 4vw, 50px);
+        padding: 11px;
+        border: 1px solid #383838;
+        border-radius: 16px;
+        background: rgba(20, 20, 20, .98);
+        box-shadow: 0 22px 58px rgba(0, 0, 0, .48);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(-9px);
+        transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+        overflow: visible;
+      }
+      .menu-wrap:hover .menu-dropdown,
+      .menu-wrap:focus-within .menu-dropdown,
+      .menu-dropdown.show {
+        display: grid;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+      .menu-item {
+        min-height: 112px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 20px;
+        border: 1px solid #303030;
+        border-radius: 12px;
+        background: #171717;
+        font-size: 1em;
+        font-weight: 600;
+        transition: background .18s ease, border-color .18s ease, transform .18s ease;
+      }
+      .menu-item:last-child { border-bottom: 1px solid #303030; }
+      .menu-item:hover {
+        background: #202820;
+        border-color: #456653;
+        transform: translateY(-2px);
+      }
+      .menu-item .sub {
+        margin-top: 8px;
+        color: #969e98;
+        font-size: .82em;
+        font-weight: 400;
+        line-height: 1.5;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .menu-dropdown, .menu-item { transition: none !important; }
+    }
+
     /* ===== 메인 ===== */
     main { flex: 1; }
     .view { display: none; }
@@ -870,12 +933,24 @@ AI 기반 코딩 웹 애플리케이션입니다. Supabase와 Kilo AI Gateway를
     // ===== 이벤트 =====
     function setupEvents() {
       const menuButton = document.getElementById("menuBtn");
+      const menuWrap = document.querySelector(".menu-wrap");
+      const canHoverMenu = window.matchMedia("(min-width: 769px) and (hover: hover) and (pointer: fine)").matches;
+      if (canHoverMenu) {
+        menuWrap.addEventListener("pointerenter", () => toggleMenu(true));
+        menuWrap.addEventListener("pointerleave", () => toggleMenu(false));
+        menuWrap.addEventListener("focusin", () => toggleMenu(true));
+        menuWrap.addEventListener("focusout", (event) => {
+          if (!menuWrap.contains(event.relatedTarget) && !menuWrap.matches(":hover")) toggleMenu(false);
+        });
+      }
       menuButton.addEventListener("click", (event) => {
         event.stopPropagation();
-        toggleMenu();
+        // On desktop the menu is hover-first; clicking the trigger also opens it.
+        if (canHoverMenu) toggleMenu(true);
+        else toggleMenu();
       });
       document.addEventListener("click", (event) => {
-        if (!document.querySelector(".menu-wrap").contains(event.target)) toggleMenu(false);
+        if (!menuWrap.contains(event.target)) toggleMenu(false);
       });
       document.getElementById("menuPython").addEventListener("click", () => showView("python"));
       document.getElementById("menuLogin").addEventListener("click", onMenuLoginClick);
