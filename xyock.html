@@ -5492,6 +5492,30 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
   if (window.__xyockReviewSecretRescueInstalled) return;
   window.__xyockReviewSecretRescueInstalled = true;
   const byId = id => document.getElementById(id);
+
+  const reviewStyle = document.createElement("style");
+  reviewStyle.id = "xyock-review-modal-visibility-fix";
+  reviewStyle.textContent = `
+    #reviewModal.show {
+      display: flex !important;
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 2147483000 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+    #reviewModal.show > .xy-review-content {
+      position: relative !important;
+      z-index: 1 !important;
+      width: min(860px, 96vw) !important;
+      max-height: min(90dvh, 900px) !important;
+      overflow-y: auto !important;
+      margin: auto !important;
+    }
+  `;
+  document.head.appendChild(reviewStyle);
+
   function startSecretChat() {
     if (window.__xyockSecretMode) return;
     window.__xyockSecretMode = true;
@@ -5507,6 +5531,7 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
     if(byId("modeIndicator"))byId("modeIndicator").textContent="Secret Chat";
     input?.focus();
   }
+
   function endSecretChat() {
     if(!window.__xyockSecretMode)return;
     window.xyockSidebarApi?.startNewConversation?.();
@@ -5520,26 +5545,49 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
     window.__xyockClearAttachments?.();
     input?.focus();
   }
+
+  function forceShowReviewModal(modal) {
+    if (!modal) return;
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    modal.classList.add("show");
+    modal.style.setProperty("display", "flex", "important");
+    modal.style.setProperty("position", "fixed", "important");
+    modal.style.setProperty("inset", "0", "important");
+    modal.style.setProperty("z-index", "2147483000", "important");
+    modal.style.setProperty("visibility", "visible", "important");
+    modal.style.setProperty("opacity", "1", "important");
+    modal.style.setProperty("pointer-events", "auto", "important");
+  }
+
   async function showReview() {
     ["xyMenu","xyAccount","xyCodes","xyProjects"].forEach(id=>byId(id)?.classList.remove("open"));
     const modal=byId("reviewModal"),status=byId("reviewStatus"),dash=byId("reviewDashboard");
     if(!modal||!status||!dash)return;
-    modal.classList.add("show");
-    if(typeof window.xyockOpenReview==="function"){await window.xyockOpenReview();return;}
-    status.hidden=false;status.textContent="대화 기록을 불러오는 중…";dash.hidden=true;
-    try{
-      if(typeof window.xyockFetchSavedConversations!=="function"){status.textContent="대화 기록 서비스가 준비되지 않았습니다. 새로고침 후 다시 시도해 주세요.";return;}
-      const rows=await window.xyockFetchSavedConversations();
-      const replies=rows.flatMap(row=>Array.isArray(row.messages)?row.messages:[]).filter(m=>m.role==="assistant"&&typeof m.content==="string"&&m.content.trim());
-      if(!replies.length){status.textContent="분석할 저장된 답변이 없습니다. 일반 채팅을 저장한 뒤 다시 시도해 주세요.";return;}
-      const totalWords=replies.reduce((n,m)=>n+(m.content.match(/[\p{L}\p{N}]+/gu)||[]).length,0);
-      byId("reviewTotal").textContent=replies.length.toLocaleString();
-      byId("reviewChats").textContent=rows.length.toLocaleString();
-      byId("reviewWords").textContent=totalWords.toLocaleString();
-      status.textContent="저장된 대화 "+rows.length+"개에서 답변 "+replies.length+"개를 확인했습니다.";
-      dash.hidden=false;
-    }catch(error){status.textContent="Review를 불러오지 못했습니다: "+(error?.message||error);}
+    forceShowReviewModal(modal);
+    status.hidden=false;
+    status.textContent="Review 데이터를 불러오는 중…";
+    try {
+      if(typeof window.xyockOpenReview==="function") {
+        await window.xyockOpenReview();
+      } else if(typeof window.xyockFetchSavedConversations==="function") {
+        const rows=await window.xyockFetchSavedConversations();
+        const replies=rows.flatMap(row=>Array.isArray(row.messages)?row.messages:[])
+          .filter(m=>m.role==="assistant"&&typeof m.content==="string"&&m.content.trim());
+        status.textContent=replies.length
+          ? "저장된 답변 "+replies.length+"개를 찾았습니다. 그래프를 불러오지 못해 화면을 새로고침해 주세요."
+          : "분석할 저장된 답변이 없습니다. 일반 채팅을 저장한 뒤 다시 시도해 주세요.";
+      } else {
+        status.textContent="대화 기록 기능을 불러오지 못했습니다. 로그인 상태를 확인한 뒤 다시 시도해 주세요.";
+      }
+    } catch(error) {
+      status.textContent="Review 데이터 조회 오류: "+(error?.message||error);
+    } finally {
+      forceShowReviewModal(modal);
+    }
   }
+
   document.addEventListener("click",event=>{
     const target=event.target instanceof Element?event.target:event.target?.parentElement;
     const action=target?.closest("#xyHeaderSecretChat, #xyMenu [data-xy-go='secret'], #secretChatExit, #xyMenu [data-xy-go='review']");
@@ -5549,6 +5597,13 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
     else if(action.id==="xyHeaderSecretChat"||action.dataset.xyGo==="secret")startSecretChat();
     else if(action.dataset.xyGo==="review")void showReview();
   },true);
+
+  ["reviewClose","reviewCloseBottom"].forEach(id=>byId(id)?.addEventListener("click",()=>{
+    const modal=byId("reviewModal");
+    modal?.classList.remove("show");
+    modal?.style.removeProperty("display");
+    modal?.setAttribute("aria-hidden","true");
+  }));
 })();
 </script>
 </body>
