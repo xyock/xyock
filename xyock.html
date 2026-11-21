@@ -941,6 +941,9 @@ header .xy-menu-logo-trigger:active{transform:scale(.95)!important}
 </style>
 <style id="xy-chat-github-commit">
 .xy-chat-commit-card{display:grid;gap:10px;margin-top:14px;padding:13px;border:1px solid #505050;border-radius:13px;background:#292929;color:#eeeeee;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.xy-chat-commit-card .xy-commit-heading{display:flex;align-items:center;gap:9px;min-width:0}
+.xy-chat-commit-card .xy-commit-brandmark{display:block;width:24px;height:24px;flex:0 0 24px;color:#fff}
+.xy-chat-commit-card .xy-commit-brandmark svg{display:block;width:100%;height:100%;overflow:visible}
 .xy-chat-commit-card .xy-commit-title{font-size:13px;font-weight:750;color:#f0f0f0}
 .xy-chat-commit-card .xy-commit-meta{font-size:11px;color:#c2c2c2;overflow-wrap:anywhere}
 .xy-chat-commit-card .xy-commit-files{display:grid;gap:6px}
@@ -2623,9 +2626,17 @@ int main() {
     function addGitHubCommitApprovalCard(bubble, request, plan) {
       const card=document.createElement("section");
       card.className="xy-chat-commit-card";
+      const heading=document.createElement("div");
+      heading.className="xy-commit-heading";
+      const brandmark=document.createElement("span");
+      brandmark.className="xy-commit-brandmark";
+      brandmark.setAttribute("role","img");
+      brandmark.setAttribute("aria-label","GitHub Invertocat logo");
+      brandmark.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.08c-3.1.67-3.76-1.32-3.76-1.32-.5-1.29-1.24-1.63-1.24-1.63-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 .1.77 2.2 3.32 1.57.1-.73.4-1.23.72-1.51-2.48-.28-5.09-1.24-5.09-5.53 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.44 3.05-1.14 3.05-1.14.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.3-2.61 5.25-5.1 5.52.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/></svg>';
       const title=document.createElement("div");
       title.className="xy-commit-title";
       title.textContent="GitHub commit review";
+      heading.append(brandmark,title);
       const meta=document.createElement("div");
       meta.className="xy-commit-meta";
       meta.textContent=request.repo+" · "+(request.payload?.branch||"default branch")+" · "+plan.changes.length+"개 파일";
@@ -2656,7 +2667,7 @@ int main() {
       reject.className="secondary";
       reject.textContent="거부";
       actions.append(commit,reject);
-      card.append(title,meta,message,files,status,actions);
+      card.append(heading,meta,message,files,status,actions);
       bubble.append(card);
       commit.addEventListener("click",async()=>{
         if(!confirm(request.repo+"의 "+plan.changes.length+"개 파일을 "+(request.payload?.branch||"기본 브랜치")+"에 커밋할까요?"))return;
