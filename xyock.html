@@ -5514,11 +5514,43 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
       margin: auto !important;
     }
   `;
+  reviewStyle.textContent += `
+    #xyHeaderSecretChat.xy-secret-exit-button {
+      min-width: 44px !important;
+      width: 44px !important;
+      font-size: 11px !important;
+      font-weight: 850 !important;
+      letter-spacing: .08em !important;
+      color: #8fe8b8 !important;
+      border-color: #70dba8 !important;
+    }
+  `;
   document.head.appendChild(reviewStyle);
+
+  const secretHeaderButton = byId("xyHeaderSecretChat");
+  const secretHeaderButtonOriginalHTML = secretHeaderButton?.innerHTML || "";
+  function updateSecretHeaderButton() {
+    if (!secretHeaderButton) return;
+    const active = !!window.__xyockSecretMode;
+    if (active) {
+      secretHeaderButton.textContent = "ESC";
+      secretHeaderButton.title = "Secret Chat 종료";
+      secretHeaderButton.setAttribute("aria-label", "Secret Chat 종료");
+      secretHeaderButton.setAttribute("aria-pressed", "true");
+      secretHeaderButton.classList.add("xy-secret-exit-button");
+    } else {
+      secretHeaderButton.innerHTML = secretHeaderButtonOriginalHTML;
+      secretHeaderButton.title = "Secret Chat";
+      secretHeaderButton.setAttribute("aria-label", "Secret Chat 시작");
+      secretHeaderButton.setAttribute("aria-pressed", "false");
+      secretHeaderButton.classList.remove("xy-secret-exit-button");
+    }
+  }
 
   function startSecretChat() {
     if (window.__xyockSecretMode) return;
     window.__xyockSecretMode = true;
+    updateSecretHeaderButton();
     window.xyockSidebarApi?.startNewConversation?.();
     document.body.classList.add("xy-secret-active");
     ["xyMenu","xyAccount","xyCodes","xyProjects"].forEach(id => byId(id)?.classList.remove("open"));
@@ -5536,6 +5568,7 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
     if(!window.__xyockSecretMode)return;
     window.xyockSidebarApi?.startNewConversation?.();
     window.__xyockSecretMode=false;
+    updateSecretHeaderButton();
     document.body.classList.remove("xy-secret-active");
     if(byId("secretChatNotice"))byId("secretChatNotice").hidden=true;
     if(byId("modeIndicator"))byId("modeIndicator").textContent="xyock";
@@ -5594,9 +5627,23 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
     if(!action)return;
     event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
     if(action.id==="secretChatExit")endSecretChat();
-    else if(action.id==="xyHeaderSecretChat"||action.dataset.xyGo==="secret")startSecretChat();
+    else if(action.id==="xyHeaderSecretChat"){
+      if(window.__xyockSecretMode)endSecretChat();
+      else startSecretChat();
+    }
+    else if(action.dataset.xyGo==="secret")startSecretChat();
     else if(action.dataset.xyGo==="review")void showReview();
   },true);
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && window.__xyockSecretMode) {
+      event.preventDefault();
+      event.stopPropagation();
+      endSecretChat();
+    }
+  }, true);
+
+  updateSecretHeaderButton();
 
   ["reviewClose","reviewCloseBottom"].forEach(id=>byId(id)?.addEventListener("click",()=>{
     const modal=byId("reviewModal");
