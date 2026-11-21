@@ -2278,6 +2278,83 @@ console.log(arr.sort((a, b) => a - b));`,
     String html = "<html><body><h1>Hello from Java</h1>
 
 
+
+<style id="xy-responsive-answer-visibility">
+/* Keep every AI answer and its code panels inside the available viewport width. */
+#chat.chat-container {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-bottom: calc(156px + env(safe-area-inset-bottom, 0px)) !important;
+}
+#chat .message.ai {
+  display: flex !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+#chat .message.ai > .bubble {
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: min(900px, 100%) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow-wrap: anywhere !important;
+}
+#chat .message.ai .ai-text,
+#chat .message.ai .ai-text-run {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+#chat .message.ai .code-card {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+#chat .message.ai .code-card pre {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+#chat .message.ai .code-card code,
+#chat .message.ai .xy-inline-code {
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+#chat .message.ai answer-feedback {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 768px) {
+  #chat.chat-container {
+    padding-left: clamp(10px, 3.5vw, 25px) !important;
+    padding-right: clamp(10px, 3.5vw, 25px) !important;
+    padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #chat .message.ai > .bubble {
+    padding-left: clamp(7px, 2vw, 18px) !important;
+    padding-right: clamp(7px, 2vw, 18px) !important;
+  }
+}
+</style>
+
 </body></html>";
     System.out.println(html);
   }
