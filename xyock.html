@@ -1468,7 +1468,8 @@ header::after{
       feedback.setAttribute("source-site", location.hostname);
       feedback.setAttribute("api-endpoint", SUPABASE_URL + "/functions/v1/xyock-review");
       feedback.setAttribute("answer-text", String(bubble.dataset.rawContent || bubble.textContent || "").slice(0, 4000));
-      message.appendChild(feedback);
+      // Keep the feedback controls inside the answer bubble, directly after its final content block.
+      bubble.appendChild(feedback);
     }
 
     function addAIMessage(text, type = "normal") {
