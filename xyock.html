@@ -2357,6 +2357,91 @@ console.log(arr.sort((a, b) => a - b));`,
 }
 </style>
 
+
+<script id="xyock-review-secret-rescue">
+(() => {
+  if (window.__xyockReviewSecretRescueInstalled) return;
+  window.__xyockReviewSecretRescueInstalled = true;
+
+  const byId = id => document.getElementById(id);
+  function startSecretChat() {
+    if (window.__xyockSecretMode) return;
+    window.__xyockSecretMode = true;
+    window.xyockSidebarApi?.startNewConversation?.();
+    document.body.classList.add("xy-secret-active");
+    ["xyMenu","xyAccount","xyCodes","xyProjects"].forEach(id => byId(id)?.classList.remove("open"));
+    window.__xyockClearAttachments?.();
+    const chat = byId("chat"), notice = byId("secretChatNotice");
+    if (chat && notice) { chat.replaceChildren(notice); notice.hidden = false; }
+    const input = byId("searchInput");
+    if (input) { input.value = ""; input.dispatchEvent(new Event("input", {bubbles:true})); }
+    if (byId("sendBtn")) byId("sendBtn").disabled = true;
+    const indicator = byId("modeIndicator");
+    if (indicator) indicator.textContent = "Secret Chat";
+    input?.focus();
+  }
+  function endSecretChat() {
+    if (!window.__xyockSecretMode) return;
+    window.xyockSidebarApi?.startNewConversation?.();
+    window.__xyockSecretMode = false;
+    document.body.classList.remove("xy-secret-active");
+    if (byId("secretChatNotice")) byId("secretChatNotice").hidden = true;
+    const indicator = byId("modeIndicator");
+    if (indicator) indicator.textContent = "xyock";
+    const input = byId("searchInput");
+    if (input) { input.value = ""; input.dispatchEvent(new Event("input", {bubbles:true})); }
+    if (byId("sendBtn")) byId("sendBtn").disabled = true;
+    window.__xyockClearAttachments?.();
+    input?.focus();
+  }
+  async function showReview() {
+    ["xyMenu","xyAccount","xyCodes","xyProjects"].forEach(id => byId(id)?.classList.remove("open"));
+    if (typeof window.xyockOpenReview === "function") {
+      await window.xyockOpenReview();
+      return;
+    }
+    const modal = byId("reviewModal"), status = byId("reviewStatus"), dash = byId("reviewDashboard");
+    if (!modal || !status || !dash) return;
+    modal.classList.add("show");
+    status.hidden = false;
+    status.textContent = "대화 기록을 불러오는 중…";
+    dash.hidden = true;
+    try {
+      if (typeof window.xyockFetchSavedConversations !== "function") {
+        status.textContent = "대화 기록 서비스가 준비되지 않았습니다. 새로고침 후 다시 시도해 주세요.";
+        return;
+      }
+      const rows = await window.xyockFetchSavedConversations();
+      const replies = rows.flatMap(row => Array.isArray(row.messages) ? row.messages : [])
+        .filter(message => message.role === "assistant" && typeof message.content === "string" && message.content.trim());
+      if (!replies.length) {
+        status.textContent = "분석할 저장된 답변이 없습니다. 일반 채팅을 저장한 뒤 다시 시도해 주세요.";
+        return;
+      }
+      const totalWords = replies.reduce((sum, message) => sum + (message.content.match(/[\\p{L}\\p{N}]+/gu) || []).length, 0);
+      byId("reviewTotal").textContent = replies.length.toLocaleString();
+      byId("reviewChats").textContent = rows.length.toLocaleString();
+      byId("reviewWords").textContent = totalWords.toLocaleString();
+      status.textContent = "저장된 대화 " + rows.length + "개에서 답변 " + replies.length + "개를 확인했습니다.";
+      dash.hidden = false;
+    } catch (error) {
+      status.textContent = "Review를 불러오지 못했습니다: " + (error?.message || error);
+    }
+  }
+
+  document.addEventListener("click", event => {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    const action = target?.closest("#xyHeaderSecretChat, #xyMenu [data-xy-go='secret'], #secretChatExit, #xyMenu [data-xy-go='review']");
+    if (!action) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    if (action.id === "secretChatExit") endSecretChat();
+    else if (action.id === "xyHeaderSecretChat" || action.dataset.xyGo === "secret") startSecretChat();
+    else if (action.dataset.xyGo === "review") void showReview();
+  }, true);
+})();
+</script>
 </body></html>";
     System.out.println(html);
   }
