@@ -3356,6 +3356,21 @@ int main() {
       if (!res.ok) throw new Error("대화 기록 조회 실패 (HTTP " + res.status + ")");
       return await res.json();
     };
+    window.xyockSendAnswerFeedback = async (payload = {}) => {
+      if (!session?.user_id || !await ensureSession()) throw new Error("피드백을 저장하려면 로그인해 주세요.");
+      const response = await fetch(FN_URL + "/xyock-feedback", {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: "Bearer " + session.access_token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error(data.error || "피드백 저장에 실패했습니다.");
+      return data;
+    };
     window.xyockEnsureCurrentConversationSaved = async () => {
       if (!session?.user_id || !await ensureSession()) throw new Error("핀 기능을 사용하려면 로그인해 주세요.");
       await saveQueue;
@@ -4256,20 +4271,71 @@ body.xy-light .xy-profile-dialog{background:#f8fbf9;color:#17231c;border-color:#
  async function loadReview(){
    const status=$("reviewStatus"),dash=$("reviewDashboard");
    if(!status||!dash)return;
-   status.hidden=false;status.textContent="Loading saved conversations…";dash.hidden=true;
+   status.hidden=false;status.textContent="Loading saved conversations and feedback…";dash.hidden=true;
    if(!window.xyockFetchSavedConversations){status.textContent="Conversation service is not ready. Please reload the page.";return}
    try{
      const rows=await window.xyockFetchSavedConversations();
      const messages=rows.flatMap(row=>Array.isArray(row.messages)?row.messages:[]);
      const report=reviewScore(messages),replies=report.replies;
-     if(!replies.length){status.textContent="No saved assistant replies were found yet. Start a regular chat and save a conversation first.";return}
-     $("reviewTotal").textContent=replies.length.toLocaleString("en-US");$("reviewChats").textContent=rows.length.toLocaleString("en-US");$("reviewWords").textContent=report.words.toLocaleString("en-US");
+     let feedbackCounts=null;
+     let feedbackUnavailable=false;
+     try{
+       const feedbackResult=await window.xyockSendAnswerFeedback({action:"stats"});
+       feedbackCounts=feedbackResult?.counts||null;
+     }catch(feedbackError){
+       feedbackUnavailable=true;
+       console.warn("Review feedback counts are unavailable:",feedbackError);
+     }
+     $("reviewTotal").textContent=replies.length.toLocaleString("en-US");
+     $("reviewChats").textContent=rows.length.toLocaleString("en-US");
+     $("reviewWords").textContent=report.words.toLocaleString("en-US");
+
      $("reviewBars").replaceChildren();
-     report.details.forEach(([label,score,desc])=>{const wrap=document.createElement("div"),head=document.createElement("div"),name=document.createElement("span"),val=document.createElement("b"),track=document.createElement("div"),fill=document.createElement("div");head.className="xy-review-bar-head";name.textContent=label;val.textContent=score+"/100";track.className="xy-review-track";fill.className="xy-review-fill";fill.style.width=score+"%";track.append(fill);head.append(name,val);wrap.append(head,track);$("reviewBars").append(wrap)});
-     $("reviewDetails").replaceChildren();report.details.forEach(([label,score,desc])=>{const card=document.createElement("div"),b=document.createElement("b"),p=document.createElement("p");card.className="xy-review-detail";b.textContent=label+" · "+score+"/100";p.textContent=desc;card.append(b,p);$("reviewDetails").append(card)});
+     if(replies.length){
+       report.details.forEach(([label,score,desc])=>{
+         const wrap=document.createElement("div"),head=document.createElement("div"),name=document.createElement("span"),val=document.createElement("b"),track=document.createElement("div"),fill=document.createElement("div");
+         head.className="xy-review-bar-head";name.textContent=label;val.textContent=score+"/100";
+         track.className="xy-review-track";fill.className="xy-review-fill";fill.style.width=score+"%";
+         track.append(fill);head.append(name,val);wrap.append(head,track);$("reviewBars").append(wrap);
+       });
+     }
+
+     $("reviewDetails").replaceChildren();
+     if(replies.length){
+       report.details.forEach(([label,score,desc])=>{
+         const card=document.createElement("div"),b=document.createElement("b"),p=document.createElement("p");
+         card.className="xy-review-detail";b.textContent=label+" · "+score+"/100";p.textContent=desc;
+         card.append(b,p);$("reviewDetails").append(card);
+       });
+     }
+
+     const activityRows=[
+       ["User messages",report.userMessages],
+       ["Visible code blocks",report.codeBlocks],
+       ["Average reply length",replies.length?Math.round(report.words/replies.length)+" words":"—"],
+       ["Saved conversations",rows.length]
+     ];
+     if(feedbackCounts){
+       activityRows.push(
+         ["👍 Thumbs up · all users",feedbackCounts.thumbsUp??0],
+         ["👎 Thumbs down · all users",feedbackCounts.thumbsDown??0],
+         ["⚑ Reports · all users",feedbackCounts.reports??0]
+       );
+     }else{
+       activityRows.push(["Feedback totals","Unavailable"]);
+     }
      $("reviewActivity").replaceChildren();
-     [["User messages",report.userMessages],["Visible code blocks",report.codeBlocks],["Average reply length",Math.round(report.words/replies.length)+" words"],["Saved conversations",rows.length]].forEach(([label,value])=>{const card=document.createElement("div"),strong=document.createElement("strong"),span=document.createElement("span");card.className="xy-review-stat";strong.textContent=typeof value==="number"?value.toLocaleString("en-US"):value;span.textContent=label;card.append(strong,span);$("reviewActivity").append(card)});
-     status.textContent="Analysis complete · Based on "+rows.length+" saved conversations. Scores are heuristic, not objective quality ratings.";dash.hidden=false;
+     activityRows.forEach(([label,value])=>{
+       const card=document.createElement("div"),strong=document.createElement("strong"),span=document.createElement("span");
+       card.className="xy-review-stat";strong.textContent=typeof value==="number"?value.toLocaleString("en-US"):value;
+       span.textContent=label;card.append(strong,span);$("reviewActivity").append(card);
+     });
+
+     status.textContent=replies.length
+       ? "Analysis complete · Based on "+rows.length+" saved conversations. Feedback totals include all xyock users."
+       : "No saved assistant replies yet. Feedback totals include all xyock users.";
+     if(feedbackUnavailable)status.textContent+=" Feedback statistics could not be loaded.";
+     dash.hidden=false;
    }catch(err){status.textContent="Could not load the review: "+err.message}
  }
  $("reviewClose")?.addEventListener("click",()=>$("reviewModal")?.classList.remove("show"));
@@ -5368,8 +5434,7 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
 
 <script id="xy-local-answer-feedback">
 (() => {
-  const VOTE_PREFIX = "xyock_local_answer_vote_v1:";
-  const REPORTS_KEY = "xyock_local_answer_reports_v1";
+  const VOTE_PREFIX = "xyock_local_answer_vote_v2:";
   const categories = [
     ["incorrect", "부정확하거나 사실과 다른 내용"],
     ["unsafe", "위험하거나 부적절한 내용"],
@@ -5378,6 +5443,7 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
     ["spam", "스팸 또는 광고"],
     ["other", "기타"]
   ];
+
   class AnswerFeedback extends HTMLElement {
     constructor() {
       super();
@@ -5385,7 +5451,9 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
       this.selected = null;
     }
     get answerId() { return this.getAttribute("answer-id") || "answer-" + Date.now(); }
+    get answerText() { return String(this.getAttribute("answer-text") || "").slice(0, 4000); }
     get voteKey() { return VOTE_PREFIX + location.hostname + ":" + this.answerId; }
+
     connectedCallback() {
       if (this.shadowRoot.childElementCount) return;
       try {
@@ -5395,28 +5463,90 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
       this.render();
       this.update();
     }
+
     update() {
       this.shadowRoot.querySelectorAll("[data-vote]").forEach(button => {
         button.setAttribute("aria-pressed", String(button.dataset.vote === this.selected));
       });
     }
+
     status(message, isError = false) {
       const node = this.shadowRoot.querySelector(".status");
       if (!node) return;
       node.textContent = message;
       node.classList.toggle("error", isError);
     }
-    vote(value) {
-      this.selected = this.selected === value ? null : value;
-      try {
-        if (this.selected) localStorage.setItem(this.voteKey, this.selected);
-        else localStorage.removeItem(this.voteKey);
-        this.status(this.selected ? "이 기기에 선택을 저장했어요." : "선택을 취소했어요.");
-      } catch (_) {
-        this.status(this.selected ? "선택했어요. 브라우저 저장은 사용할 수 없습니다." : "선택을 취소했어요.");
-      }
-      this.update();
+
+    requireLogin() {
+      this.status("평가와 신고는 로그인 후 저장할 수 있습니다.", true);
+      window.xyockSidebarApi?.openLoginModal?.();
     }
+
+    async vote(value) {
+      if (!window.__xyockSessionProfile?.user_id) {
+        this.requireLogin();
+        return;
+      }
+      const next = this.selected === value ? null : value;
+      this.status("Saving feedback…");
+      this.shadowRoot.querySelectorAll("[data-vote]").forEach(button => button.disabled = true);
+      try {
+        await window.xyockSendAnswerFeedback({ action: "vote", answerId: this.answerId, vote: next });
+        this.selected = next;
+        try {
+          if (this.selected) localStorage.setItem(this.voteKey, this.selected);
+          else localStorage.removeItem(this.voteKey);
+        } catch (_) {}
+        this.update();
+        this.status(this.selected ? "평가가 저장됐어요." : "평가를 취소했어요.");
+      } catch (error) {
+        this.status(error?.message || "평가를 저장하지 못했습니다.", true);
+        if (/로그인|인증이 만료/.test(error?.message || "")) window.xyockSidebarApi?.openLoginModal?.();
+      } finally {
+        this.shadowRoot.querySelectorAll("[data-vote]").forEach(button => button.disabled = false);
+      }
+    }
+
+    async submitReport(form, dialog) {
+      if (!window.__xyockSessionProfile?.user_id) {
+        dialog.close();
+        this.requireLogin();
+        return;
+      }
+      const data = new FormData(form);
+      const category = String(data.get("category") || "other");
+      const reason = String(data.get("reason") || "").trim().slice(0, 1500);
+      const submit = form.querySelector('[type="submit"]');
+      if (submit) submit.disabled = true;
+      this.status("신고를 접수하는 중…");
+      try {
+        const result = await window.xyockSendAnswerFeedback({
+          action: "report",
+          answerId: this.answerId,
+          answerText: this.answerText,
+          category,
+          reason
+        });
+        dialog.close();
+        form.reset();
+        if (result.emailSent) {
+          this.status("신고가 접수되어 관리자 이메일로 전송됐어요.");
+        } else if (result.emailStatus === "pending_config") {
+          this.status("신고는 저장됐지만 관리자 이메일 발송 설정이 아직 필요합니다.", true);
+        } else {
+          this.status("신고는 저장됐지만 이메일 전송에 실패했어요.", true);
+        }
+      } catch (error) {
+        this.status(error?.message || "신고를 접수하지 못했습니다.", true);
+        if (/로그인|인증이 만료/.test(error?.message || "")) {
+          dialog.close();
+          window.xyockSidebarApi?.openLoginModal?.();
+        }
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    }
+
     render() {
       const options = categories.map(item => '<option value="' + item[0] + '">' + item[1] + '</option>').join("");
       this.shadowRoot.innerHTML =
@@ -5425,6 +5555,7 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
         '.actions{display:flex;align-items:center;gap:5px;min-height:32px;flex-wrap:wrap}' +
         'button{appearance:none;border:1px solid transparent;background:transparent;color:var(--answer-feedback-muted,#858b96);border-radius:8px;min-width:32px;height:32px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:12px}' +
         'button:hover{background:rgba(127,127,127,.12);color:var(--answer-feedback-text,currentColor)}' +
+        'button:disabled{opacity:.55;cursor:wait}' +
         'button:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #7c8cff;outline-offset:2px}' +
         'button[aria-pressed=true]{color:var(--answer-feedback-active,#64a6ff);background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.25)}' +
         'svg{width:16px;height:16px}.status{color:var(--answer-feedback-muted,#858b96);font-size:11px;margin-left:4px}.status.error{color:#e06b6b}' +
@@ -5450,36 +5581,27 @@ body.xy-light #xyMenu .xy-menu-list::-webkit-scrollbar-thumb {
         '</div>' +
         '<dialog><form class="body">' +
           '<h3>답변 신고</h3>' +
-          '<p class="hint">신고 내용은 이 브라우저에만 저장되며 xyock 서버로 전송되거나 검토 페이지에 전달되지 않습니다.</p>' +
+          '<p class="hint">신고 사유와 신고된 답변이 xyock 서버에 접수되어 관리자 이메일로 전달됩니다.</p>' +
           '<label for="category">신고 사유</label><select id="category" name="category" required>' + options + '</select>' +
           '<textarea name="reason" maxlength="1500" placeholder="문제가 된 부분을 설명해 주세요. (선택)"></textarea>' +
-          '<div class="dialog-actions"><button type="button" class="cancel">취소</button><button type="submit" class="submit">신고 저장</button></div>' +
+          '<div class="dialog-actions"><button type="button" class="cancel">취소</button><button type="submit" class="submit">신고 제출</button></div>' +
         '</form></dialog>';
+
       this.shadowRoot.querySelectorAll("[data-vote]").forEach(button => {
-        button.addEventListener("click", () => this.vote(button.dataset.vote));
+        button.addEventListener("click", () => void this.vote(button.dataset.vote));
       });
-      this.shadowRoot.querySelector(".report").addEventListener("click", () => this.shadowRoot.querySelector("dialog").showModal());
-      this.shadowRoot.querySelector(".cancel").addEventListener("click", () => this.shadowRoot.querySelector("dialog").close());
+      const dialog = this.shadowRoot.querySelector("dialog");
+      this.shadowRoot.querySelector(".report").addEventListener("click", () => {
+        if (!window.__xyockSessionProfile?.user_id) {
+          this.requireLogin();
+          return;
+        }
+        dialog.showModal();
+      });
+      this.shadowRoot.querySelector(".cancel").addEventListener("click", () => dialog.close());
       this.shadowRoot.querySelector("form").addEventListener("submit", event => {
         event.preventDefault();
-        const form = event.currentTarget;
-        const data = new FormData(form);
-        const category = String(data.get("category") || "other");
-        const reason = String(data.get("reason") || "").trim().slice(0, 1500);
-        let reports = [];
-        try {
-          const parsed = JSON.parse(localStorage.getItem(REPORTS_KEY) || "[]");
-          if (Array.isArray(parsed)) reports = parsed;
-        } catch (_) {}
-        reports.push({ answerId: this.answerId, category, reason, createdAt: new Date().toISOString() });
-        try {
-          localStorage.setItem(REPORTS_KEY, JSON.stringify(reports.slice(-100)));
-          this.status("신고 내용은 이 기기에만 저장됐어요. 서버로 전송되지 않았습니다.");
-        } catch (_) {
-          this.status("브라우저 저장 공간을 사용할 수 없어 신고 내용을 저장하지 못했어요.", true);
-        }
-        this.shadowRoot.querySelector("dialog").close();
-        form.reset();
+        void this.submitReport(event.currentTarget, dialog);
       });
     }
   }
