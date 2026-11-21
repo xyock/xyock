@@ -241,6 +241,7 @@
     }
     .section-content.show { max-height: 1000px; padding: 0 var(--pad) 20px var(--pad); }
     .section-content p { line-height: 1.6; color: var(--muted); margin: 0; }
+    #descriptionText { line-height: 1.6; color: var(--muted); margin: 0; }
 
     /* GitHub / Supabase 푸터 */
     .home-footer {
@@ -465,7 +466,7 @@
         <button class="section-toggle" type="button" data-target="description" aria-expanded="false">
           <span class="toggle-icon">▶</span><span id="descriptionTitle">Description</span>
         </button>
-        <div id="description" class="section-content"><p id="descriptionText"># xyock
+        <div id="description" class="section-content"><div id="descriptionText"># xyock
 
 AI 기반 코딩 웹 애플리케이션입니다. Supabase와 Kilo AI Gateway를 연동하여 웹에서 AI 코딩 기능을 제공합니다.
 
@@ -482,7 +483,7 @@ AI 기반 코딩 웹 애플리케이션입니다. Supabase와 Kilo AI Gateway를
 - Supabase
 - Kilo AI Gateway
 - NVIDIA Nemotron 3.5 Super VL (Free)
-</p></div>
+</div></div>
       </div>
       <div class="home-section">
         <button class="section-toggle" type="button" data-target="notice" aria-expanded="false">
